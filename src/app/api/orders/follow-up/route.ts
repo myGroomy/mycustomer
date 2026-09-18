@@ -20,7 +20,7 @@ function colLetter(idx: number): string {
 export async function PUT(request: NextRequest) {
   const session = await getSessionCookie()
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized — silakan login ulang' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized silakan login ulang' }, { status: 401 })
   }
 
   try {

@@ -93,7 +93,7 @@ export default function InputOrderPage() {
         }))
         setPreloadedCustomers(withStatus)
       } catch {
-        // Silent fail — search will just return empty
+        // Silent fail search will just return empty
       } finally {
         setPreloading(false)
       }
@@ -184,7 +184,7 @@ export default function InputOrderPage() {
       })
 
       toast.success('Order tersimpan', {
-        description: `${selectedCustomer?.name || newName} — ${CHANNELS.find(c => c.id === channel)?.label || channel}`,
+        description: `${selectedCustomer?.name || newName} ${CHANNELS.find(c => c.id === channel)?.label || channel}`,
       })
       setTimeout(() => handleReset(), 600)
     } catch (err) {
@@ -348,7 +348,7 @@ export default function InputOrderPage() {
         </div>
       </div>
 
-      {/* Selected customer — Rich Profile Card */}
+      {/* Selected customer Rich Profile Card */}
       <AnimatePresence>
         {selectedCustomer && !isCreatingNew && (
           <motion.div

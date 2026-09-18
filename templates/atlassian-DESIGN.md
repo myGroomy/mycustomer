@@ -50,13 +50,13 @@ motion:
 
 ## Rationale
 
-Atlassian's design system prioritizes clarity and professional authority through a restrained, high-contrast palette anchored in near-black primary and white surfaces. The measured tokens reveal a deliberately minimalist approach: the primary color (#101214) and text color (#292a2e) sit just barely apart in the darkness spectrum, creating visual hierarchy through extreme subtlety rather than saturation. This choice signals enterprise software maturity—teams collaborating on complex work need interfaces that disappear, not distract. The background (#f8f8f8) is nearly white but slightly warmed, reducing harsh luminance contrast while maintaining legibility.
+Atlassian's design system prioritizes clarity and professional authority through a restrained, high-contrast palette anchored in near-black primary and white surfaces. The measured tokens reveal a deliberately minimalist approach: the primary color (#101214) and text color (#292a2e) sit just barely apart in the darkness spectrum, creating visual hierarchy through extreme subtlety rather than saturation. This choice signals enterprise software maturityteams collaborating on complex work need interfaces that disappear, not distract. The background (#f8f8f8) is nearly white but slightly warmed, reducing harsh luminance contrast while maintaining legibility.
 
-The typography system uses two distinct typeface families—Charlie Display for headlines and Charlie Text for body—suggesting a considered separation between information architecture (where users scan) and instructional content (where users read). The generous line-height defaults (1.33–1.5) and measured font sizes (12px baseline, 24–32px for hierarchy) indicate an audience that values breathing room and sustained reading comfort; these are knowledge workers, not mobile-first casual users.
+The typography system uses two distinct typeface familiesCharlie Display for headlines and Charlie Text for bodysuggesting a considered separation between information architecture (where users scan) and instructional content (where users read). The generous line-height defaults (1.33–1.5) and measured font sizes (12px baseline, 24–32px for hierarchy) indicate an audience that values breathing room and sustained reading comfort; these are knowledge workers, not mobile-first casual users.
 
 Spacing follows a base-4 scale that compounds predictably (4, 8, 12, 24, 32, 60, 64, 80), enabling both tight micro-interactions and expansive sectional breathing. The lack of depth (card and elevated shadows are nearly invisible at measured values) reinforces a flat, data-forward aesthetic where information density matters more than layered visual depth.
 
-Finally, the motion parameters—75ms for snappy feedback, 400ms as the comfortable default, cubic-bezier easing that favors ease-out—are calibrated for professional tools where responsiveness builds trust and slowness suggests lag.
+Finally, the motion parameters75ms for snappy feedback, 400ms as the comfortable default, cubic-bezier easing that favors ease-outare calibrated for professional tools where responsiveness builds trust and slowness suggests lag.
 
 ## 1. Visual Theme & Atmosphere
 

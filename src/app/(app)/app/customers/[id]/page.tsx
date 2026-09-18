@@ -40,12 +40,12 @@ import { useMounted } from '@/lib/useMounted'
 import type { CustomerWithStats, Order } from '@/types'
 
 const AGE_RANGES = [
-  { value: '<17', label: '<17 — Anak-anak/Remaja awal' },
-  { value: '17-25', label: '17-25 — Gen Z / Pelajar-Mahasiswa' },
-  { value: '26-35', label: '26-35 — Muda bekerja' },
-  { value: '36-45', label: '36-45 — Keluarga muda' },
-  { value: '46-55', label: '46-55 — Dewasa mapan' },
-  { value: '56+', label: '56+ — Senior' },
+  { value: '<17', label: '<17 Anak-anak/Remaja awal' },
+  { value: '17-25', label: '17-25 Gen Z / Pelajar-Mahasiswa' },
+  { value: '26-35', label: '26-35 Muda bekerja' },
+  { value: '36-45', label: '36-45 Keluarga muda' },
+  { value: '46-55', label: '46-55 Dewasa mapan' },
+  { value: '56+', label: '56+ Senior' },
 ]
 
 const GENDERS = [

@@ -8,7 +8,7 @@
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, monospace;
 
-  /* Surfaces — Atlassian Naval Monochrome (#101214 · #1C2B42 · #4F6B8A · #CFE1FD) */
+  /* Surfaces Atlassian Naval Monochrome (#101214 · #1C2B42 · #4F6B8A · #CFE1FD) */
   --color-canvas: #f6f7f9;
   --color-surface: #ffffff;
   --color-sunken: #eef1f4;
@@ -30,7 +30,7 @@
   --color-amber: #4f6b8a;
   --color-rose: #0d1622;
 
-  /* Motion — mass & spring physics */
+  /* Motion mass & spring physics */
   --ease-fluid: cubic-bezier(0.32, 0.72, 0, 1);
   --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
 }

@@ -138,8 +138,8 @@ export default function AdminPage() {
 
   const handleDeleteBranch = async (index: number, branch: Branch) => {
     const used = users.some((u) => u.branch === branch.code)
-    if (used) return flash('err', `Cabang ${branch.code} masih dipakai user — pindahkan dulu user-nya`)
-    if (!confirm(`Hapus cabang ${branch.code} — ${branch.name}?`)) return
+    if (used) return flash('err', `Cabang ${branch.code} masih dipakai user pindahkan dulu user-nya`)
+    if (!confirm(`Hapus cabang ${branch.code} ${branch.name}?`)) return
     setBusy(true)
     try {
       await deleteBranch(index)
@@ -187,7 +187,7 @@ export default function AdminPage() {
     if (isSelf && editDraft.role !== original.role) {
       const target = users.filter((u) => u.role === 'owner')
       if (original.role === 'owner' && target.length <= 1) {
-        return flash('err', 'Tidak bisa mengubah role sendiri — Anda owner terakhir')
+        return flash('err', 'Tidak bisa mengubah role sendiri Anda owner terakhir')
       }
     }
     setBusy(true)
@@ -593,7 +593,7 @@ export default function AdminPage() {
           <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent/5 p-4">
             <Info size={18} weight="duotone" className="mt-0.5 shrink-0 text-accent" />
             <p className="text-xs leading-relaxed text-ash">
-              <strong className="text-accent">☁️ Tersimpan di Cloud</strong> — Perubahan cabang &amp; user langsung tersimpan di Google Sheets dan efektif untuk semua perangkat. Owner tidak bisa menghapus akun sendiri atau mengubah role-nya jika menjadi owner terakhir.
+              <strong className="text-accent">☁️ Tersimpan di Cloud</strong> Perubahan cabang &amp; user langsung tersimpan di Google Sheets dan efektif untuk semua perangkat. Owner tidak bisa menghapus akun sendiri atau mengubah role-nya jika menjadi owner terakhir.
             </p>
           </div>
         </motion.div>

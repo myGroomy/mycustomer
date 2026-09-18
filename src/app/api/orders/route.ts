@@ -6,10 +6,10 @@ const CUSTOMERS_SHEET = 'customers'
 const ORDERS_SHEET = 'orders'
 
 export async function POST(request: NextRequest) {
-  // Auth minimal — cek session cookie
+  // Auth minimal cek session cookie
   const session = await getSessionCookie()
   if (!session) {
-    return NextResponse.json({ error: 'Unauthorized — silakan login ulang' }, { status: 401 })
+    return NextResponse.json({ error: 'Unauthorized silakan login ulang' }, { status: 401 })
   }
 
   try {

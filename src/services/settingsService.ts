@@ -28,7 +28,7 @@ function rowsToSettings(rows: Record<string, string>[]): AppSettings {
   }
 }
 
-// In-memory cache — sumber utama settings adalah Google Sheets, bukan localStorage.
+// In-memory cache sumber utama settings adalah Google Sheets, bukan localStorage.
 // Di-set lewat syncSettingsFromSheets(); dipakai sebagai sumber sinkron untuk
 // komponen yang butuh nilai seketika (churnStatus, waLinkBuilder, layout, provider).
 let _cache: AppSettings | null = null

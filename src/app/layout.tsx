@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: 'MYCUSTOMER — Jangan sampai pelanggan lupa balik lagi',
+  title: 'MYCUSTOMER Jangan sampai pelanggan lupa balik lagi',
   description: 'Catatan kasir yang jadi database pelanggan & pelacak retensi bisnis F&B.',
   icons: {
     icon: [
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     apple: '/brand-assets/mycustomer-icon.png',
   },
   openGraph: {
-    title: 'MYCUSTOMER — Pelacak Retensi Bisnis F&B',
+    title: 'MYCUSTOMER Pelacak Retensi Bisnis F&B',
     description: 'Jangan sampai pelanggan lupa balik lagi. Rekam transaksi kasir jadi database pelanggan otomatis.',
     images: [
       {

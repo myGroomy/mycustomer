@@ -41,7 +41,7 @@ const CHANNELS = [
 ]
 
 const SCRUB_COPY =
-  'Setiap kali kasir mengetik satu nomor HP, MYCUSTOMER membangun profil retensi di belakang layar: siapa yang masih aktif, siapa yang mulai jarang, dan siapa yang sudah seminggu menghilang. Ujungnya cuma satu pekerjaan — kirim satu pesan WhatsApp yang hangat.'
+  'Setiap kali kasir mengetik satu nomor HP, MYCUSTOMER membangun profil retensi di belakang layar: siapa yang masih aktif, siapa yang mulai jarang, dan siapa yang sudah seminggu menghilang. Ujungnya cuma satu pekerjaan kirim satu pesan WhatsApp yang hangat.'
 
 const SCRUB_TITLE = 'Data duduk diam. Kamu yang bergerak lebih cerdas.'
 
@@ -60,7 +60,7 @@ const REVIEWS = [
   },
   {
     quote:
-      'Semua di satu layar, datanya langsung jelas. Anak kasir pun bisa pakai tanpa training — itu yang paling penting buat kami.',
+      'Semua di satu layar, datanya langsung jelas. Anak kasir pun bisa pakai tanpa training itu yang paling penting buat kami.',
     name: 'Andra',
     role: 'Owner Gerai Warteg, Jakarta',
   },
@@ -243,7 +243,7 @@ export default function LandingPage() {
 
           <p data-fade className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-ash sm:text-xl">
             MYCUSTOMER mencatat setiap repeat order bisnis F&B dan menandai pelanggan yang mulai
-            jarang datang — supaya kamu bisa mengirim satu pesan WhatsApp sebelum mereka pindah ke tempat lain.
+            jarang datang supaya kamu bisa mengirim satu pesan WhatsApp sebelum mereka pindah ke tempat lain.
           </p>
 
           <div data-fade className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
@@ -344,7 +344,7 @@ export default function LandingPage() {
       <section id="features" ref={bentoRef} className="px-4 py-28 sm:px-6 sm:py-40 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <p className="max-w-3xl text-3xl font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-4xl lg:text-[2.75rem]">
-            Satu layar yang merangkum seluruh pelanggan kamu — keluar-masuk, tanpa satu pun
+            Satu layar yang merangkum seluruh pelanggan kamu keluar-masuk, tanpa satu pun
             yang jatuh lewat sela.
           </p>
 
@@ -360,7 +360,7 @@ export default function LandingPage() {
                     Catat order sekali ketuk, semua channel.
                   </h3>
                   <p className="mt-3 max-w-md text-[15px] leading-relaxed text-ash">
-                    Dine-in, takeaway, GoFood, Grab, Shopee — masuk lewat satu layar yang sama.
+                    Dine-in, takeaway, GoFood, Grab, Shopee masuk lewat satu layar yang sama.
                     Nomor WhatsApp otomatis dinormalisasi jadi profil pelanggan.
                   </p>
                 </div>
@@ -407,7 +407,7 @@ export default function LandingPage() {
               <div className="mb-5 flex items-center justify-between gap-4">
                 <div>
                   <h3 className="text-lg font-semibold tracking-tight text-ink">Terhubung dengan semua saluran penjualan</h3>
-                  <p className="mt-1 text-sm text-ash">Semua order — dari mana pun asalnya — jatuh ke profil pelanggan yang sama.</p>
+                  <p className="mt-1 text-sm text-ash">Semua order dari mana pun asalnya jatuh ke profil pelanggan yang sama.</p>
                 </div>
                 <div className="hidden items-center gap-2 sm:flex">
                   {CHANNELS.map((c) => {
@@ -441,7 +441,7 @@ export default function LandingPage() {
               <div>
                 <div className="text-3xl font-semibold tracking-tight">2 menit</div>
                 <p className="mt-1 text-sm leading-relaxed text-white/70">
-                  dari browser — tidak perlu install aplikasi atau training panjang.
+                  dari browser tidak perlu install aplikasi atau training panjang.
                 </p>
               </div>
             </div>
@@ -478,7 +478,7 @@ export default function LandingPage() {
                 Cara kerja. Alur yang sama tiap hari, hasil yang terus tumbuh.
               </h2>
               <p className="mt-5 max-w-sm text-base leading-relaxed text-ash">
-                Kasir tidak perlu mempelajari flow baru. Cukup catat order seperti biasa —
+                Kasir tidak perlu mempelajari flow baru. Cukup catat order seperti biasa 
                 MYCUSTOMER mengubahnya menjadi profil, segmentasi, dan pengingat follow-up.
               </p>
               <div className="mt-10 hidden items-center gap-2 lg:flex">
@@ -586,7 +586,7 @@ export default function LandingPage() {
                 Dipakai tim yang melayani pelanggan tiap hari.
               </h2>
               <p className="mt-4 max-w-xs text-[15px] leading-relaxed text-ash">
-                Dari kafe kecil sampai jaringan bakmi — alurnya sama, dan hasilnya mirip-mirip: pelanggan balik lagi.
+                Dari kafe kecil sampai jaringan bakmi alurnya sama, dan hasilnya mirip-mirip: pelanggan balik lagi.
               </p>
               <div className="mt-8 flex -space-x-3">
                 {REVIEWS.map((r, i) => (

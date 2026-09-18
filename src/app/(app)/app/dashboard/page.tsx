@@ -36,7 +36,7 @@ const BRANCHES: { id: BranchType | 'ALL'; label: string }[] = [
 // Distribusi frekuensi repeat order: bucket 1x..9x, lalu 10x+ digabung jadi satu bucket terakhir
 const FREQ_MAX = 10
 
-// Warna distinct untuk donut chart channel order — ramp navy/steel monokrom
+// Warna distinct untuk donut chart channel order ramp navy/steel monokrom
 const CHANNEL_COLORS = ['#1c2b42', '#2f4a6e', '#4f6b8a', '#66809e', '#8198b4', '#9cafc8', '#b9c8db', '#d5dfec']
 
 // Cache hasil agregasi di level client supaya pindah tab/halaman tidak refetch 10.000 baris setiap kali
@@ -540,7 +540,7 @@ export default function DashboardPage() {
                 </span>
                 <div>
                   <h2 className="text-base font-semibold text-ink">Distribusi Frekuensi Order</h2>
-                  <p className="text-[11px] text-ash">Jumlah customer per total order — klik bar untuk melihat daftarnya</p>
+                  <p className="text-[11px] text-ash">Jumlah customer per total order klik bar untuk melihat daftarnya</p>
                 </div>
               </div>
               <span className="text-xs font-mono text-ash">{filteredCustomers.length} customer</span>

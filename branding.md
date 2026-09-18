@@ -1,4 +1,4 @@
-# Retain-ly Brand Guidelines — v1.0
+# Retain-ly Brand Guidelines v1.0
 
 > Status: Internal Style Guide | Last updated: 2026-09-10
 > Bahasa dokumen: copy produk dalam **Bahasa Indonesia**, direktif teknis dalam **English**.
@@ -23,7 +23,7 @@
 
 - **Nama:** Retain-ly
 - **Origin:** Berasal dari kata **"retain"** (mempertahankan pelanggan) + sufiks **"-ly"** untuk membentuk nama produk yang mudah diingat. Dibaca *"ri-ten-li"*.
-- **Logo wordmark:** `Retain-ly` — huruf "ly" diwarnai accent blue (`Retain<ly>`).
+- **Logo wordmark:** `Retain-ly` huruf "ly" diwarnai accent blue (`Retain<ly>`).
 
 ### 1.2 Positioning Statement
 
@@ -35,7 +35,7 @@
 ### 1.3 Misi
 
 > **"Jangan sampai pelanggan lupa balik lagi."**
-> Membantu bisnis F&B kecil yang tidak punya akses API POS untuk tetap mengenal pelanggannya, melacak repeat order, dan menjaga mereka kembali — tanpa install aplikasi di luar browser.
+> Membantu bisnis F&B kecil yang tidak punya akses API POS untuk tetap mengenal pelanggannya, melacak repeat order, dan menjaga mereka kembali tanpa install aplikasi di luar browser.
 
 ### 1.4 Target Market
 
@@ -62,18 +62,18 @@
 ### 2.1 Elevator Pitch
 
 **ID:**
-> Retain-ly membantu bisnis F&B melacak repeat order dan menghubungi pelanggan yang mulai jarang datang — lewat WhatsApp. Cukup ketik nama atau nomor HP saat transaksi, data tersimpan otomatis, dan dashboard memberi tahu siapa yang perlu dihubungi hari ini.
+> Retain-ly membantu bisnis F&B melacak repeat order dan menghubungi pelanggan yang mulai jarang datang lewat WhatsApp. Cukup ketik nama atau nomor HP saat transaksi, data tersimpan otomatis, dan dashboard memberi tahu siapa yang perlu dihubungi hari ini.
 
 **EN:**
-> Retain-ly helps F&B businesses track repeat orders and re-engage customers who are starting to drift away — over WhatsApp. Type a name or phone number at the till, data is saved automatically, and the dashboard tells you who to contact today.
+> Retain-ly helps F&B businesses track repeat orders and re-engage customers who are starting to drift away over WhatsApp. Type a name or phone number at the till, data is saved automatically, and the dashboard tells you who to contact today.
 
 ### 2.2 Value Proposition per Fitur
 
 | Fitur | Headline (ID) | Bukti / Benefit |
 |-------|---------------|-----------------|
-| Catat Order | *"Catat Order Sekali Ketuk"* | Rekam transaksi dari semua channel — dine-in, takeaway, Gofood, Grab, Shopee — dalam satu layar |
+| Catat Order | *"Catat Order Sekali Ketuk"* | Rekam transaksi dari semua channel dine-in, takeaway, Gofood, Grab, Shopee dalam satu layar |
 | Database Customer | *"Database Customer Otomatis"* | Setiap order membangun profil customer. Nomor WhatsApp ter-normalize, siap dihubungi |
-| Retensi Real-Time | *"Retensi Real-Time"* | Lihat siapa aktif, mulai jarang, dan sudah hilang — tersegmentasi otomatis |
+| Retensi Real-Time | *"Retensi Real-Time"* | Lihat siapa aktif, mulai jarang, dan sudah hilang tersegmentasi otomatis |
 | Follow-up WhatsApp | *"Follow-up via WhatsApp"* | Satu ketik untuk kirim pesan personal. Tanpa copy-paste, tanpa aplikasi tambahan |
 
 **Subtitle umum (features):**
@@ -84,7 +84,7 @@
 | Elemen | Copy |
 |--------|------|
 | Hero Headline | *"Jangan sampai pelanggan lupa balik lagi."* (kata **lupa** di-highlight accent blue) |
-| Hero Subheadline | *"Retain-ly membantu bisnis F&B melacak repeat order dan menghubungi pelanggan yang mulai jarang datang — lewat WhatsApp."* |
+| Hero Subheadline | *"Retain-ly membantu bisnis F&B melacak repeat order dan menghubungi pelanggan yang mulai jarang datang lewat WhatsApp."* |
 | CTA Primer | **"Mulai Sekarang"** |
 | CTA Sekunder | **"Lihat Fitur"** |
 | Bottom CTA Headline | *"Siap mempertahankan pelanggan Anda?"* |
@@ -92,10 +92,10 @@
 
 ### 2.4 Tagline Alternatif (untuk campaign)
 
-1. *"Jangan sampai pelanggan lupa balik lagi."* — default, emotional
-2. *"Catatan kasir yang jadi database pelanggan."* — functional
-3. *"Kenal pelangganmu, jaga mereka balik."* — short form
-4. *"Pertahankan pelanggan, satu ketukan."* — benefit-driven
+1. *"Jangan sampai pelanggan lupa balik lagi."* default, emotional
+2. *"Catatan kasir yang jadi database pelanggan."* functional
+3. *"Kenal pelangganmu, jaga mereka balik."* short form
+4. *"Pertahankan pelanggan, satu ketukan."* benefit-driven
 
 ### 2.5 Copywriting Do / Don't
 
@@ -110,9 +110,9 @@
 
 ## 3. Logo & Iconography
 
-### 3.1 Logo Baru — Konsep (PROPOSED)
+### 3.1 Logo Baru Konsep (PROPOSED)
 
-> **Status:** Konsep. Belum diimplementasikan ke code — perlu dicreate sebagai aset SVG.
+> **Status:** Konsep. Belum diimplementasikan ke code perlu dicreate sebagai aset SVG.
 
 **Konsep: "Storefront Retensi"**
 Mark terdiri dari kanopi toko / etalase sederhana yang menyatu dengan bentuk pelacak panah kembali (*return arrow*), melambangkan **toko + pelanggan yang kembali**. Idealnya komposisi simetris di dalam rounded square (`border-radius ≈ 24%`), satu-satu garis bersih, stroke halus, ramah di ukuran kecil.
@@ -126,14 +126,14 @@ Mark terdiri dari kanopi toko / etalase sederhana yang menyatu dengan bentuk pel
   | `logo-icon.svg` | Sidebar, mobile header, app favicon |
   | `logo-mono.svg` | Kontras terbatas, single color |
 
-### 3.2 Logo Saat Ini (Interim — sampai logo baru dibuat)
+### 3.2 Logo Saat Ini (Interim sampai logo baru dibuat)
 
 | Lokasi | Implementasi |
 |--------|--------------|
 | Landing nav | Phosphor `Storefront` 18px, `bg-accent` rounded `0.9rem`, putih |
 | Sidebar app | Phosphor `Storefront` 22px, `bg-accent` rounded `2xl`, putih |
 | Login | Phosphor `Storefront` 20px, `bg-white` ring hairline, warna accent |
-| Favicon | `public/favicon.svg` — petir ungu `#863bff` — **TIDAK konsisten** |
+| Favicon | `public/favicon.svg` petir ungu `#863bff` **TIDAK konsisten** |
 
 ### 3.3 Clean Space & Minimum Size
 
@@ -198,7 +198,7 @@ Mark terdiri dari kanopi toko / etalase sederhana yang menyatu dengan bentuk pel
 
 | Do ✅ | Don't ❌ |
 |-------|----------|
-| Gunakan accent untuk OPS — sedikit, tajam | Jangan accent untuk dekorasi murni tanpa makna |
+| Gunakan accent untuk OPS sedikit, tajam | Jangan accent untuk dekorasi murni tanpa makna |
 | Status warna hanya untuk status retensi/jenis | Jangan biru untuk status error |
 | Gradient button hanya utk primary CTA | Jangan gradient di teks / body |
 | Warna dari token, bukan hex inline | Jangan ungu `#863bff` dari favicon lama di UI |
@@ -246,7 +246,7 @@ Mark terdiri dari kanopi toko / etalase sederhana yang menyatu dengan bentuk pel
 
 ### 6.1 Persona
 
-Bayangkan brand sebagai **rekan pemilik warung/server yang sigap dan pengertian** — tidak sok teknologi, tidak birokratis, langsung ke inti yang bermanfaat.
+Bayangkan brand sebagai **rekan pemilik warung/server yang sigap dan pengertian** tidak sok teknologi, tidak birokratis, langsung ke inti yang bermanfaat.
 
 ### 6.2 Voice Chart
 
@@ -290,7 +290,7 @@ Bayangkan brand sebagai **rekan pemilik warung/server yang sigap dan pengertian*
 
 ---
 
-## 7. Design Language — "Light Soft Structuralism"
+## 7. Design Language "Light Soft Structuralism"
 
 > Nama resmi desain system: **"Light Soft Structuralism"** (didefinisikan di `globals.css:7`).
 
@@ -303,7 +303,7 @@ Struktur tegas, perasaan lembut. Grid yang jelas, kartu kokoh ber-bezel ganda, g
 | **Double-bezel card** | outer gradient `#fff → #edeff6`, radius `2rem`; inner gradient `#fff → #fafbff` + radial glow biru di atas | `.doppel-outer`, `.doppel-inner` |
 | **Ambient hero bg** | tiga radial gradient biru di atas `#f6f7fb` | `.sky-hero` |
 | **Film grain** | overlay noise `opacity: 0.028` untuk taktil | `.grain` |
-| **Hairline borders** | `rgba(15,23,42,.08)` — garis sangat tipis, bukan border solid tebal | token `hairline` |
+| **Hairline borders** | `rgba(15,23,42,.08)` garis sangat tipis, bukan border solid tebal | token `hairline` |
 | **Primary CTA** | gradient `#4780ff → #2259e6`, inset highlight atas, shadow `0 8px 24px -8px rgba(47,108,255,.5)` | `.btn-primary` |
 
 ### 7.2 Motion System

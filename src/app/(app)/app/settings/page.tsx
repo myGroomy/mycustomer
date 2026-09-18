@@ -395,7 +395,7 @@ export default function SettingsPage() {
         <motion.div variants={fadeUp} custom={5} initial="hidden" animate={ready ? 'show' : 'hidden'}>
           <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4">
             <p className="text-xs text-ash">
-              <strong className="text-accent">☁️ Tersimpan di Cloud</strong> — Pengaturan ini disimpan di Google Sheets dan akan sync ke semua perangkat yang login dengan akun yang sama.
+              <strong className="text-accent">☁️ Tersimpan di Cloud</strong> Pengaturan ini disimpan di Google Sheets dan akan sync ke semua perangkat yang login dengan akun yang sama.
             </p>
           </div>
         </motion.div>
