@@ -482,8 +482,8 @@ export default function DashboardPage() {
                       <div
                         className={`w-full max-w-[42px] rounded-t-lg transition-all ${
                           b.count > 0
-                            ? 'bg-accent/25 group-hover:bg-accent group-hover:shadow-[0_-4px_14px_-4px_rgba(27,44,193,0.5)]'
-                            : 'bg-ink/5'
+                            ? 'bg-accent group-hover:bg-accent-deep group-hover:shadow-[0_-4px_14px_-4px_rgba(27,44,193,0.6)]'
+                            : 'bg-sunken'
                         }`}
                         style={{ height: `${barPx}px` }}
                       />
