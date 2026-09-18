@@ -1,7 +1,8 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { Suspense, useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
 import {
   MagnifyingGlass,
@@ -43,8 +44,9 @@ function matchesRepeatFilter(count: number, filter: RepeatFilter): boolean {
   return true
 }
 
-export default function CustomerListPage() {
+function CustomerListView() {
   const ready = useMounted()
+  const searchParams = useSearchParams()
   const [customers, setCustomers] = useState<CustomerWithStats[]>([])
   const [page, setPage] = useState(0)
   const [totalPages, setTotalPages] = useState(0)
@@ -53,6 +55,7 @@ export default function CustomerListPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<RetentionStatus | 'all'>('all')
   const [repeatFilter, setRepeatFilter] = useState<RepeatFilter>('all')
+  const [countRange, setCountRange] = useState<{ min: number; max: number } | null>(null)
 
   // Date Filter State
   const [dateFrom, setDateFrom] = useState('')
@@ -90,13 +93,41 @@ export default function CustomerListPage() {
 
   useEffect(() => { loadCustomers() }, [loadCustomers])
 
+  // Support drill-down query params from Dashboard: ?status=... dan ?order_count_min&order_count_max
+  useEffect(() => {
+    if (!searchParams) return
+    const status = searchParams.get('status')
+    if (status === 'active' || status === 'at_risk' || status === 'churned') {
+      setFilter(status)
+    }
+    const minStr = searchParams.get('order_count_min')
+    const maxStr = searchParams.get('order_count_max')
+    const min = minStr ? parseInt(minStr, 10) : null
+    const max = maxStr ? parseInt(maxStr, 10) : null
+    if (min !== null || max !== null) {
+      setCountRange({ min: min ?? 0, max: max ?? Number.MAX_SAFE_INTEGER })
+    }
+  }, [searchParams])
+
   const filtered = customers.filter((c) => {
     if (filter !== 'all' && c.retention_status !== filter) return false
     if (!matchesRepeatFilter(c.order_count || 0, repeatFilter)) return false
+    if (countRange) {
+      const oc = c.order_count || 0
+      if (oc < countRange.min || oc > countRange.max) return false
+    }
     if (dateFrom && c.last_order_date < dateFrom) return false
     if (dateTo && c.last_order_date > dateTo) return false
     return true
   })
+
+  const countRangeLabel = countRange
+    ? countRange.max === Number.MAX_SAFE_INTEGER
+      ? `${countRange.min}x+`
+      : countRange.min === countRange.max
+        ? `${countRange.min}x`
+        : `${countRange.min}x–${countRange.max}x`
+    : ''
 
   const getInitials = (name: string) => name.split(' ').map((n) => n[0]).join('').slice(0, 2)
   const getDaysSince = (date: string) => Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
@@ -238,7 +269,7 @@ export default function CustomerListPage() {
 
       {/* Repeat Order Filter */}
       <motion.div variants={fadeUp} custom={2.5} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-6">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="text-[11px] font-semibold uppercase tracking-wider text-ash">Repeat:</span>
           <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
             {REPEAT_FILTERS.map((f) => (
@@ -255,6 +286,16 @@ export default function CustomerListPage() {
               </button>
             ))}
           </div>
+          {countRange && (
+            <button
+              onClick={() => setCountRange(null)}
+              className="flex items-center gap-1.5 rounded-full border border-accent bg-accent px-3 py-1.5 text-[11px] font-semibold text-white transition-all hover:opacity-90"
+              title="Reset filter order count"
+            >
+              Order: {countRangeLabel}
+              <X size={12} weight="bold" />
+            </button>
+          )}
         </div>
       </motion.div>
 
@@ -367,5 +408,13 @@ export default function CustomerListPage() {
         </div>
       )}
     </main>
+  )
+}
+
+export default function CustomerListPage() {
+  return (
+    <Suspense fallback={null}>
+      <CustomerListView />
+    </Suspense>
   )
 }

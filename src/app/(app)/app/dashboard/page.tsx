@@ -8,13 +8,10 @@ import {
   ArrowsClockwise,
   PersonSimpleWalk,
   ChartPie,
+  ChartBar,
   ShoppingBag,
   Storefront,
-  WhatsappLogo,
-  UserPlus,
-  ArrowSquareOut,
   TrendUp,
-  Trophy,
   DownloadSimple,
   FunnelSimple,
   Prohibit,
@@ -23,12 +20,10 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getCustomersWithStats } from '@/services/customerService'
 import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
-import { buildWaLink } from '@/utils/waLinkBuilder'
-import { downloadVCard } from '@/utils/vcardGenerator'
 import { CHANNELS, DEFAULT_THRESHOLDS } from '@/constants'
 import { fadeUp } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
-import type { CustomerWithStats, RetentionStatus, BranchType } from '@/types'
+import type { CustomerWithStats, BranchType } from '@/types'
 
 const BRANCHES: { id: BranchType | 'ALL'; label: string }[] = [
   { id: 'ALL', label: 'Semua Cabang' },
@@ -36,20 +31,18 @@ const BRANCHES: { id: BranchType | 'ALL'; label: string }[] = [
   { id: 'BDG', label: 'Bandung (BDG)' },
 ]
 
-const AGE_RANGES = ['<17', '17-25', '26-35', '36-45', '46-55', '56+']
-const GENDERS = [
-  { value: 'L', label: 'Laki-laki' },
-  { value: 'P', label: 'Perempuan' },
-]
+// Distribusi frekuensi repeat order: bucket 1x..9x, lalu 10x+ digabung jadi satu bucket terakhir
+const FREQ_MAX = 10
+
+// Cache hasil agregasi di level client supaya pindah tab/halaman tidak refetch 10.000 baris setiap kali
+const DASH_CACHE_TTL = 60_000
+let dashCache: { data: CustomerWithStats[]; ts: number } | null = null
 
 export default function DashboardPage() {
   const ready = useMounted()
   const [customers, setCustomers] = useState<CustomerWithStats[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<RetentionStatus | 'all'>('all')
   const [branchFilter, setBranchFilter] = useState<BranchType | 'ALL'>('ALL')
-  const [genderFilter, setGenderFilter] = useState<'ALL' | 'L' | 'P'>('ALL')
-  const [ageFilter, setAgeFilter] = useState<string>('ALL')
   const [channelFilter, setChannelFilter] = useState<string>('ALL')
 
   const [userRole, setUserRole] = useState('')
@@ -68,8 +61,15 @@ export default function DashboardPage() {
   useEffect(() => {
     (async () => {
       try {
-        const r = await getCustomersWithStats(0, 10000)
-        setCustomers(r.data.map((c) => ({ ...c, retention_status: getRetentionStatus(c.last_order_date, DEFAULT_THRESHOLDS) })))
+        const now = Date.now()
+        if (dashCache && now - dashCache.ts < DASH_CACHE_TTL) {
+          setCustomers(dashCache.data)
+        } else {
+          const r = await getCustomersWithStats(0, 10000)
+          const data = r.data.map((c) => ({ ...c, retention_status: getRetentionStatus(c.last_order_date, DEFAULT_THRESHOLDS) }))
+          dashCache = { data, ts: now }
+          setCustomers(data)
+        }
       } catch { /* silent */ } finally { setLoading(false) }
     })()
   }, [])
@@ -90,8 +90,6 @@ export default function DashboardPage() {
       })
 
   const filteredCustomers = branchCustomers.filter(c => {
-    if (genderFilter !== 'ALL' && c.gender !== genderFilter) return false
-    if (ageFilter !== 'ALL' && c.age_range !== ageFilter) return false
     if (channelFilter !== 'ALL' && !c.orders?.some(o => o.channel === channelFilter)) return false
     return true
   })
@@ -99,22 +97,11 @@ export default function DashboardPage() {
   const counts = { active: 0, at_risk: 0, churned: 0 }
   const channelCounts: Record<string, number> = {}
   const branchCounts: Record<string, number> = {}
-  const ageRangeCounts: Record<string, number> = {}
-  const genderCounts: Record<string, number> = {}
   let totalOrdersAll = 0
 
   filteredCustomers.forEach((c) => {
     counts[c.retention_status as keyof typeof counts]++
     totalOrdersAll += c.order_count || 0
-
-    // Age range breakdown
-    if (c.age_range) {
-      ageRangeCounts[c.age_range] = (ageRangeCounts[c.age_range] || 0) + 1
-    }
-    // Gender breakdown
-    if (c.gender) {
-      genderCounts[c.gender] = (genderCounts[c.gender] || 0) + 1
-    }
 
     if (c.orders && Array.isArray(c.orders)) {
       c.orders.forEach((o) => {
@@ -137,13 +124,22 @@ export default function DashboardPage() {
   const topChannelEntry = Object.entries(channelCounts).sort((a, b) => b[1] - a[1])[0]
   const topChannelLabel = topChannelEntry ? (CHANNELS.find((ch) => ch.id === topChannelEntry[0])?.label || topChannelEntry[0]) : 'N/A'
 
-  const categoryCustomers = activeTab === 'all'
-    ? filteredCustomers
-    : filteredCustomers.filter((c) => c.retention_status === activeTab)
+  // Distribusi frekuensi repeat order: 1x, 2x, 3x, ... lalu 10x+ digabung jadi satu bucket terakhir
+  const freqBuckets: { min: number; max: number; label: string; count: number }[] = []
+  for (let i = 1; i < FREQ_MAX; i++) {
+    const count = filteredCustomers.filter((c) => (c.order_count || 0) === i).length
+    freqBuckets.push({ min: i, max: i, label: `${i}x`, count })
+  }
+  {
+    const count = filteredCustomers.filter((c) => (c.order_count || 0) >= FREQ_MAX).length
+    freqBuckets.push({ min: FREQ_MAX, max: Infinity, label: `${FREQ_MAX}x+`, count })
+  }
+  const freqMaxCount = Math.max(...freqBuckets.map((b) => b.count), 1)
 
-  const topRepeat = [...filteredCustomers]
-    .sort((a, b) => (b.order_count || 0) - (a.order_count || 0))
-    .slice(0, 20)
+  const buildOrderFilterHref = (b: { min: number; max: number }) =>
+    b.max === Infinity
+      ? `/app/customers?order_count_min=${b.min}`
+      : `/app/customers?order_count_min=${b.min}&order_count_max=${b.max}`
 
   const channelList = CHANNELS.map((ch) => ({
     ...ch,
@@ -197,18 +193,6 @@ export default function DashboardPage() {
     { key: 'churned' as const, label: 'Churned', range: '61+ hari', count: counts.churned, color: 'bg-rose', pct: total > 0 ? Math.round((counts.churned / total) * 100) : 0 },
   ]
 
-  const getStatusBadge = (status: RetentionStatus) => {
-    if (status === 'active') return <Badge className="bg-emerald/10 text-emerald border-emerald/20">Active</Badge>
-    if (status === 'at_risk') return <Badge className="bg-amber/10 text-accent-deep border-amber/20">At Risk</Badge>
-    return <Badge className="bg-rose/10 text-ink border-rose/20">Churned</Badge>
-  }
-
-  const getAvatarStyle = (status: RetentionStatus) => {
-    if (status === 'active') return 'bg-accent-wash text-accent-deep'
-    if (status === 'at_risk') return 'bg-amber/10 text-accent-deep'
-    return 'bg-rose/10 text-ink'
-  }
-
   const getDaysSince = (date: string) => Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
 
   const downloadCsv = (rows: Record<string, string | number>[], filename: string) => {
@@ -231,7 +215,7 @@ export default function DashboardPage() {
   }
 
   const handleDownload = () => {
-    const rows = categoryCustomers.map((c, idx) => ({
+    const rows = filteredCustomers.map((c, idx) => ({
       no: idx + 1,
       nama_customer: c.name,
       no_whatsapp: c.phone_normalized,
@@ -245,10 +229,7 @@ export default function DashboardPage() {
     }))
     const tag = [
       branchFilter === 'ALL' ? 'SemuaCabang' : branchFilter,
-      genderFilter === 'ALL' ? 'SemuaGender' : genderFilter,
-      ageFilter === 'ALL' ? 'SemuaUsia' : ageFilter,
       channelFilter === 'ALL' ? 'SemuaChannel' : getChannelLabel(channelFilter).replace(/\s+/g, ''),
-      activeTab === 'all' ? 'SemuaStatus' : activeTab,
     ].join('-')
     downloadCsv(rows, `Dashboard_Retensi_${tag}.csv`)
   }
@@ -266,7 +247,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={handleDownload}
-            disabled={categoryCustomers.length === 0}
+            disabled={filteredCustomers.length === 0}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
           >
             <DownloadSimple size={18} weight="duotone" className="text-accent" />
@@ -318,10 +299,10 @@ export default function DashboardPage() {
                 <FunnelSimple size={16} weight="duotone" className="text-accent" />
                 <span className="text-xs font-semibold uppercase tracking-wider text-ash">Filter Laporan</span>
               </div>
-              {(genderFilter !== 'ALL' || ageFilter !== 'ALL' || channelFilter !== 'ALL') && (
+              {(channelFilter !== 'ALL') && (
                 <button
                   type="button"
-                  onClick={() => { setGenderFilter('ALL'); setAgeFilter('ALL'); setChannelFilter('ALL') }}
+                  onClick={() => { setChannelFilter('ALL') }}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink rounded-full px-3 py-1.5 ring-1 ring-ink/10 bg-white transition-all hover:bg-ink/5 active:scale-95"
                 >
                   <Prohibit size={13} weight="duotone" className="text-accent" />
@@ -329,32 +310,8 @@ export default function DashboardPage() {
                 </button>
               )}
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div>
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Gender</span>
-                <Select value={genderFilter} onValueChange={(v) => v && setGenderFilter(v as 'ALL' | 'L' | 'P')}>
-                  <SelectTrigger className="h-10 w-full rounded-2xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Semua Gender</SelectItem>
-                    {GENDERS.map((g) => <SelectItem key={g.value} value={g.value}>{g.label}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Rentang Usia</span>
-                <Select value={ageFilter} onValueChange={(v) => v && setAgeFilter(v)}>
-                  <SelectTrigger className="h-10 w-full rounded-2xl">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ALL">Semua Usia</SelectItem>
-                    {AGE_RANGES.map((ar) => <SelectItem key={ar} value={ar}>Usia {ar} th</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="sm:max-w-xs">
                 <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Channel Order</span>
                 <Select value={channelFilter} onValueChange={(v) => v && setChannelFilter(v)}>
                   <SelectTrigger className="h-10 w-full rounded-2xl">
@@ -410,15 +367,19 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-semibold text-ink">Segmentasi Status Retensi</h2>
-                  <span className="text-xs text-ash font-mono">{total} total</span>
+                  <Link href="/app/customers" className="text-xs font-semibold text-accent hover:underline">Lihat semua →</Link>
                 </div>
                 <div className="space-y-4">
                   {segments.map((s) => (
-                    <div key={s.key}>
+                    <Link
+                      key={s.key}
+                      href={`/app/customers?status=${s.key}`}
+                      className="group block"
+                    >
                       <div className="mb-1.5 flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
                           <span className={`h-2.5 w-2.5 rounded-full ${s.color}`} />
-                          <span className="font-semibold text-ink">{s.label}</span>
+                          <span className="font-semibold text-ink group-hover:text-accent transition-colors">{s.label}</span>
                           <span className="text-mist">({s.range})</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -432,7 +393,7 @@ export default function DashboardPage() {
                           style={{ width: `${s.pct}%` }}
                         />
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
@@ -489,126 +450,51 @@ export default function DashboardPage() {
         </motion.div>
       </div>
 
-      {/* Top Rank Repeat Order */}
+      {/* Distribusi Frekuensi Repeat Order */}
       <motion.div variants={fadeUp} custom={7.6} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-8">
         <div className="doppel-outer">
           <div className="doppel-inner p-5 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber/10">
-                  <Trophy size={18} weight="duotone" className="text-accent-deep" />
+                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-accent-wash">
+                  <ChartBar size={18} weight="duotone" className="text-accent" />
                 </span>
                 <div>
-                  <h2 className="text-base font-semibold text-ink">Top Rank Repeat Order</h2>
-                  <p className="text-[11px] text-ash">20 customer dengan transaksi berulang tertinggi</p>
+                  <h2 className="text-base font-semibold text-ink">Distribusi Frekuensi Order</h2>
+                  <p className="text-[11px] text-ash">Jumlah customer per total order — klik bar untuk melihat daftarnya</p>
                 </div>
               </div>
-              <span className="text-xs font-mono text-ash">Top 1–20</span>
+              <span className="text-xs font-mono text-ash">{filteredCustomers.length} customer</span>
             </div>
 
-            {topRepeat.length > 0 ? (
-              <ol className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                {topRepeat.map((c, i) => {
-                  const rank = i + 1
-                  const rankStyle =
-                    rank === 1
-                      ? 'bg-amber/10 text-accent-deep ring-1 ring-ink/15 font-extrabold border-accent/30'
-                      : rank === 2
-                        ? 'bg-ink/5 text-ink ring-1 ring-ink/10 font-bold'
-                        : rank === 3
-                          ? 'bg-accent-wash/60 text-accent ring-1 ring-accent/20 font-bold'
-                          : 'bg-sunken text-ash'
-                  const days = getDaysSince(c.last_order_date)
-                  const customerBranches = [...new Set(c.orders?.map(o => o.branch).filter(Boolean) || [])]
+            {filteredCustomers.length > 0 ? (
+              <div className="flex items-end gap-1.5 sm:gap-3 h-48" role="img" aria-label="Distribusi frekuensi order">
+                {freqBuckets.map((b) => {
+                  const barPx = b.count > 0 ? Math.max(Math.round((b.count / freqMaxCount) * 120), 6) : 2
                   return (
-                    <li key={c.id} className="group flex items-center gap-3 rounded-2xl border border-hairline bg-white p-3 transition-all duration-300 hover:border-accent/30 hover:bg-accent-wash/30">
-                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl text-xs ${rankStyle}`}>
-                        {rank}
-                      </span>
-                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xs font-semibold ${getAvatarStyle(c.retention_status)}`}>
-                        {c.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="text-sm font-semibold text-ink truncate">{c.name}</span>
-                          {customerBranches.length > 0 && (
-                            <span className="text-[10px] bg-sunken rounded-full px-2 py-0.5 text-ash">{customerBranches.join(', ')}</span>
-                          )}
-                        </div>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-ash">
-                          <span>Order ke-{(c.order_count || 0) + 1}</span>
-                          <span>&middot;</span>
-                          <span>{c.last_order_date}</span>
-                          <span>&middot;</span>
-                          <span className={days > DEFAULT_THRESHOLDS.atRiskDays ? 'text-ink' : 'text-mist'}>
-                            {days === 0 ? 'order hari ini' : `${days} hari lalu`}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="shrink-0 text-right">
-                        <div className="text-lg font-semibold text-ink">{c.order_count}x</div>
-                        <div className="text-[10px] text-mist">repeat</div>
-                      </div>
-                    </li>
+                    <Link
+                      key={b.label}
+                      href={buildOrderFilterHref(b)}
+                      className="group flex h-full flex-1 flex-col items-center justify-end gap-1.5 rounded-xl px-1 pt-2 transition-colors hover:bg-sunken/50"
+                      title={`Lihat customer dengan ${b.label} order`}
+                    >
+                      <span className="text-[10px] font-semibold tabular-nums text-ash group-hover:text-accent">{b.count}</span>
+                      <div
+                        className={`w-full max-w-[42px] rounded-t-lg transition-all ${
+                          b.count > 0
+                            ? 'bg-accent/25 group-hover:bg-accent group-hover:shadow-[0_-4px_14px_-4px_rgba(27,44,193,0.5)]'
+                            : 'bg-ink/5'
+                        }`}
+                        style={{ height: `${barPx}px` }}
+                      />
+                      <span className="text-[10px] tabular-nums text-mist group-hover:text-accent group-hover:font-semibold">{b.label}</span>
+                    </Link>
                   )
                 })}
-              </ol>
+              </div>
             ) : (
               <div className="py-10 text-center text-sm text-ash">Tidak ada data pada filter ini.</div>
             )}
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Age & Gender Breakdown */}
-      <motion.div variants={fadeUp} custom={7.5} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-8">
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          {/* Age Range Breakdown */}
-          <div className="doppel-outer">
-            <div className="doppel-inner p-5">
-              <h2 className="text-base font-semibold text-ink mb-4">Breakdown Usia</h2>
-              <div className="space-y-2.5">
-                {AGE_RANGES.map((ar) => {
-                  const count = ageRangeCounts[ar] || 0
-                  const pct = total > 0 ? Math.round((count / total) * 100) : 0
-                  return (
-                    <div key={ar} className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-ink w-16">{ar}</span>
-                      <div className="flex flex-1 items-center gap-2 mx-3">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
-                          <div className="h-full rounded-full bg-accent-soft" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                      <span className="font-mono text-ash shrink-0">{count} <span className="text-[10px] text-mist">({pct}%)</span></span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Gender Breakdown */}
-          <div className="doppel-outer">
-            <div className="doppel-inner p-5">
-              <h2 className="text-base font-semibold text-ink mb-4">Breakdown Gender</h2>
-              <div className="space-y-2.5">
-                {GENDERS.map((g) => {
-                  const count = genderCounts[g.value] || 0
-                  const pct = total > 0 ? Math.round((count / total) * 100) : 0
-                  return (
-                    <div key={g.value} className="flex items-center justify-between text-xs">
-                      <span className="font-medium text-ink w-24">{g.label}</span>
-                      <div className="flex flex-1 items-center gap-2 mx-3">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
-                          <div className="h-full rounded-full bg-emerald" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                      <span className="font-mono text-ash shrink-0">{count} <span className="text-[10px] text-mist">({pct}%)</span></span>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
           </div>
         </div>
       </motion.div>
@@ -642,122 +528,6 @@ export default function DashboardPage() {
         </motion.div>
       )}
 
-      {/* Category List */}
-      <motion.div variants={fadeUp} custom={9} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mt-8">
-        <div className="doppel-outer">
-          <div className="doppel-inner p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-              <div>
-                <h2 className="text-lg font-semibold text-ink">Laporan Pelanggan per Kategori</h2>
-                <p className="text-xs text-ash">Daftar lengkap pelanggan berdasarkan kategori churn & retensi</p>
-              </div>
-
-              <div className="flex gap-1 overflow-x-auto pb-1 no-scrollbar bg-sunken/60 p-1 rounded-full border border-hairline">
-                {([
-                  { key: 'all' as const, label: 'Semua', count: total },
-                  { key: 'active' as const, label: 'Aktif', count: counts.active },
-                  { key: 'at_risk' as const, label: 'At Risk', count: counts.at_risk },
-                  { key: 'churned' as const, label: 'Churned', count: counts.churned },
-                ]).map((t) => (
-                  <button
-                    key={t.key}
-                    onClick={() => setActiveTab(t.key)}
-                    className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${
-                      activeTab === t.key
-                        ? 'bg-white text-ink shadow-sm'
-                        : 'text-ash hover:text-ink'
-                    }`}
-                  >
-                    <span>{t.label}</span>
-                    <span className="rounded-full bg-sunken px-1.5 py-0.5 text-[10px] text-ash font-bold">{t.count}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              {categoryCustomers.length > 0 ? (
-                categoryCustomers.map((c) => {
-                  const days = getDaysSince(c.last_order_date)
-                  const customerBranches = [...new Set(c.orders?.map(o => o.branch).filter(Boolean) || [])]
-
-                  return (
-                    <div
-                      key={c.id}
-                      className="group flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-hairline bg-white p-3.5 sm:p-4 transition-all duration-300 hover:border-accent/30 hover:bg-accent-wash/30"
-                    >
-                      <div className="flex items-start gap-3 min-w-0">
-                        <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-xs font-semibold ${getAvatarStyle(c.retention_status)}`}>
-                          {c.name.split(' ').map((n) => n[0]).join('').slice(0, 2)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-semibold text-ink truncate">{c.name}</span>
-                            {getStatusBadge(c.retention_status)}
-                            <Badge variant="outline" className="border-accent/20 text-accent">
-                              Order ke-{(c.order_count || 0) + 1}
-                            </Badge>
-                          </div>
-                          <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ash">
-                            <span className="font-mono text-ink-soft">{c.phone_normalized}</span>
-                            <span>&middot;</span>
-                            <span className="font-semibold text-accent">{c.order_count}x order</span>
-                            {customerBranches.length > 0 && (
-                              <>
-                                <span>&middot;</span>
-                                <span className="text-[10px] bg-sunken rounded-full px-2 py-0.5">
-                                  {customerBranches.join(', ')}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center justify-between sm:justify-end gap-3 border-t sm:border-t-0 border-hairline pt-2.5 sm:pt-0 shrink-0">
-                        <div className="text-left sm:text-right text-xs text-ash">
-                          <div className="font-medium text-ink">Order: {c.last_order_date}</div>
-                          <div className="text-[10px] text-mist">{days === 0 ? 'Hari ini' : `${days} hari lalu`}</div>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={buildWaLink(c.phone_normalized, c.name)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-ink ring-1 ring-ink/10 transition-all hover:scale-105 active:scale-95"
-                            title="WhatsApp"
-                          >
-                            <WhatsappLogo size={16} weight="fill" />
-                          </a>
-                          <button
-                            onClick={() => downloadVCard(c.name, c.phone_normalized)}
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-white text-ash transition-all hover:bg-sunken hover:text-ink active:scale-95"
-                            title="Download vCard"
-                          >
-                            <UserPlus size={15} weight="duotone" />
-                          </button>
-                          <Link
-                            href={`/app/customers/${c.id}`}
-                            className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-white text-accent transition-all hover:bg-accent-wash active:scale-95"
-                            title="Detail Profil"
-                          >
-                            <ArrowSquareOut size={16} weight="bold" />
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })
-              ) : (
-                <div className="py-12 text-center text-ash text-sm">
-                  Tidak ada customer di kategori ini.
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </motion.div>
     </main>
   )
 }
