@@ -243,9 +243,9 @@ export default function InputOrderPage() {
                   <button
                     type="button"
                     onClick={() => { setQuery(''); inputRef.current?.focus() }}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-8 w-8 items-center justify-center rounded-full text-mist transition-colors duration-300 hover:bg-sunken hover:text-ink z-10"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 flex h-10 w-10 items-center justify-center rounded-full text-mist transition-colors duration-300 hover:bg-sunken hover:text-ink z-10"
                   >
-                    <X size={16} weight="bold" />
+                    <X size={18} weight="bold" />
                   </button>
                 )}
               </div>
@@ -379,10 +379,10 @@ export default function InputOrderPage() {
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-hairline bg-white text-mist transition-colors hover:bg-sunken hover:text-ink"
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-hairline bg-white text-mist transition-colors hover:bg-sunken hover:text-ink"
                     title="Ganti Pelanggan"
                   >
-                    <X size={14} weight="bold" />
+                    <X size={16} weight="bold" />
                   </button>
                 </div>
 

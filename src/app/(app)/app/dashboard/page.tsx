@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import {
@@ -15,6 +15,7 @@ import {
   DownloadSimple,
   FunnelSimple,
   Prohibit,
+  WarningCircle,
 } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
@@ -47,6 +48,7 @@ export default function DashboardPage() {
   const ready = useMounted()
   const [customers, setCustomers] = useState<CustomerWithStats[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [branchFilter, setBranchFilter] = useState<BranchType | 'ALL'>('ALL')
   const [channelFilter, setChannelFilter] = useState<string>('ALL')
   const [dateFrom, setDateFrom] = useState('')
@@ -65,27 +67,57 @@ export default function DashboardPage() {
     } catch {}
   }, [])
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const now = Date.now()
-        if (dashCache && now - dashCache.ts < DASH_CACHE_TTL) {
-          setCustomers(dashCache.data)
-        } else {
-          const r = await getCustomersWithStats(0, 10000)
-          const data = r.data.map((c) => ({ ...c, retention_status: getRetentionStatus(c.last_order_date, DEFAULT_THRESHOLDS) }))
-          dashCache = { data, ts: now }
-          setCustomers(data)
-        }
-      } catch { /* silent */ } finally { setLoading(false) }
-    })()
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    try {
+      const now = Date.now()
+      if (dashCache && now - dashCache.ts < DASH_CACHE_TTL) {
+        setCustomers(dashCache.data)
+      } else {
+        const r = await getCustomersWithStats(0, 10000)
+        const data = r.data.map((c) => ({ ...c, retention_status: getRetentionStatus(c.last_order_date, DEFAULT_THRESHOLDS) }))
+        dashCache = { data, ts: now }
+        setCustomers(data)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data.')
+    } finally {
+      setLoading(false)
+    }
   }, [])
+
+  useEffect(() => { loadData() }, [loadData])
 
   if (loading) {
     return (
       <div className="flex min-h-[70dvh] items-center justify-center">
         <span className="h-8 w-8 animate-spin rounded-full border-2 border-ink/15 border-t-accent" />
       </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 md:py-10">
+        <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-4 text-center">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-rose/10 text-rose">
+            <WarningCircle size={28} weight="duotone" />
+          </span>
+          <div>
+            <p className="text-base font-semibold text-ink">Gagal memuat data laporan</p>
+            <p className="mt-1 text-sm text-ash">{error}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => loadData()}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+          >
+            <ArrowsClockwise size={16} weight="bold" />
+            Coba Lagi
+          </button>
+        </div>
+      </main>
     )
   }
 
@@ -282,7 +314,7 @@ export default function DashboardPage() {
             type="button"
             onClick={handleDownload}
             disabled={filteredCustomers.length === 0}
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 min-h-[44px] text-sm font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
           >
             <DownloadSimple size={18} weight="duotone" className="text-accent" />
             Download Laporan
@@ -305,7 +337,7 @@ export default function DashboardPage() {
                   }
                 }}
                 disabled={isDisabled}
-                className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-all whitespace-nowrap ${
+                className={`flex items-center gap-2 rounded-full px-4 min-h-[44px] text-xs font-semibold transition-all whitespace-nowrap ${
                   branchFilter === b.id
                     ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(28,43,66,0.5)]'
                     : isDisabled
@@ -337,7 +369,7 @@ export default function DashboardPage() {
                 <button
                   type="button"
                   onClick={handleResetFilter}
-                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink rounded-full px-3 py-1.5 ring-1 ring-ink/10 bg-white transition-all hover:bg-ink/5 active:scale-95"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink rounded-full px-4 min-h-[44px] ring-1 ring-ink/10 bg-white transition-all hover:bg-ink/5 active:scale-95"
                 >
                   <Prohibit size={13} weight="duotone" className="text-accent" />
                   Reset Filter
@@ -348,7 +380,7 @@ export default function DashboardPage() {
               <div>
                 <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Channel Order</span>
                 <Select value={channelFilter} onValueChange={(v) => v && setChannelFilter(v)}>
-                  <SelectTrigger className="h-10 w-full rounded-2xl">
+                  <SelectTrigger className="h-11 w-full rounded-2xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -363,7 +395,7 @@ export default function DashboardPage() {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-10 text-xs rounded-2xl"
+                  className="h-11 text-xs rounded-2xl"
                 />
               </div>
               <div>
@@ -372,7 +404,7 @@ export default function DashboardPage() {
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="h-10 text-xs rounded-2xl"
+                  className="h-11 text-xs rounded-2xl"
                 />
               </div>
             </div>

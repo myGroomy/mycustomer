@@ -166,7 +166,7 @@ export default function FollowUpPage() {
         <div className="flex gap-1.5 rounded-2xl bg-sunken/70 p-1.5 border border-hairline w-full sm:w-auto">
           <button
             onClick={() => setMode('daily_transactions')}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl px-4 min-h-[44px] text-xs font-semibold transition-all ${
               mode === 'daily_transactions'
                 ? 'bg-white text-accent shadow-sm'
                 : 'text-ash hover:text-ink'
@@ -177,7 +177,7 @@ export default function FollowUpPage() {
           </button>
           <button
             onClick={() => setMode('churn_alert')}
-            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
+            className={`flex-1 sm:flex-initial flex items-center justify-center gap-2 rounded-xl px-4 min-h-[44px] text-xs font-semibold transition-all ${
               mode === 'churn_alert'
                 ? 'bg-white text-ink shadow-sm'
                 : 'text-ash hover:text-ink'
@@ -226,7 +226,7 @@ export default function FollowUpPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={() => setSelectedDate(todayStr)}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                      className={`flex items-center justify-center rounded-full px-4 min-h-[44px] text-xs font-semibold transition-all ${
                         selectedDate === todayStr
                           ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(28,43,66,0.5)]'
                           : 'border border-hairline bg-white text-ash hover:bg-sunken'
@@ -236,7 +236,7 @@ export default function FollowUpPage() {
                     </button>
                     <button
                       onClick={() => setSelectedDate(yesterdayStr)}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
+                      className={`flex items-center justify-center rounded-full px-4 min-h-[44px] text-xs font-semibold transition-all ${
                         selectedDate === yesterdayStr
                           ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(28,43,66,0.5)]'
                           : 'border border-hairline bg-white text-ash hover:bg-sunken'
@@ -248,7 +248,7 @@ export default function FollowUpPage() {
                       type="date"
                       value={selectedDate}
                       onChange={(e) => setSelectedDate(e.target.value)}
-                      className="h-9 w-auto min-w-[140px] text-xs"
+                      className="h-11 w-auto min-w-[140px] text-xs"
                     />
                   </div>
                 </div>
@@ -291,16 +291,16 @@ export default function FollowUpPage() {
                         <button
                           onClick={() => toggleFollowUp(order.id, isChecked, 'order')}
                           disabled={isSaving}
-                          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-300 active:scale-90 disabled:opacity-50 ${
-                            isChecked ? 'border-accent bg-white text-ink ring-1 ring-ink/10' : 'border-mist bg-white hover:border-accent'
-                          }`}
-                          title={isSaving ? 'Menyimpan...' : isChecked ? 'Batalkan tanda sudah di-chat' : 'Tandai Sudah Di-chat'}
-                        >
-                          {isSaving ? (
-                            <span className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-accent border-t-transparent" />
-                          ) : isChecked ? (
-                            <CheckSquare size={14} weight="fill" />
-                          ) : null}
+className={`mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border-2 transition-all duration-300 active:scale-90 disabled:opacity-50 ${
+                          isChecked ? 'border-accent bg-white text-ink ring-1 ring-ink/10' : 'border-mist bg-white hover:border-accent'
+                        }`}
+                        title={isSaving ? 'Menyimpan...' : isChecked ? 'Batalkan tanda sudah di-chat' : 'Tandai Sudah Di-chat'}
+                      >
+                        {isSaving ? (
+                          <span className="h-4 w-4 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+                        ) : isChecked ? (
+                          <CheckSquare size={20} weight="fill" />
+                        ) : null}
                         </button>
 
                         <div className={isChecked ? 'line-through opacity-60 min-w-0' : 'min-w-0'}>

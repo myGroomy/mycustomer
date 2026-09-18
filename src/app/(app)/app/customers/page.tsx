@@ -13,6 +13,7 @@ import {
   DownloadSimple,
   Phone,
   ShoppingBag,
+  WarningCircle,
 } from '@phosphor-icons/react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -58,6 +59,7 @@ function CustomerListView() {
   const [repeatFilter, setRepeatFilter] = useState<RepeatFilter>('all')
   const [countRange, setCountRange] = useState<{ min: number; max: number } | null>(null)
   const [downloading, setDownloading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Date Filter State
   const [dateFrom, setDateFrom] = useState('')
@@ -65,6 +67,7 @@ function CustomerListView() {
 
   const loadCustomers = useCallback(async () => {
     setLoading(true)
+    setError(null)
     try {
       if (searchQuery) {
         const result = await searchCustomers(searchQuery, page, PAGE_SIZE)
@@ -85,8 +88,8 @@ function CustomerListView() {
         setTotalPages(result.totalPages)
         setTotal(result.count)
       }
-    } catch {
-      // silent
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal memuat data customer')
     } finally {
       setLoading(false)
     }
@@ -264,7 +267,7 @@ function CustomerListView() {
                   type="button"
                   onClick={handleDownload}
                   disabled={downloading || loading}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 min-h-[44px] text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   title="Download CSV data sesuai filter aktif"
                 >
                   <DownloadSimple size={14} weight="bold" />
@@ -274,7 +277,7 @@ function CustomerListView() {
                   <button
                     type="button"
                     onClick={handleResetAll}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 min-h-[44px] text-xs font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95"
                   >
                     <X size={13} weight="bold" className="text-accent" />
                     Reset Filter
@@ -293,7 +296,7 @@ function CustomerListView() {
                     placeholder="Cari nama atau no. telepon..."
                     value={searchQuery}
                     onChange={(e) => { setSearchQuery(e.target.value); setPage(0) }}
-                    className="h-10 pl-10 text-sm rounded-2xl"
+                    className="h-11 pl-10 text-sm rounded-2xl"
                   />
                 </div>
               </div>
@@ -301,7 +304,7 @@ function CustomerListView() {
               <div>
                 <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Status Retensi</span>
                 <Select value={filter} onValueChange={(v) => v && setFilter(v as RetentionStatus | 'all')}>
-                  <SelectTrigger className="h-10 w-full rounded-2xl">
+                  <SelectTrigger className="h-11 w-full rounded-2xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -316,7 +319,7 @@ function CustomerListView() {
               <div>
                 <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Jumlah Order</span>
                 <Select value={repeatFilter} onValueChange={(v) => v && setRepeatFilter(v as RepeatFilter)}>
-                  <SelectTrigger className="h-10 w-full rounded-2xl">
+                  <SelectTrigger className="h-11 w-full rounded-2xl">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -334,7 +337,7 @@ function CustomerListView() {
                   type="date"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-10 text-xs rounded-2xl"
+                  className="h-11 text-xs rounded-2xl"
                 />
               </div>
 
@@ -344,7 +347,7 @@ function CustomerListView() {
                   type="date"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="h-10 text-xs rounded-2xl"
+                  className="h-11 text-xs rounded-2xl"
                 />
               </div>
             </div>
@@ -353,7 +356,7 @@ function CustomerListView() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setCountRange(null)}
-                  className="flex items-center gap-1.5 rounded-full border border-accent bg-accent px-3 py-1.5 text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                  className="flex items-center gap-1.5 rounded-full border border-accent bg-accent px-4 min-h-[44px] text-[11px] font-semibold text-white transition-all hover:opacity-90"
                   title="Reset filter order count"
                 >
                   Order: {countRangeLabel}
@@ -364,6 +367,30 @@ function CustomerListView() {
           </div>
         </div>
       </motion.div>
+
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="mb-6 flex flex-col items-start gap-3 rounded-2xl border border-rose/20 bg-rose/10 p-4 sm:flex-row sm:items-center sm:justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <WarningCircle size={22} weight="duotone" className="shrink-0 text-rose" />
+            <div className="text-sm text-ink">
+              <span className="font-semibold">Gagal memuat data.</span>{' '}
+              <span className="text-ash">{error}</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => loadCustomers()}
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 sm:ml-4"
+          >
+            Coba Lagi
+          </button>
+        </motion.div>
+      )}
 
       {/* Customer Grid/List */}
       <div className="space-y-3">
@@ -439,7 +466,7 @@ function CustomerListView() {
           })}
         </motion.div>
 
-        {!loading && filtered.length === 0 && (
+        {!loading && !error && filtered.length === 0 && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="py-16 text-center">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-sunken text-mist">
               <UsersThree size={28} weight="duotone" className="text-mist" />
@@ -458,14 +485,14 @@ function CustomerListView() {
             <button
               onClick={() => setPage((p) => Math.max(0, p - 1))}
               disabled={page === 0}
-              className="rounded-full border border-hairline bg-white px-4 py-2 text-xs font-semibold text-ash transition-all duration-300 hover:bg-sunken hover:text-ink active:scale-[0.98] disabled:opacity-40"
+              className="rounded-full border border-hairline bg-white px-4 py-2 min-h-[44px] text-xs font-semibold text-ash transition-all duration-300 hover:bg-sunken hover:text-ink active:scale-[0.98] disabled:opacity-40"
             >
               Sebelumnya
             </button>
             <button
               onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
               disabled={page >= totalPages - 1}
-              className="rounded-full border border-hairline bg-white px-4 py-2 text-xs font-semibold text-ink transition-all duration-300 hover:bg-sunken active:scale-[0.98] disabled:opacity-40"
+              className="rounded-full border border-hairline bg-white px-4 py-2 min-h-[44px] text-xs font-semibold text-ink transition-all duration-300 hover:bg-sunken active:scale-[0.98] disabled:opacity-40"
             >
               Selanjutnya
             </button>
