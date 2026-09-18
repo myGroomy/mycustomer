@@ -35,6 +35,9 @@ const BRANCHES: { id: BranchType | 'ALL'; label: string }[] = [
 // Distribusi frekuensi repeat order: bucket 1x..9x, lalu 10x+ digabung jadi satu bucket terakhir
 const FREQ_MAX = 10
 
+// Warna distinct untuk donut chart channel order
+const CHANNEL_COLORS = ['#1b2cc1', '#60a5fa', '#34d399', '#fbbf24', '#fb7185', '#a78bfa', '#38bdf8', '#94a3b8']
+
 // Cache hasil agregasi di level client supaya pindah tab/halaman tidak refetch 10.000 baris setiap kali
 const DASH_CACHE_TTL = 60_000
 let dashCache: { data: CustomerWithStats[]; ts: number } | null = null
@@ -158,6 +161,22 @@ export default function DashboardPage() {
     ...ch,
     count: channelCounts[ch.id] || 0,
   })).filter((ch) => ch.count > 0).sort((a, b) => b.count - a.count)
+
+  // Donut chart "Distribusi Channel Order"
+  const DONUT_R = 58
+  const DONUT_CIRC = 2 * Math.PI * DONUT_R
+  let donutCursor = 0
+  const donutSegments = channelList.map((ch, i) => {
+    const frac = channelTotal > 0 ? ch.count / channelTotal : 0
+    const segment = {
+      id: ch.id,
+      color: CHANNEL_COLORS[i % CHANNEL_COLORS.length],
+      dash: Math.max(frac * DONUT_CIRC, 0.4),
+      offset: donutCursor,
+    }
+    donutCursor -= frac * DONUT_CIRC
+    return segment
+  })
 
   const getChannelLabel = (id: string) => CHANNELS.find((ch) => ch.id === id)?.label || id
 
@@ -452,26 +471,53 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              <div className="space-y-3">
-                {channelList.length > 0 ? channelList.map((ch) => {
-                  const pct = channelTotal > 0 ? Math.round((ch.count / channelTotal) * 100) : 0
-                  return (
-                    <div key={ch.id} className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2 min-w-[100px]">
-                        <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                        <span className="font-medium text-ink">{ch.label}</span>
-                      </div>
-                      <div className="flex flex-1 items-center gap-2 mx-3">
-                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-sunken">
-                          <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
-                        </div>
-                      </div>
-                      <div className="font-mono text-ash shrink-0">
-                        {ch.count} <span className="text-[10px] text-mist">({pct}%)</span>
+              <div className="flex flex-col items-center gap-5">
+                {channelList.length > 0 ? (
+                  <>
+                    <div className="relative h-40 w-40">
+                      <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90">
+                        <circle cx="80" cy="80" r={DONUT_R} fill="none" stroke="var(--color-sunken)" strokeWidth="18" />
+                        {donutSegments.map((s) => (
+                          <circle
+                            key={s.id}
+                            cx="80"
+                            cy="80"
+                            r={DONUT_R}
+                            fill="none"
+                            stroke={s.color}
+                            strokeWidth="18"
+                            strokeLinecap="round"
+                            strokeDasharray={`${s.dash} ${DONUT_CIRC - s.dash}`}
+                            strokeDashoffset={s.offset}
+                          />
+                        ))}
+                      </svg>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="text-2xl font-semibold tabular-nums text-ink">{channelTotal.toLocaleString('id-ID')}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-ash">order</span>
                       </div>
                     </div>
-                  )
-                }) : (
+
+                    <div className="w-full space-y-2">
+                      {channelList.map((ch, i) => {
+                        const pct = channelTotal > 0 ? Math.round((ch.count / channelTotal) * 100) : 0
+                        const color = CHANNEL_COLORS[i % CHANNEL_COLORS.length]
+                        return (
+                          <div key={ch.id} className="flex items-center justify-between gap-3 rounded-xl bg-sunken/40 px-3 py-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                              <span className="truncate text-xs font-medium text-ink">{ch.label}</span>
+                            </div>
+                            <div className="flex shrink-0 items-center gap-2 font-mono text-xs">
+                              <span className="text-ink">{ch.count.toLocaleString('id-ID')}</span>
+                              <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] text-ash">{pct}%</span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  </>
+                ) : (
                   <div className="py-8 text-center text-xs text-ash">
                     Tidak ada data channel pada filter ini.
                   </div>
