@@ -18,6 +18,8 @@ function toCustomer(row: Record<string, string>): Customer {
     description: row.description || '',
     age_range: row.age_range || '',
     gender: row.gender || '',
+    is_followed_up: row.is_followed_up === 'TRUE' || row.is_followed_up === 'true',
+    followed_up_at: row.followed_up_at || '',
   }
 }
 

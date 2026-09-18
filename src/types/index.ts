@@ -27,6 +27,8 @@ export interface Customer {
   description?: string
   age_range?: string
   gender?: string
+  is_followed_up?: boolean
+  followed_up_at?: string
 }
 
 export interface CustomerWithStats extends Customer {
@@ -44,6 +46,8 @@ export interface Order {
   raw_phone_input: string | null
   created_at: string
   branch?: string
+  is_followed_up?: boolean
+  followed_up_at?: string
 }
 
 export interface OrderWithCustomer extends Order {

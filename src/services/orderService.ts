@@ -13,6 +13,8 @@ function toOrder(row: Record<string, string>): Order {
     raw_phone_input: row.raw_phone_input || null,
     created_at: row.created_at,
     branch: row.branch || '',
+    is_followed_up: row.is_followed_up === 'TRUE' || row.is_followed_up === 'true',
+    followed_up_at: row.followed_up_at || '',
   }
 }
 

@@ -14,6 +14,14 @@ const CACHE_TTL = 30_000
 
 let syncInProgress = false
 
+export function clearSheetsCache(sheetName?: string): void {
+  if (sheetName) {
+    cache.delete(sheetName)
+  } else {
+    cache.clear()
+  }
+}
+
 export async function syncStaging(): Promise<SyncResult> {
   if (syncInProgress) {
     return { success: true, imported: 0, skipped: 0, errors: ['Sync already in progress'] }

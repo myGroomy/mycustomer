@@ -18,8 +18,10 @@ import {
 } from '@phosphor-icons/react'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { toast } from 'sonner'
 import { getOrdersByDate } from '@/services/orderService'
 import { getCustomersWithStats } from '@/services/customerService'
+import { clearSheetsCache } from '@/services/sheetsService'
 import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
 import { buildWaLink } from '@/utils/waLinkBuilder'
 import { downloadVCard, downloadBulkVCard } from '@/utils/vcardGenerator'
@@ -41,7 +43,7 @@ export default function FollowUpPage() {
   const [churnCustomers, setChurnCustomers] = useState<CustomerWithStats[]>([])
 
   const [loading, setLoading] = useState(true)
-  const [checked, setChecked] = useState<Set<string>>(new Set())
+  const [savingIds, setSavingIds] = useState<Set<string>>(new Set())
 
   const loadDailyOrders = useCallback(async (date: string) => {
     setLoading(true)
@@ -79,13 +81,57 @@ export default function FollowUpPage() {
     }
   }, [mode, selectedDate, loadDailyOrders, loadChurnCustomers])
 
-  const toggleCheck = (id: string) => {
-    setChecked((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  const toggleFollowUp = async (id: string, currentStatus: boolean, mode: 'order' | 'customer') => {
+    if (savingIds.has(id)) return
+    const newStatus = !currentStatus
+    const timestamp = newStatus ? new Date().toISOString() : ''
+
+    setSavingIds((prev) => new Set(prev).add(id))
+
+    // Optimistic update
+    if (mode === 'order') {
+      setDailyOrders((prev) =>
+        prev.map((o) => (o.id === id ? { ...o, is_followed_up: newStatus, followed_up_at: timestamp } : o)),
+      )
+    } else {
+      setChurnCustomers((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, is_followed_up: newStatus, followed_up_at: timestamp } : c)),
+      )
+    }
+
+    try {
+      const res = await fetch(mode === 'order' ? '/api/orders/follow-up' : '/api/customers/follow-up', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          [mode === 'order' ? 'order_id' : 'customer_id']: id,
+          is_followed_up: newStatus,
+        }),
+      })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Gagal menyimpan follow-up')
+
+      clearSheetsCache(mode === 'order' ? 'orders' : 'customers')
+      toast.success(newStatus ? 'Tandai sudah di-follow up' : 'Follow-up dibatalkan')
+    } catch (err) {
+      // Revert optimistic update
+      if (mode === 'order') {
+        setDailyOrders((prev) =>
+          prev.map((o) => (o.id === id ? { ...o, is_followed_up: currentStatus } : o)),
+        )
+      } else {
+        setChurnCustomers((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, is_followed_up: currentStatus } : c)),
+        )
+      }
+      toast.error(err instanceof Error ? err.message : 'Gagal menyimpan follow-up')
+    } finally {
+      setSavingIds((prev) => {
+        const next = new Set(prev)
+        next.delete(id)
+        return next
+      })
+    }
   }
 
   const handleBulkDownloadDaily = () => {
@@ -231,7 +277,8 @@ export default function FollowUpPage() {
               const cust = order.customer
               if (!cust) return null
 
-              const isChecked = checked.has(order.id)
+              const isChecked = !!order.is_followed_up
+              const isSaving = savingIds.has(order.id)
               const isNewCustomer = cust.first_order_date === order.order_date
               const channelLabel = CHANNELS.find((ch) => ch.id === order.channel)?.label || order.channel
 
@@ -242,13 +289,18 @@ export default function FollowUpPage() {
                       {/* Left: check & customer info */}
                       <div className="flex items-start gap-3.5 min-w-0">
                         <button
-                          onClick={() => toggleCheck(order.id)}
-                          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-300 active:scale-90 ${
+                          onClick={() => toggleFollowUp(order.id, isChecked, 'order')}
+                          disabled={isSaving}
+                          className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-300 active:scale-90 disabled:opacity-50 ${
                             isChecked ? 'border-accent bg-white text-ink ring-1 ring-ink/10' : 'border-mist bg-white hover:border-accent'
                           }`}
-                          title="Tandai Sudah Di-chat"
+                          title={isSaving ? 'Menyimpan...' : isChecked ? 'Batalkan tanda sudah di-chat' : 'Tandai Sudah Di-chat'}
                         >
-                          {isChecked && <CheckSquare size={14} weight="fill" />}
+                          {isSaving ? (
+                            <span className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-accent border-t-transparent" />
+                          ) : isChecked ? (
+                            <CheckSquare size={14} weight="fill" />
+                          ) : null}
                         </button>
 
                         <div className={isChecked ? 'line-through opacity-60 min-w-0' : 'min-w-0'}>
@@ -327,7 +379,8 @@ export default function FollowUpPage() {
           ))}
 
           {!loading && churnCustomers.map((c) => {
-            const isChecked = checked.has(c.id)
+            const isChecked = !!c.is_followed_up
+            const isSaving = savingIds.has(c.id)
             const days = Math.floor((Date.now() - new Date(c.last_order_date).getTime()) / 86400000)
             const isRisk = c.retention_status === 'at_risk'
             const statusColor = isRisk ? 'border-amber/25 bg-amber/10 text-accent-deep' : 'border-rose/25 bg-rose/10 text-ink'
@@ -337,12 +390,18 @@ export default function FollowUpPage() {
                 <div className="doppel-inner flex items-center justify-between gap-3 p-4 sm:p-5">
                   <div className="flex items-center gap-3.5 min-w-0">
                     <button
-                      onClick={() => toggleCheck(c.id)}
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-300 active:scale-90 ${
+                      onClick={() => toggleFollowUp(c.id, isChecked, 'customer')}
+                      disabled={isSaving}
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border-2 transition-all duration-300 active:scale-90 disabled:opacity-50 ${
                         isChecked ? 'border-accent bg-white text-ink ring-1 ring-ink/10' : 'border-mist bg-white hover:border-accent'
                       }`}
+                      title={isSaving ? 'Menyimpan...' : isChecked ? 'Batalkan tanda sudah di-follow up' : 'Tandai Sudah Di-follow up'}
                     >
-                      {isChecked && <CheckSquare size={13} weight="fill" />}
+                      {isSaving ? (
+                        <span className="h-3 w-3 animate-spin rounded-full border-[1.5px] border-accent border-t-transparent" />
+                      ) : isChecked ? (
+                        <CheckSquare size={13} weight="fill" />
+                      ) : null}
                     </button>
                     <div className={isChecked ? 'line-through opacity-60 min-w-0' : 'min-w-0'}>
                       <div className="text-sm font-semibold text-ink truncate">{c.name}</div>
