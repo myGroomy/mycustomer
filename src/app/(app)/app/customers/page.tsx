@@ -60,7 +60,6 @@ function CustomerListView() {
   // Date Filter State
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
-  const [showDateFilter, setShowDateFilter] = useState(false)
 
   const loadCustomers = useCallback(async () => {
     setLoading(true)
@@ -155,14 +154,18 @@ function CustomerListView() {
   const counts = { active: 0, at_risk: 0, churned: 0 }
   customers.forEach((c) => counts[c.retention_status as keyof typeof counts]++)
 
-  const statusFilters = [
-    { key: 'all' as const, label: 'Semua', count: total },
-    { key: 'active' as const, label: 'Active', count: counts.active },
-    { key: 'at_risk' as const, label: 'At Risk', count: counts.at_risk },
-    { key: 'churned' as const, label: 'Churned', count: counts.churned },
-  ]
-
   const hasDateFilter = Boolean(dateFrom || dateTo)
+  const hasActiveFilter = Boolean(searchQuery || filter !== 'all' || repeatFilter !== 'all' || hasDateFilter || countRange)
+
+  const handleResetAll = () => {
+    setSearchQuery('')
+    setFilter('all')
+    setRepeatFilter('all')
+    setCountRange(null)
+    setDateFrom('')
+    setDateTo('')
+    setPage(0)
+  }
 
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 md:py-10 pb-28 md:pb-20">
@@ -173,129 +176,106 @@ function CustomerListView() {
         <p className="mt-1.5 text-xs text-ash sm:text-sm">{total} customer terdaftar dalam database</p>
       </motion.div>
 
-      {/* Search & Filters */}
-      <motion.div variants={fadeUp} custom={1} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-5 space-y-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="relative flex-1 min-w-[240px]">
-            <MagnifyingGlass className="absolute left-4 top-1/2 -translate-y-1/2 text-mist" size={20} weight="light" />
-            <Input
-              type="text"
-              placeholder="Cari nama atau no. telepon..."
-              value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setPage(0) }}
-              className="h-12 pl-11 text-sm rounded-2xl"
-            />
-          </div>
-          <button
-            onClick={() => setShowDateFilter((prev) => !prev)}
-            className={`flex min-h-[48px] items-center gap-2 rounded-2xl border px-4 text-xs font-semibold transition-all ${
-              hasDateFilter || showDateFilter
-                ? 'border-accent bg-accent-wash text-accent-deep'
-                : 'border-hairline bg-white text-ash hover:bg-sunken hover:text-ink'
-            }`}
-          >
-            <Funnel size={16} weight="bold" />
-            <span>Filter Tanggal</span>
-            {hasDateFilter && (
-              <span className="flex h-2 w-2 rounded-full bg-accent" />
-            )}
-          </button>
-        </div>
-
-        {/* Date Range Selector */}
-        {showDateFilter && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="doppel-outer"
-          >
-            <div className="doppel-inner p-4">
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-ink">Filter Berdasarkan Order Terakhir</span>
-                {hasDateFilter && (
-                  <button
-                    onClick={() => { setDateFrom(''); setDateTo('') }}
-                    className="flex items-center gap-1 text-xs text-ink hover:underline"
-                  >
-                    <X size={13} weight="bold" /> Reset Tanggal
-                  </button>
-                )}
+      {/* Filter Toolbar */}
+      <motion.div variants={fadeUp} custom={1} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-6">
+        <div className="doppel-outer">
+          <div className="doppel-inner p-4 sm:p-5">
+            <div className="mb-4 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Funnel size={16} weight="duotone" className="text-accent" />
+                <span className="text-xs font-semibold uppercase tracking-wider text-ash">Filter Customer</span>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold text-ash">Dari Tanggal</label>
+              {hasActiveFilter && (
+                <button
+                  type="button"
+                  onClick={handleResetAll}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95"
+                >
+                  <X size={13} weight="bold" className="text-accent" />
+                  Reset Filter
+                </button>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="sm:col-span-2 lg:col-span-4">
+                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Cari Customer</span>
+                <div className="relative">
+                  <MagnifyingGlass className="absolute left-3.5 top-1/2 -translate-y-1/2 text-mist" size={18} weight="light" />
                   <Input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="h-10 text-xs rounded-2xl"
+                    type="text"
+                    placeholder="Cari nama atau no. telepon..."
+                    value={searchQuery}
+                    onChange={(e) => { setSearchQuery(e.target.value); setPage(0) }}
+                    className="h-10 pl-10 text-sm rounded-2xl"
                   />
                 </div>
-                <div>
-                  <label className="mb-1 block text-[11px] font-semibold text-ash">Sampai Tanggal</label>
-                  <Input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    className="h-10 text-xs rounded-2xl"
-                  />
-                </div>
+              </div>
+
+              <div>
+                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Status Retensi</span>
+                <Select value={filter} onValueChange={(v) => v && setFilter(v as RetentionStatus | 'all')}>
+                  <SelectTrigger className="h-10 w-full rounded-2xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua ({total})</SelectItem>
+                    <SelectItem value="active">Active ({counts.active})</SelectItem>
+                    <SelectItem value="at_risk">At Risk ({counts.at_risk})</SelectItem>
+                    <SelectItem value="churned">Churned ({counts.churned})</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Jumlah Order</span>
+                <Select value={repeatFilter} onValueChange={(v) => v && setRepeatFilter(v as RepeatFilter)}>
+                  <SelectTrigger className="h-10 w-full rounded-2xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua</SelectItem>
+                    {REPEAT_FILTERS.filter((f) => f.key !== 'all').map((f) => (
+                      <SelectItem key={f.key} value={f.key}>{f.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Dari Tanggal</span>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="h-10 text-xs rounded-2xl"
+                />
+              </div>
+
+              <div>
+                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Sampai Tanggal</span>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="h-10 text-xs rounded-2xl"
+                />
               </div>
             </div>
-          </motion.div>
-        )}
-      </motion.div>
 
-      {/* Status Filter Chips */}
-      <motion.div variants={fadeUp} custom={2} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
-        {statusFilters.map((f) => (
-          <button
-            key={f.key}
-            onClick={() => { setFilter(f.key); setPage(0) }}
-            className={`group flex min-h-[38px] flex-shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-all duration-300 active:scale-[0.98] ${
-              filter === f.key
-                ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(27,44,193,0.5)]'
-                : 'border border-hairline bg-white text-ash hover:bg-sunken hover:text-ink'
-            }`}
-          >
-            <span>{f.label}</span>
-            <span className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold ${
-              filter === f.key ? 'bg-white/20' : 'bg-sunken text-ash'
-            }`}>{f.count}</span>
-          </button>
-        ))}
-      </motion.div>
-
-      {/* Repeat Order Filter */}
-      <motion.div variants={fadeUp} custom={2.5} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-6">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-ash">Repeat:</span>
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-            {REPEAT_FILTERS.map((f) => (
-              <button
-                key={f.key}
-                onClick={() => { setRepeatFilter(f.key); setPage(0) }}
-                className={`flex-shrink-0 rounded-full px-3 py-1.5 text-[11px] font-semibold transition-all ${
-                  repeatFilter === f.key
-                    ? 'bg-accent-wash text-accent-deep border border-accent/20'
-                    : 'border border-hairline bg-white text-ash hover:bg-sunken'
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
+            {countRange && (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setCountRange(null)}
+                  className="flex items-center gap-1.5 rounded-full border border-accent bg-accent px-3 py-1.5 text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                  title="Reset filter order count"
+                >
+                  Order: {countRangeLabel}
+                  <X size={12} weight="bold" />
+                </button>
+              </div>
+            )}
           </div>
-          {countRange && (
-            <button
-              onClick={() => setCountRange(null)}
-              className="flex items-center gap-1.5 rounded-full border border-accent bg-accent px-3 py-1.5 text-[11px] font-semibold text-white transition-all hover:opacity-90"
-              title="Reset filter order count"
-            >
-              Order: {countRangeLabel}
-              <X size={12} weight="bold" />
-            </button>
-          )}
         </div>
       </motion.div>
 
