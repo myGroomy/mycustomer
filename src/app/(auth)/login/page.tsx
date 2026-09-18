@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { getSheetData } from '@/services/sheetsService'
+import { setSessionUser } from '@/utils/session'
 import { fadeUp, FLUID_EASE } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
 
@@ -49,17 +50,15 @@ export default function LoginPage() {
       if (!user) {
         setError('Username atau PIN salah')
       } else {
-        localStorage.setItem(
-          'retainly_user',
-          JSON.stringify({
-            id: user.id,
-            username: user.username,
-            role: user.role,
-            branch: user.branch || '',
-          }),
-        )
+        setSessionUser({
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          branch: user.branch || '',
+        })
         // Set session cookie for API auth minimal
-        document.cookie = `retainly_session=${user.id}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+        document.cookie = `mycustomer_session=${user.id}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
+        document.cookie = 'retainly_session=; path=/; max-age=0'
         window.location.href = '/app'
       }
     } catch {
@@ -84,8 +83,8 @@ export default function LoginPage() {
               transition={{ duration: 0.6, ease: FLUID_EASE }}
             >
               <Image
-                src="/brand-assets/logo-full.png"
-                alt="Retain-ly Logo"
+                src="/brand-assets/mycustomer-logo.png"
+                alt="MYCUSTOMER Logo"
                 width={160}
                 height={48}
                 className="h-10 w-auto object-contain"
@@ -174,7 +173,7 @@ export default function LoginPage() {
                   <Button
                     type="submit"
                     disabled={loading}
-                    className="group h-auto w-full gap-3 rounded-full bg-white px-8 py-4 text-sm font-semibold text-ink shadow-[0_8px_24px_-12px_rgba(9,21,64,0.4)] ring-1 ring-ink/10 transition-all duration-700 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
+                    className="group h-auto w-full gap-3 rounded-full bg-white px-8 py-4 text-sm font-semibold text-ink shadow-[0_8px_24px_-12px_rgba(16,18,20,0.4)] ring-1 ring-ink/10 transition-all duration-700 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
                   >
                     {loading ? (
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />

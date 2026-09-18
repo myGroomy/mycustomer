@@ -28,6 +28,7 @@ import {
 import { getBranches, getUsers, createBranch, updateBranch, deleteBranch, createUser, updateUser, deleteUser, isManagerRole, ROLE_OPTIONS, type Branch, type ManagedUser } from '@/services/adminService'
 import { fadeUp } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
+import { getSessionUser } from '@/utils/session'
 
 interface SessionUser {
   id: string
@@ -62,13 +63,12 @@ export default function AdminPage() {
   const [editDraft, setEditDraft] = useState<Record<string, string>>({})
 
   useEffect(() => {
-    const stored = localStorage.getItem('retainly_user')
+    const stored = getSessionUser()
     if (!stored) {
       window.location.href = '/login'
       return
     }
-    const parsed = JSON.parse(stored) as SessionUser
-    setMe(parsed)
+    setMe(stored)
     loadAll()
   }, [])
 

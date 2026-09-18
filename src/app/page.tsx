@@ -24,8 +24,8 @@ import {
 
 gsap.registerPlugin(ScrollTrigger, useGSAP)
 
-const CTA_GRADIENT =
-  'bg-white text-ink ring-1 ring-ink/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_32px_-24px_rgba(9,21,64,0.45)]'
+const CTA_STYLE =
+  'bg-white text-ink ring-1 ring-ink/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_32px_-24px_rgba(16,18,20,0.45)]'
 
 const NAV_LINKS = [
   ['Fitur', '#features'],
@@ -41,7 +41,7 @@ const CHANNELS = [
 ]
 
 const SCRUB_COPY =
-  'Setiap kali kasir mengetik satu nomor HP, Retain-ly membangun profil retensi di belakang layar: siapa yang masih aktif, siapa yang mulai jarang, dan siapa yang sudah seminggu menghilang. Ujungnya cuma satu pekerjaan — kirim satu pesan WhatsApp yang hangat.'
+  'Setiap kali kasir mengetik satu nomor HP, MYCUSTOMER membangun profil retensi di belakang layar: siapa yang masih aktif, siapa yang mulai jarang, dan siapa yang sudah seminggu menghilang. Ujungnya cuma satu pekerjaan — kirim satu pesan WhatsApp yang hangat.'
 
 const SCRUB_TITLE = 'Data duduk diam. Kamu yang bergerak lebih cerdas.'
 
@@ -66,7 +66,7 @@ const REVIEWS = [
   },
   {
     quote:
-      'Kami pindah dari catatan buku ke Retain-ly. Sekarang hampir separuh pelanggan aktif balik lagi tiap minggu.',
+      'Kami pindah dari catatan buku ke MYCUSTOMER. Sekarang hampir separuh pelanggan aktif balik lagi tiap minggu.',
     name: 'Dewi',
     role: 'Chained Bakmi, Bandung',
   },
@@ -179,9 +179,9 @@ export default function LandingPage() {
     <main className="w-full max-w-full overflow-x-hidden bg-canvas">
       {/* Navigation - floating glass pill */}
       <nav className="fixed left-1/2 top-5 z-50 w-[min(100%-2rem,46rem)] -translate-x-1/2">
-        <div className="flex items-center justify-between gap-3 rounded-full border border-hairline bg-white/80 py-2 pl-4 pr-2 shadow-[0_12px_40px_-16px_rgba(9,21,64,0.18)] backdrop-blur-xl">
+        <div className="flex items-center justify-between gap-3 rounded-full border border-hairline bg-white/80 py-2 pl-4 pr-2 shadow-[0_12px_40px_-16px_rgba(16,18,20,0.18)] backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-2.5">
-            <Image src="/brand-assets/logo-full.png" alt="Retain-ly Logo" width={150} height={40} className="h-9 w-auto object-contain" priority />
+            <Image src="/brand-assets/mycustomer-logo.png" alt="MYCUSTOMER Logo" width={150} height={40} className="h-9 w-auto object-contain" priority />
           </Link>
           <nav className="hidden items-center gap-6 lg:flex">
             {NAV_LINKS.map(([label, href]) => (
@@ -196,7 +196,7 @@ export default function LandingPage() {
             </Link>
             <Button
               render={<Link href="/login" />}
-              className={`group h-auto gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-ink transition-all duration-700 hover:-translate-y-px active:scale-[0.98] ${CTA_GRADIENT}`}
+              className={`group h-auto gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-ink transition-all duration-700 hover:-translate-y-px active:scale-[0.98] ${CTA_STYLE}`}
             >
               Daftar
               <ArrowRight size={14} weight="bold" className="transition-transform duration-500 group-hover:translate-x-0.5" />
@@ -230,7 +230,7 @@ export default function LandingPage() {
                   className="mx-1 inline-block h-10 w-16 align-middle bg-cover bg-center sm:h-14 sm:w-24"
                   style={{
                     backgroundImage:
-                      "url('https://picsum.photos/seed/espresso/480/240'), linear-gradient(135deg,#abd2fa,#7692ff)",
+                      "url('https://picsum.photos/seed/espresso/480/240')",
                     WebkitMaskImage: 'radial-gradient(circle, black 62%, rgba(0,0,0,0.85) 78%, transparent 100%)',
                     maskImage: 'radial-gradient(circle, black 62%, rgba(0,0,0,0.85) 78%, transparent 100%)',
                     borderRadius: '9999px',
@@ -242,7 +242,7 @@ export default function LandingPage() {
           </h1>
 
           <p data-fade className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-ash sm:text-xl">
-            Retain-ly mencatat setiap repeat order bisnis F&B dan menandai pelanggan yang mulai
+            MYCUSTOMER mencatat setiap repeat order bisnis F&B dan menandai pelanggan yang mulai
             jarang datang — supaya kamu bisa mengirim satu pesan WhatsApp sebelum mereka pindah ke tempat lain.
           </p>
 
@@ -250,7 +250,7 @@ export default function LandingPage() {
             <Button
               data-cta
               render={<Link href="/login" />}
-              className={`group h-auto gap-2 rounded-full px-8 py-4 text-base font-semibold text-ink transition-all duration-700 hover:-translate-y-[2px] active:scale-[0.98] ${CTA_GRADIENT}`}
+              className={`group h-auto gap-2 rounded-full px-8 py-4 text-base font-semibold text-ink transition-all duration-700 hover:-translate-y-[2px] active:scale-[0.98] ${CTA_STYLE}`}
             >
               Mulai Sekarang
               <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0.5">
@@ -275,7 +275,7 @@ export default function LandingPage() {
                   <span className="h-2.5 w-2.5 rounded-full bg-ink/20" />
                   <span className="h-2.5 w-2.5 rounded-full bg-ink/35" />
                   <span className="h-2.5 w-2.5 rounded-full bg-ink/50" />
-                  <div className="ml-4 flex-1 rounded-lg bg-sunken px-3 py-1.5 text-left font-mono text-xs text-ash">retainly.app/app</div>
+                  <div className="ml-4 flex-1 rounded-lg bg-sunken px-3 py-1.5 text-left font-mono text-xs text-ash">mycustomer.app/app</div>
                 </div>
                 <div className="grid grid-cols-12 gap-5 bg-canvas p-5 sm:p-7">
                   <div className="col-span-3 hidden border-r border-hairline pr-5 sm:block">
@@ -290,7 +290,7 @@ export default function LandingPage() {
                         <div
                           key={item as string}
                           className={`flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-sm transition-colors duration-300 ${
-                            active ? 'bg-white font-semibold text-ink shadow-[0_6px_16px_-6px_rgba(27,44,193,0.25)] ring-1 ring-ink/15' : 'text-ash'
+                            active ? 'bg-white font-semibold text-ink shadow-[0_6px_16px_-6px_rgba(28,43,66,0.25)] ring-1 ring-ink/15' : 'text-ash'
                           }`}
                         >
                           <span className={`h-1.5 w-1.5 rounded-full ${active ? 'bg-white/60' : 'bg-mist/50'}`} />
@@ -381,7 +381,7 @@ export default function LandingPage() {
             </div>
 
             {/* B : 1x1 */}
-            <div data-soar className="group col-span-1 overflow-hidden rounded-3xl border border-hairline bg-white p-6 transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(9,21,64,0.25)]">
+            <div data-soar className="group col-span-1 overflow-hidden rounded-3xl border border-hairline bg-white p-6 transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(16,18,20,0.25)]">
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-accent">
                 <WhatsappLogo size={22} weight="duotone" />
               </div>
@@ -392,7 +392,7 @@ export default function LandingPage() {
             </div>
 
             {/* C : 1x1 */}
-            <div data-soar className="group col-span-1 overflow-hidden rounded-3xl border border-hairline bg-white p-6 transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(9,21,64,0.25)]">
+            <div data-soar className="group col-span-1 overflow-hidden rounded-3xl border border-hairline bg-white p-6 transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(16,18,20,0.25)]">
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-accent-soft/20 text-accent-deep">
                 <ChartLineUp size={22} weight="duotone" />
               </div>
@@ -479,7 +479,7 @@ export default function LandingPage() {
               </h2>
               <p className="mt-5 max-w-sm text-base leading-relaxed text-ash">
                 Kasir tidak perlu mempelajari flow baru. Cukup catat order seperti biasa —
-                Retain-ly mengubahnya menjadi profil, segmentasi, dan pengingat follow-up.
+                MYCUSTOMER mengubahnya menjadi profil, segmentasi, dan pengingat follow-up.
               </p>
               <div className="mt-10 hidden items-center gap-2 lg:flex">
                 {STACK_CARDS.map((c) => {
@@ -556,7 +556,7 @@ export default function LandingPage() {
                     aria-hidden
                     className="absolute inset-0 bg-cover bg-center opacity-0 transition-opacity duration-700 contrast-125 lg:group-hover:opacity-40"
                     style={{
-                      backgroundImage: `url('https://picsum.photos/seed/${c.name.toLowerCase()}/960/640'), linear-gradient(135deg,#091540,#091540)`,
+                      backgroundImage: `url('https://picsum.photos/seed/${c.name.toLowerCase()}/960/640')`,
                       filter: 'grayscale(1) brightness(0.6)',
                     }}
                   />
@@ -593,7 +593,7 @@ export default function LandingPage() {
                   <span
                     key={r.name}
                     className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-canvas text-sm font-semibold"
-                    style={{ background: 'linear-gradient(135deg, #abd2fa, #7692ff)', color: '#091540' }}
+                    style={{ background: '#cfe1fd', color: '#0d1622' }}
                   >
                     {r.name[0]}
                   </span>
@@ -673,8 +673,8 @@ export default function LandingPage() {
       <footer className="border-t border-hairline bg-canvas px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 text-sm text-ash sm:flex-row">
           <div className="flex items-center gap-2.5">
-            <Image src="/brand-assets/logo-icon.png" alt="Retain-ly Icon" width={26} height={26} className="h-6 w-6 object-contain" />
-            <span className="font-semibold text-ink-soft">Retain-ly</span>
+            <Image src="/brand-assets/mycustomer-icon.png" alt="MYCUSTOMER Icon" width={26} height={26} className="h-6 w-6 object-contain" />
+            <span className="font-semibold text-ink-soft">MYCUSTOMER</span>
           </div>
           <div className="flex items-center gap-7">
             <a href="#features" className="transition-colors duration-300 hover:text-ink">
@@ -687,7 +687,7 @@ export default function LandingPage() {
               Masuk
             </a>
           </div>
-          <div>&copy; {new Date().getFullYear()} Retain-ly. Semua hak dilindungi.</div>
+          <div>&copy; {new Date().getFullYear()} MYCUSTOMER. Semua hak dilindungi.</div>
         </div>
       </footer>
       <style>{`

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
-import { cookies } from 'next/headers'
+import { getSessionCookie } from '@/lib/sessionServer'
 
 const CUSTOMERS_SHEET = 'customers'
 const FU_COL = 'is_followed_up'
@@ -18,9 +18,8 @@ function colLetter(idx: number): string {
 }
 
 export async function PUT(request: NextRequest) {
-  const cookieStore = await cookies()
-  const session = cookieStore.get('retainly_session')
-  if (!session?.value) {
+  const session = await getSessionCookie()
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized — silakan login ulang' }, { status: 401 })
   }
 

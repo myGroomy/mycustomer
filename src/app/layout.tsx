@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic'
 const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 export const metadata: Metadata = {
-  title: 'Retain-ly — Jangan sampai pelanggan lupa balik lagi',
+  title: 'MYCUSTOMER — Jangan sampai pelanggan lupa balik lagi',
   description: 'Catatan kasir yang jadi database pelanggan & pelacak retensi bisnis F&B.',
   icons: {
     icon: [
@@ -18,17 +18,17 @@ export const metadata: Metadata = {
       { url: '/favicon.png', type: 'image/png' },
     ],
     shortcut: '/favicon.png',
-    apple: '/brand-assets/logo-icon.png',
+    apple: '/brand-assets/mycustomer-icon.png',
   },
   openGraph: {
-    title: 'Retain-ly — Pelacak Retensi Bisnis F&B',
+    title: 'MYCUSTOMER — Pelacak Retensi Bisnis F&B',
     description: 'Jangan sampai pelanggan lupa balik lagi. Rekam transaksi kasir jadi database pelanggan otomatis.',
     images: [
       {
-        url: '/brand-assets/logo-full.png',
-        width: 1200,
-        height: 600,
-        alt: 'Retain-ly Logo',
+        url: '/brand-assets/mycustomer-logo.png',
+        width: 1400,
+        height: 328,
+        alt: 'MYCUSTOMER Logo',
       },
     ],
   },

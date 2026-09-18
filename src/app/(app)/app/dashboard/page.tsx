@@ -24,6 +24,7 @@ import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
 import { CHANNELS, DEFAULT_THRESHOLDS } from '@/constants'
 import { fadeUp } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
+import { getSessionUser } from '@/utils/session'
 import type { CustomerWithStats, BranchType } from '@/types'
 
 const BRANCHES: { id: BranchType | 'ALL'; label: string }[] = [
@@ -35,8 +36,8 @@ const BRANCHES: { id: BranchType | 'ALL'; label: string }[] = [
 // Distribusi frekuensi repeat order: bucket 1x..9x, lalu 10x+ digabung jadi satu bucket terakhir
 const FREQ_MAX = 10
 
-// Warna distinct untuk donut chart channel order
-const CHANNEL_COLORS = ['#1b2cc1', '#60a5fa', '#34d399', '#fbbf24', '#fb7185', '#a78bfa', '#38bdf8', '#94a3b8']
+// Warna distinct untuk donut chart channel order — ramp navy/steel monokrom
+const CHANNEL_COLORS = ['#1c2b42', '#2f4a6e', '#4f6b8a', '#66809e', '#8198b4', '#9cafc8', '#b9c8db', '#d5dfec']
 
 // Cache hasil agregasi di level client supaya pindah tab/halaman tidak refetch 10.000 baris setiap kali
 const DASH_CACHE_TTL = 60_000
@@ -55,10 +56,10 @@ export default function DashboardPage() {
   const [userBranch, setUserBranch] = useState('')
   useEffect(() => {
     try {
-      const user = JSON.parse(localStorage.getItem('retainly_user') || '{}')
-      setUserRole(user.role || '')
-      setUserBranch(user.branch || '')
-      if (user.role === 'kasir' && user.branch) {
+      const user = getSessionUser()
+      setUserRole(user?.role || '')
+      setUserBranch(user?.branch || '')
+      if (user?.role === 'kasir' && user.branch) {
         setBranchFilter(user.branch as BranchType)
       }
     } catch {}
@@ -306,7 +307,7 @@ export default function DashboardPage() {
                 disabled={isDisabled}
                 className={`flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold transition-all whitespace-nowrap ${
                   branchFilter === b.id
-                    ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(27,44,193,0.5)]'
+                    ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(28,43,66,0.5)]'
                     : isDisabled
                       ? 'border border-hairline bg-sunken text-ash cursor-not-allowed opacity-60'
                       : 'border border-hairline bg-white text-ash hover:bg-sunken hover:text-ink'
@@ -560,7 +561,7 @@ export default function DashboardPage() {
                       <div
                         className={`w-full max-w-[42px] rounded-t-lg transition-all ${
                           b.count > 0
-                            ? 'bg-accent group-hover:bg-accent-deep group-hover:shadow-[0_-4px_14px_-4px_rgba(27,44,193,0.6)]'
+                            ? 'bg-accent group-hover:bg-accent-deep group-hover:shadow-[0_-4px_14px_-4px_rgba(28,43,66,0.6)]'
                             : 'bg-sunken'
                         }`}
                         style={{ height: `${barPx}px` }}

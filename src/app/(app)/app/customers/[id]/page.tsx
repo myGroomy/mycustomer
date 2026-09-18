@@ -194,7 +194,7 @@ export default function CustomerDetailPage() {
         <Link
           href="/app"
           className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-white px-4 py-2 text-xs sm:text-sm font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-[0.98]"
-          style={{ boxShadow: '0 6px 16px -6px rgba(27, 44, 193, 0.5)' }}
+          style={{ boxShadow: '0 6px 16px -6px rgba(28, 43, 66, 0.5)' }}
         >
           <Plus size={16} weight="bold" />
           <span>+ Catat Order Baru</span>
@@ -466,7 +466,7 @@ export default function CustomerDetailPage() {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="group flex min-h-[48px] h-12 sm:h-13 flex-1 items-center justify-center gap-2.5 rounded-full bg-emerald text-xs sm:text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98]"
-                style={{ boxShadow: '0 8px 24px -8px rgba(27, 44, 193, 0.5)' }}
+                style={{ boxShadow: '0 8px 24px -8px rgba(28, 43, 66, 0.5)' }}
               >
                 <WhatsappLogo size={20} weight="fill" />
                 <span>Kirim WhatsApp</span>

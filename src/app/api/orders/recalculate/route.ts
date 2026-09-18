@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
-import { cookies } from 'next/headers'
+import { getSessionCookie } from '@/lib/sessionServer'
 
 const CUSTOMERS_SHEET = 'customers'
 const ORDERS_SHEET = 'orders'
 
 export async function POST() {
-  const cookieStore = await cookies()
-  const session = cookieStore.get('retainly_session')
-  if (!session?.value) {
+  const session = await getSessionCookie()
+  if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

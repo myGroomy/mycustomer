@@ -35,7 +35,7 @@ let _cache: AppSettings | null = null
 
 function broadcastChange(): void {
   if (typeof window !== 'undefined') {
-    window.dispatchEvent(new Event('retainly_settings_changed'))
+    window.dispatchEvent(new Event('mycustomer_settings_changed'))
   }
 }
 

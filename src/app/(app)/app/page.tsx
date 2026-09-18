@@ -32,6 +32,7 @@ import { normalizePhone } from '@/utils/normalizePhone'
 import { DEFAULT_THRESHOLDS } from '@/constants'
 import { FLUID_EASE } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
+import { getSessionUser } from '@/utils/session'
 import type { ChannelType, CustomerWithStats } from '@/types'
 
 const CHANNELS = [
@@ -76,8 +77,8 @@ export default function InputOrderPage() {
   const [userBranch, setUserBranch] = useState('')
   useEffect(() => {
     try {
-      const user = JSON.parse(localStorage.getItem('retainly_user') || '{}')
-      setUserBranch(user.branch || '')
+      const user = getSessionUser()
+      setUserBranch(user?.branch || '')
     } catch {}
   }, [])
 
@@ -503,7 +504,7 @@ export default function InputOrderPage() {
                     onClick={() => setChannel(ch.id)}
                     className={`min-h-[44px] rounded-full px-4 py-2.5 text-xs font-semibold transition-all duration-300 active:scale-[0.96] ${
                       channel === ch.id
-                        ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(27,44,193,0.5)]'
+                        ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(28,43,66,0.5)]'
                         : 'border border-hairline bg-white text-ash hover:bg-sunken hover:text-ink'
                     }`}
                   >
@@ -548,7 +549,7 @@ export default function InputOrderPage() {
                   onClick={handleSubmit}
                   disabled={!canSubmit}
                   className="group flex min-h-[48px] h-12 sm:h-13 flex-1 items-center justify-center gap-2.5 rounded-full bg-accent text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-40"
-                  style={{ boxShadow: '0 8px 24px -8px rgba(27, 44, 193, 0.5)' }}
+                  style={{ boxShadow: '0 8px 24px -8px rgba(28, 43, 66, 0.5)' }}
                 >
                   {loading ? (
                     <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />

@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { motion, AnimatePresence } from 'framer-motion'
+import { toast } from 'sonner'
 import {
   FloppyDisk,
   Info,
@@ -14,12 +15,17 @@ import {
   Check,
   DownloadSimple,
   Spinner,
+  UploadSimple,
+  FileCsv,
 } from '@phosphor-icons/react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
+import { cn } from 'cn'
 import { syncSettingsFromSheets, saveAppSettings, type AppSettings, DEFAULT_APP_SETTINGS } from '@/services/settingsService'
+import { clearSheetsCache } from '@/services/sheetsService'
+import { parseCsv, mapCsvToRows, downloadImportTemplate, type ImportCustomerRow, type MappedCsv } from '@/utils/csvImport'
 import { fadeUp } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
 
@@ -32,6 +38,12 @@ export default function SettingsPage() {
   const [savedToast, setSavedToast] = useState(false)
   const [recalculating, setRecalculating] = useState(false)
   const [recalcResult, setRecalcResult] = useState<string | null>(null)
+
+  // Import customer state
+  const [importFile, setImportFile] = useState<{ name: string; mapped: MappedCsv } | null>(null)
+  const [importing, setImporting] = useState(false)
+  const [importResult, setImportResult] = useState<{ imported: number; skipped: number; errors: string[] } | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     loadSettings()
@@ -86,6 +98,55 @@ export default function SettingsPage() {
       setRecalcResult('Gagal menghubungi server')
     } finally {
       setRecalculating(false)
+    }
+  }
+
+  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    try {
+      const text = await file.text()
+      const mapped = mapCsvToRows(parseCsv(text))
+      setImportFile({ name: file.name, mapped })
+    } catch {
+      setImportFile({ name: file.name, mapped: { data: [], errors: ['Gagal membaca file CSV.'] } })
+    }
+    setImportResult(null)
+  }
+
+  const parseErrors = importFile ? importFile.mapped.errors : []
+
+  const handleRunImport = async () => {
+    if (!importFile || importFile.mapped.data.length === 0 || importing) return
+    setImporting(true)
+    setImportResult(null)
+    try {
+      const res = await fetch('/api/sheets/import-customers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows: importFile.mapped.data }),
+      })
+      const result = await res.json()
+      if (!res.ok) throw new Error(result.error || 'Import gagal')
+
+      setImportResult({
+        imported: result.imported as number,
+        skipped: result.skipped as number,
+        errors: [...parseErrors, ...((result.errors as string[]) || [])],
+      })
+
+      clearSheetsCache('customers')
+      toast.success(result.imported > 0 ? `${result.imported} customer berhasil diimport` : 'Tidak ada customer baru yang diimport')
+    } catch (err) {
+      setImportResult({
+        imported: 0,
+        skipped: 0,
+        errors: [err instanceof Error ? err.message : 'Import gagal'],
+      })
+      toast.error(err instanceof Error ? err.message : 'Import gagal')
+    } finally {
+      setImporting(false)
     }
   }
 
@@ -195,8 +256,112 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
-        {/* WhatsApp Message Template */}
+        {/* Import Data Customer */}
         <motion.div variants={fadeUp} custom={3} initial="hidden" animate={ready ? 'show' : 'hidden'}>
+          <div className="doppel-outer">
+            <div className="doppel-inner p-5 sm:p-7">
+              <div className="mb-4 flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-wash text-accent">
+                  <UploadSimple size={20} weight="duotone" />
+                </span>
+                <div>
+                  <h2 className="text-base font-semibold text-ink">Import Data Customer</h2>
+                  <p className="mt-0.5 text-xs text-ash">Tambah customer secara massal dari file CSV. Nomor WhatsApp yang sudah terdaftar akan dilewati (duplikat)</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col items-start justify-between gap-3 rounded-2xl border border-hairline bg-sunken/40 p-4 sm:flex-row sm:items-center">
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-ink">Template Import (.csv)</p>
+                  <p className="mt-0.5 text-[11px] leading-relaxed text-ash">
+                    Kolom: Nama, No WhatsApp, Cabang (CMH/BDG), Gender (L/P), Rentang Usia, Tanggal Order Pertama, Catatan
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={downloadImportTemplate}
+                  className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95"
+                >
+                  <DownloadSimple size={14} weight="bold" className="text-accent" />
+                  Download Template
+                </button>
+              </div>
+
+              <div className="mt-4">
+                <Label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-ash">File CSV</Label>
+                <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className={cn(
+                    'flex w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed bg-muted/20 px-4 py-6 text-center transition-colors',
+                    importFile ? 'border-accent/50 bg-accent/5' : 'border-hairline hover:border-accent/40 hover:bg-accent/5',
+                  )}
+                >
+                  {importFile ? (
+                    <>
+                      <FileCsv size={24} weight="duotone" className="text-accent" />
+                      <span className="text-xs font-semibold text-ink">{importFile.name}</span>
+                      <span className="text-[11px] text-ash">
+                        {importFile.mapped.data.length} baris data siap diimport &middot; klik untuk ganti file
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadSimple size={24} weight="duotone" className="text-mist" />
+                      <span className="text-xs font-semibold text-ink">Klik untuk pilih file CSV</span>
+                      <span className="text-[11px] text-ash">.csv - template yang sudah diisi atau hasil export dari Daftar Customer</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {parseErrors.length > 0 && (
+                <div className="mt-4 rounded-2xl border border-amber/30 bg-amber/5 p-3 text-[11px] leading-relaxed text-accent-deep">
+                  {parseErrors.map((err, i) => <p key={i}>{err}</p>)}
+                </div>
+              )}
+
+              {importResult && (
+                <div
+                  className={cn(
+                    'mt-4 rounded-2xl border p-3 text-[11px] leading-relaxed',
+                    importResult.errors.length > 0
+                      ? 'border-amber/30 bg-amber/5 text-accent-deep'
+                      : 'border-emerald/30 bg-emerald/5 text-emerald',
+                  )}
+                >
+                  <p className="text-xs font-semibold">
+                    Import selesai: {importResult.imported} diimport, {importResult.skipped} dilewati (duplikat).
+                  </p>
+                  {importResult.errors.map((err, i) => <p key={i} className="mt-1">{err}</p>)}
+                </div>
+              )}
+
+              <button
+                type="button"
+                onClick={handleRunImport}
+                disabled={!importFile || importFile.mapped.data.length === 0 || importing}
+                className="mt-5 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {importing ? (
+                  <>
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Mengimport...
+                  </>
+                ) : (
+                  <>
+                    <UploadSimple size={15} weight="bold" />
+                    Import {importFile && importFile.mapped.data.length > 0 ? importFile.mapped.data.length : 0} Customer
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* WhatsApp Message Template */}
+        <motion.div variants={fadeUp} custom={4} initial="hidden" animate={ready ? 'show' : 'hidden'}>
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
@@ -227,7 +392,7 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Info about sync */}
-        <motion.div variants={fadeUp} custom={4} initial="hidden" animate={ready ? 'show' : 'hidden'}>
+        <motion.div variants={fadeUp} custom={5} initial="hidden" animate={ready ? 'show' : 'hidden'}>
           <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4">
             <p className="text-xs text-ash">
               <strong className="text-accent">☁️ Tersimpan di Cloud</strong> — Pengaturan ini disimpan di Google Sheets dan akan sync ke semua perangkat yang login dengan akun yang sama.
@@ -236,12 +401,12 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Save Button */}
-        <motion.div variants={fadeUp} custom={5} initial="hidden" animate={ready ? 'show' : 'hidden'}>
+        <motion.div variants={fadeUp} custom={6} initial="hidden" animate={ready ? 'show' : 'hidden'}>
           <button
             onClick={handleSave}
             disabled={saving}
             className="group flex min-h-[50px] h-13 w-full items-center justify-center gap-3 rounded-full bg-accent text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
-            style={{ boxShadow: '0 8px 24px -8px rgba(27, 44, 193, 0.5)' }}
+            style={{ boxShadow: '0 8px 24px -8px rgba(28, 43, 66, 0.5)' }}
           >
             {saving ? (
               <span className="h-5 w-5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -255,7 +420,7 @@ export default function SettingsPage() {
         </motion.div>
 
         {/* Hidden Recalculate (admin tool) */}
-        <motion.div variants={fadeUp} custom={6} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mt-8 border-t border-hairline pt-4">
+        <motion.div variants={fadeUp} custom={7} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mt-8 border-t border-hairline pt-4">
           <button
             onClick={handleRecalculate}
             disabled={recalculating}

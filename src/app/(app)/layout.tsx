@@ -22,6 +22,7 @@ import {
 import { getAppSettings, syncSettingsFromSheets } from '@/services/settingsService'
 import { syncStaging } from '@/services/sheetsService'
 import { isManagerRole } from '@/services/adminService'
+import { getSessionUser, clearSessionUser } from '@/utils/session'
 import { Toaster } from '@/components/ui/sonner'
 import { SettingsProvider } from '@/lib/SettingsProvider'
 import type { ReactNode } from 'react'
@@ -61,7 +62,7 @@ function NavLink({ href, icon: Icon, label, onClick }: { href: string; icon: Rea
       onClick={onClick}
       className={`group relative flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm transition-all duration-300 active:scale-[0.98] ${
         isActive
-          ? 'bg-white font-semibold text-accent shadow-[0_2px_8px_-4px_rgba(27,44,193,0.4)] ring-1 ring-hairline'
+          ? 'bg-white font-semibold text-accent shadow-[0_2px_8px_-4px_rgba(28,43,66,0.4)] ring-1 ring-hairline'
           : 'text-ash hover:bg-sunken hover:text-ink'
       }`}
     >
@@ -82,8 +83,8 @@ function Sidebar({ user, storeName, onLogout }: { user: User | null; storeName: 
           <div className="flex flex-col gap-6 p-5">
             <div className="flex items-center gap-3">
               <Image
-                src="/brand-assets/logo-icon.png"
-                alt="Retain-ly Icon"
+                src="/brand-assets/mycustomer-icon.png"
+                alt="MYCUSTOMER Icon"
                 width={40}
                 height={40}
                 className="h-10 w-10 object-contain drop-shadow-sm"
@@ -131,7 +132,7 @@ function Sidebar({ user, storeName, onLogout }: { user: User | null; storeName: 
                 </button>
               </div>
             )}
-            <div className="text-xs text-mist">Retain-ly v2.5</div>
+            <div className="text-xs text-mist">MYCUSTOMER v2.5</div>
           </div>
         </div>
       </div>
@@ -188,12 +189,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    const stored = localStorage.getItem('retainly_user')
+    const stored = getSessionUser()
     if (!stored) {
       router.replace('/login')
       return
     }
-    setUser(JSON.parse(stored))
+    setUser(stored)
     syncSettings()
 
     // Sync settings from Sheets in background
@@ -205,12 +206,13 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     syncStaging().catch(() => {})
 
     const handleSettingsEvent = () => syncSettings()
-    window.addEventListener('retainly_settings_changed', handleSettingsEvent)
-    return () => window.removeEventListener('retainly_settings_changed', handleSettingsEvent)
+    window.addEventListener('mycustomer_settings_changed', handleSettingsEvent)
+    return () => window.removeEventListener('mycustomer_settings_changed', handleSettingsEvent)
   }, [router])
 
   const handleLogout = () => {
-    localStorage.removeItem('retainly_user')
+    clearSessionUser()
+    document.cookie = 'mycustomer_session=; path=/; max-age=0'
     document.cookie = 'retainly_session=; path=/; max-age=0'
     router.replace('/login')
   }
@@ -224,8 +226,8 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between px-4 sm:px-6">
           <div className="flex items-center gap-3">
             <Image
-              src="/brand-assets/logo-icon.png"
-              alt="Retain-ly Icon"
+              src="/brand-assets/mycustomer-icon.png"
+              alt="MYCUSTOMER Icon"
               width={32}
               height={32}
               className="h-8 w-8 object-contain md:hidden drop-shadow-sm"

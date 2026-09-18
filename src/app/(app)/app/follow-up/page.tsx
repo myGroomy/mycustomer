@@ -228,7 +228,7 @@ export default function FollowUpPage() {
                       onClick={() => setSelectedDate(todayStr)}
                       className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
                         selectedDate === todayStr
-                          ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(27,44,193,0.5)]'
+                          ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(28,43,66,0.5)]'
                           : 'border border-hairline bg-white text-ash hover:bg-sunken'
                       }`}
                     >
@@ -238,7 +238,7 @@ export default function FollowUpPage() {
                       onClick={() => setSelectedDate(yesterdayStr)}
                       className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all ${
                         selectedDate === yesterdayStr
-                          ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(27,44,193,0.5)]'
+                          ? 'bg-white text-ink ring-1 ring-ink/10 shadow-[0_6px_16px_-6px_rgba(28,43,66,0.5)]'
                           : 'border border-hairline bg-white text-ash hover:bg-sunken'
                       }`}
                     >
@@ -331,7 +331,7 @@ export default function FollowUpPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex min-h-[44px] h-10 items-center gap-2 rounded-full bg-emerald px-4 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95"
-                          style={{ boxShadow: '0 6px 16px -6px rgba(27, 44, 193, 0.5)' }}
+                          style={{ boxShadow: '0 6px 16px -6px rgba(28, 43, 66, 0.5)' }}
                         >
                           <WhatsappLogo size={16} weight="fill" />
                           <span>Chat WA</span>

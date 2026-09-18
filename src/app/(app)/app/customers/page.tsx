@@ -1,6 +1,6 @@
 'use client'
 
-import { Suspense, useEffect, useState, useCallback, useRef } from 'react'
+import { Suspense, useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { motion } from 'framer-motion'
@@ -11,27 +11,13 @@ import {
   Funnel,
   X,
   DownloadSimple,
-  UploadSimple,
-  FileCsv,
   Phone,
   ShoppingBag,
 } from '@phosphor-icons/react'
-import { cn } from 'cn'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getCustomersWithStats, searchCustomers } from '@/services/customerService'
-import { clearSheetsCache } from '@/services/sheetsService'
 import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
 import { CHANNELS, DEFAULT_THRESHOLDS, PAGE_SIZE } from '@/constants'
 import { fadeUp } from '@/lib/motion'
@@ -59,119 +45,6 @@ function matchesRepeatFilter(count: number, filter: RepeatFilter): boolean {
   return true
 }
 
-interface ImportRow {
-  name: string
-  phone: string
-  branch?: string
-  gender?: string
-  age_range?: string
-  first_order_date?: string
-  description?: string
-}
-
-const IMPORT_TEMPLATE_HEADERS = ['Nama', 'No WhatsApp', 'Cabang', 'Gender', 'Rentang Usia', 'Tanggal Order Pertama', 'Catatan']
-
-const IMPORT_COLUMN_KEYS: Record<keyof ImportRow, string[]> = {
-  name: ['nama', 'name', 'namacustomer', 'namapelanggan'],
-  phone: ['nowhatsapp', 'nowa', 'nowapp', 'notelp', 'nohp', 'telepon', 'phone', 'phon', 'nomor'],
-  branch: ['cabang', 'branch'],
-  gender: ['gender', 'jeniskelamin', 'jk'],
-  age_range: ['usia', 'umur', 'age', 'agerange', 'rentangusia', 'rentangumur'],
-  first_order_date: ['tanggalorderpertama', 'firstorderdate', 'tanggalpertama', 'tglorderpertama', 'orderpertama'],
-  description: ['catatan', 'keterangan', 'description', 'deskripsi', 'notes'],
-}
-
-function parseCsv(text: string): string[][] {
-  const rows: string[][] = []
-  let row: string[] = []
-  let cur = ''
-  let inQuotes = false
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i]
-    if (inQuotes) {
-      if (ch === '"') {
-        if (text[i + 1] === '"') { cur += '"'; i++ } else { inQuotes = false }
-      } else {
-        cur += ch
-      }
-    } else if (ch === '"') {
-      inQuotes = true
-    } else if (ch === ',') {
-      row.push(cur); cur = ''
-    } else if (ch === '\n') {
-      row.push(cur); rows.push(row); row = []; cur = ''
-    } else if (ch !== '\r') {
-      cur += ch
-    }
-  }
-  if (cur !== '' || row.length > 0) { row.push(cur); rows.push(row) }
-  return rows
-}
-
-const normHeader = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, '')
-const firstIdx = (headers: string[], keys: string[]) => headers.findIndex((h) => keys.includes(h))
-
-function mapCsvToRows(rows: string[][]): { data: ImportRow[]; errors: string[] } {
-  if (rows.length === 0) return { data: [], errors: ['File CSV kosong.'] }
-  const headers = (rows[0] || []).map(normHeader)
-  const idx = {
-    name: firstIdx(headers, IMPORT_COLUMN_KEYS.name),
-    phone: firstIdx(headers, IMPORT_COLUMN_KEYS.phone),
-    branch: firstIdx(headers, IMPORT_COLUMN_KEYS.branch),
-    gender: firstIdx(headers, IMPORT_COLUMN_KEYS.gender),
-    age_range: firstIdx(headers, IMPORT_COLUMN_KEYS.age_range),
-    first_order_date: firstIdx(headers, IMPORT_COLUMN_KEYS.first_order_date),
-    description: firstIdx(headers, IMPORT_COLUMN_KEYS.description),
-  }
-
-  if (idx.name === -1 || idx.phone === -1) {
-    return { data: [], errors: ['Header tidak valid: kolom "Nama" dan "No WhatsApp" wajib ada. Gunakan template yang disediakan.'] }
-  }
-
-  const data: ImportRow[] = []
-  const missing: number[] = []
-  for (let r = 1; r < rows.length; r++) {
-    const cells = rows[r]
-    if (!cells || cells.every((c) => !c.trim())) continue
-    const get = (i: number) => (i >= 0 ? (cells[i] || '').trim() : '')
-    const name = get(idx.name)
-    const phone = get(idx.phone)
-    if (!name || !phone) { missing.push(r + 1); continue }
-    const gender = get(idx.gender)
-    data.push({
-      name,
-      phone,
-      branch: get(idx.branch),
-      gender: gender.startsWith('L') || gender.startsWith('l') ? 'L' : gender.startsWith('P') || gender.startsWith('p') ? 'P' : gender,
-      age_range: get(idx.age_range),
-      first_order_date: get(idx.first_order_date),
-      description: get(idx.description),
-    })
-  }
-
-  const errors: string[] = []
-  if (missing.length > 0) {
-    const shown = missing.slice(0, 5).join(', ')
-    errors.push(`${missing.length} baris dilewati (nama/WA kosong): baris ${shown}${missing.length > 5 ? ', ...' : ''}`)
-  }
-  return { data, errors }
-}
-
-function downloadImportTemplate() {
-  const BOM = '\uFEFF'
-  const sample = ['Budi Santoso', '081234567890', 'CMH', 'L', '26-35', '2026-09-01', 'Customer reguler']
-  const csv = [IMPORT_TEMPLATE_HEADERS.join(','), sample.join(',')].join('\n')
-  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = 'Template_Import_Customer.csv'
-  document.body.appendChild(link)
-  link.click()
-  document.body.removeChild(link)
-  URL.revokeObjectURL(url)
-}
-
 function CustomerListView() {
   const ready = useMounted()
   const searchParams = useSearchParams()
@@ -185,13 +58,6 @@ function CustomerListView() {
   const [repeatFilter, setRepeatFilter] = useState<RepeatFilter>('all')
   const [countRange, setCountRange] = useState<{ min: number; max: number } | null>(null)
   const [downloading, setDownloading] = useState(false)
-
-  // Import state
-  const [importOpen, setImportOpen] = useState(false)
-  const [importFile, setImportFile] = useState<{ name: string; data: ImportRow[]; errors: string[] } | null>(null)
-  const [importing, setImporting] = useState(false)
-  const [importResult, setImportResult] = useState<{ imported: number; skipped: number; errors: string[] } | null>(null)
-  const fileInputRef = useRef<HTMLInputElement>(null)
 
   // Date Filter State
   const [dateFrom, setDateFrom] = useState('')
@@ -375,61 +241,6 @@ function CustomerListView() {
     setPage(0)
   }
 
-  const handleImportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    try {
-      const text = await file.text()
-      const mapped = mapCsvToRows(parseCsv(text))
-      setImportFile({ name: file.name, data: mapped.data, errors: mapped.errors })
-    } catch {
-      setImportFile({ name: file.name, data: [], errors: ['Gagal membaca file CSV.'] })
-    }
-    setImportResult(null)
-  }
-
-  const handleRunImport = async () => {
-    if (!importFile || importFile.data.length === 0 || importing) return
-    setImporting(true)
-    setImportResult(null)
-    try {
-      const res = await fetch('/api/sheets/import-customers', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ rows: importFile.data }),
-      })
-      const result = await res.json()
-      if (!res.ok) throw new Error(result.error || 'Import gagal')
-
-      setImportResult({
-        imported: result.imported as number,
-        skipped: result.skipped as number,
-        errors: [...(importFile.errors || []), ...((result.errors as string[]) || [])],
-      })
-
-      clearSheetsCache('customers')
-      if (page !== 0) setPage(0)
-      loadCustomers()
-    } catch (err) {
-      setImportResult({
-        imported: 0,
-        skipped: 0,
-        errors: [err instanceof Error ? err.message : 'Import gagal'],
-      })
-    } finally {
-      setImporting(false)
-    }
-  }
-
-  const handleImportDialogOpenChange = (open: boolean) => {
-    setImportOpen(open)
-    if (!open) {
-      setImportFile(null)
-      setImportResult(null)
-    }
-  }
-
   return (
     <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 md:py-10 pb-28 md:pb-20">
       {/* Heading */}
@@ -449,15 +260,6 @@ function CustomerListView() {
                 <span className="text-xs font-semibold uppercase tracking-wider text-ash">Filter Customer</span>
               </div>
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setImportOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-1.5 text-xs font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95"
-                  title="Import data customer dari file CSV"
-                >
-                  <UploadSimple size={14} weight="bold" className="text-accent" />
-                  Import
-                </button>
                 <button
                   type="button"
                   onClick={handleDownload}
@@ -647,96 +449,6 @@ function CustomerListView() {
         )}
       </div>
 
-      {/* Import Dialog */}
-      <Dialog open={importOpen} onOpenChange={handleImportDialogOpenChange}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Import Data Customer</DialogTitle>
-            <DialogDescription>
-              Unggah file CSV berisi daftar customer baru. Customer dengan nomor WhatsApp yang sama akan dilewati (duplikat).
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="flex items-center justify-between gap-3 rounded-xl border border-hairline bg-muted/40 p-3">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-ink">Template Import (.csv)</p>
-                <p className="mt-0.5 text-[11px] leading-relaxed text-ash">
-                  Kolom: Nama, No WhatsApp, Cabang (CMH/BDG), Gender (L/P), Rentang Usia, Tanggal Order Pertama, Catatan
-                </p>
-              </div>
-              <Button type="button" variant="outline" size="sm" onClick={downloadImportTemplate} className="shrink-0">
-                <DownloadSimple size={13} weight="bold" />
-                Template
-              </Button>
-            </div>
-
-            <input ref={fileInputRef} type="file" accept=".csv,text/csv" className="hidden" onChange={handleImportFile} />
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className={cn(
-                'flex w-full flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed bg-muted/20 px-4 py-5 text-center transition-colors',
-                importFile ? 'border-accent/50 bg-accent/5' : 'border-hairline hover:border-accent/40 hover:bg-accent/5',
-              )}
-            >
-              {importFile ? (
-                <>
-                  <FileCsv size={22} weight="duotone" className="text-accent" />
-                  <span className="text-xs font-semibold text-ink">{importFile.name}</span>
-                  <span className="text-[11px] text-ash">
-                    {importFile.data.length} baris data siap diimport
-                  </span>
-                </>
-              ) : (
-                <>
-                  <UploadSimple size={22} weight="duotone" className="text-mist" />
-                  <span className="text-xs font-semibold text-ink">Klik untuk pilih file CSV</span>
-                  <span className="text-[11px] text-ash">.csv - template yang sudah diisi atau hasil export</span>
-                </>
-              )}
-            </button>
-
-            {(importFile?.errors.length ?? 0) > 0 && (
-              <div className="rounded-xl border border-amber/30 bg-amber/5 p-3 text-[11px] leading-relaxed text-accent-deep">
-                {importFile!.errors.map((err, i) => (
-                  <p key={i}>{err}</p>
-                ))}
-              </div>
-            )}
-
-            {importResult && (
-              <div
-                className={cn(
-                  'rounded-xl border p-3 text-[11px] leading-relaxed',
-                  importResult.errors.length > 0
-                    ? 'border-amber/30 bg-amber/5 text-accent-deep'
-                    : 'border-emerald/30 bg-emerald/5 text-emerald',
-                )}
-              >
-                <p className="text-xs font-semibold">
-                  Import selesai: {importResult.imported} diimport, {importResult.skipped} dilewati (duplikat).
-                </p>
-                {importResult.errors.map((err, i) => (
-                  <p key={i} className="mt-1">{err}</p>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter>
-            <DialogClose render={<Button variant="ghost" />}>Tutup</DialogClose>
-            <Button
-              type="button"
-              onClick={handleRunImport}
-              disabled={!importFile || importFile.data.length === 0 || importing}
-            >
-              <UploadSimple size={14} weight="bold" />
-              {importing ? 'Mengimport...' : `Import ${importFile ? importFile.data.length : 0} Customer`}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
       {totalPages > 1 && (
         <div className="mt-8 flex items-center justify-between border-t border-hairline pt-5">
           <p className="text-xs text-ash">

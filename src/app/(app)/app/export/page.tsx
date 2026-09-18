@@ -205,7 +205,7 @@ export default function ExportPage() {
               onClick={handleExport}
               disabled={loading}
               className="mt-6 group flex min-h-[48px] h-13 w-full items-center justify-center gap-3 rounded-full bg-accent text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
-              style={{ boxShadow: '0 8px 24px -8px rgba(27, 44, 193, 0.5)' }}
+              style={{ boxShadow: '0 8px 24px -8px rgba(28, 43, 66, 0.5)' }}
             >
               {loading ? (
                 <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
