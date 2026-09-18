@@ -17,6 +17,7 @@ import {
   Prohibit,
 } from '@phosphor-icons/react'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getCustomersWithStats } from '@/services/customerService'
 import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
@@ -44,6 +45,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [branchFilter, setBranchFilter] = useState<BranchType | 'ALL'>('ALL')
   const [channelFilter, setChannelFilter] = useState<string>('ALL')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   const [userRole, setUserRole] = useState('')
   const [userBranch, setUserBranch] = useState('')
@@ -91,8 +94,18 @@ export default function DashboardPage() {
 
   const filteredCustomers = branchCustomers.filter(c => {
     if (channelFilter !== 'ALL' && !c.orders?.some(o => o.channel === channelFilter)) return false
+    if (dateFrom && c.last_order_date < dateFrom) return false
+    if (dateTo && c.last_order_date > dateTo) return false
     return true
   })
+
+  const hasFilter = channelFilter !== 'ALL' || Boolean(dateFrom || dateTo)
+
+  const handleResetFilter = () => {
+    setChannelFilter('ALL')
+    setDateFrom('')
+    setDateTo('')
+  }
 
   const counts = { active: 0, at_risk: 0, churned: 0 }
   const channelCounts: Record<string, number> = {}
@@ -230,6 +243,7 @@ export default function DashboardPage() {
     const tag = [
       branchFilter === 'ALL' ? 'SemuaCabang' : branchFilter,
       channelFilter === 'ALL' ? 'SemuaChannel' : getChannelLabel(channelFilter).replace(/\s+/g, ''),
+      ...(dateFrom || dateTo ? [`${dateFrom || 'awal'}-${dateTo || 'akhir'}`] : []),
     ].join('-')
     downloadCsv(rows, `Dashboard_Retensi_${tag}.csv`)
   }
@@ -299,10 +313,10 @@ export default function DashboardPage() {
                 <FunnelSimple size={16} weight="duotone" className="text-accent" />
                 <span className="text-xs font-semibold uppercase tracking-wider text-ash">Filter Laporan</span>
               </div>
-              {(channelFilter !== 'ALL') && (
+              {hasFilter && (
                 <button
                   type="button"
-                  onClick={() => { setChannelFilter('ALL') }}
+                  onClick={handleResetFilter}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink rounded-full px-3 py-1.5 ring-1 ring-ink/10 bg-white transition-all hover:bg-ink/5 active:scale-95"
                 >
                   <Prohibit size={13} weight="duotone" className="text-accent" />
@@ -311,7 +325,7 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              <div className="sm:max-w-xs">
+              <div>
                 <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Channel Order</span>
                 <Select value={channelFilter} onValueChange={(v) => v && setChannelFilter(v)}>
                   <SelectTrigger className="h-10 w-full rounded-2xl">
@@ -322,6 +336,24 @@ export default function DashboardPage() {
                     {CHANNELS.map((ch) => <SelectItem key={ch.id} value={ch.id}>{ch.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
+              </div>
+              <div>
+                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Dari Tanggal</span>
+                <Input
+                  type="date"
+                  value={dateFrom}
+                  onChange={(e) => setDateFrom(e.target.value)}
+                  className="h-10 text-xs rounded-2xl"
+                />
+              </div>
+              <div>
+                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">Sampai Tanggal</span>
+                <Input
+                  type="date"
+                  value={dateTo}
+                  onChange={(e) => setDateTo(e.target.value)}
+                  className="h-10 text-xs rounded-2xl"
+                />
               </div>
             </div>
           </div>
