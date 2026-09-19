@@ -60,6 +60,7 @@ function NavLink({ href, icon: Icon, label, onClick }: { href: string; icon: Rea
     <Link
       href={href}
       onClick={onClick}
+      aria-current={isActive ? 'page' : undefined}
       className={`group relative flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm transition-all duration-300 active:scale-[0.98] ${
         isActive
           ? 'bg-white font-semibold text-accent shadow-[0_2px_8px_-4px_rgba(28,43,66,0.4)] ring-1 ring-hairline'
@@ -125,8 +126,9 @@ function Sidebar({ user, storeName, onLogout }: { user: User | null; storeName: 
                 </div>
                 <button
                   onClick={onLogout}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-ash transition-colors duration-300 hover:bg-sunken hover:text-ink"
-                  title="Logout"
+                  aria-label="Keluar dari aplikasi"
+                  className="flex h-11 w-11 items-center justify-center rounded-md border border-hairline text-ash transition-colors duration-300 hover:bg-sunken hover:text-ink"
+                  title="Keluar dari aplikasi"
                 >
                   <SignOut size={16} weight="bold" />
                 </button>
@@ -153,23 +155,25 @@ function BottomNav({ user, onLogout }: { user: User | null; onLogout: () => void
               <Link
                 key={item.href}
                 href={item.href}
-                className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl py-1.5 transition-all duration-300 active:scale-[0.95] ${
+                aria-current={isActive ? 'page' : undefined}
+                className={`flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 transition-all duration-300 active:scale-[0.95] ${
                   isActive ? 'text-white' : 'text-mist'
                 }`}
               >
                 <span className={`flex h-8 w-12 items-center justify-center rounded-full ${isActive ? 'bg-accent' : ''}`}>
                   <item.icon size={22} weight={isActive ? 'fill' : 'regular'} className={isActive ? 'text-white' : 'text-mist'} />
                 </span>
-                <span className={`text-[9px] font-medium ${isActive ? 'text-accent' : 'text-ash/70'}`}>{item.label.split(' ')[0]}</span>
+                <span className={`text-[11px] font-medium ${isActive ? 'text-accent' : 'text-ash/70'}`}>{item.label}</span>
               </Link>
             )
           })}
           <button
             onClick={onLogout}
-            className="flex flex-1 flex-col items-center justify-center gap-0.5 rounded-2xl py-1.5 text-mist transition-all duration-300 active:scale-[0.95]"
+            aria-label="Keluar dari aplikasi"
+            className="flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-mist transition-all duration-300 active:scale-[0.95]"
           >
             <SignOut size={22} weight="bold" />
-            <span className="text-[9px] font-medium text-ash/70">Keluar</span>
+            <span className="text-[11px] font-medium text-ash/70">Keluar</span>
           </button>
         </div>
       </div>
@@ -244,8 +248,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           {/* Hamburg Menu Button */}
           <button
             onClick={() => setMenuOpen((prev) => !prev)}
-            className="flex h-10 w-10 items-center justify-center rounded-2xl border border-hairline bg-white text-ink transition-all hover:bg-sunken active:scale-95"
-            title="Menu Utama"
+            aria-expanded={menuOpen}
+            aria-controls="mobile-navigation-menu"
+            aria-label={menuOpen ? 'Tutup menu utama' : 'Buka menu utama'}
+            className="flex h-11 w-11 items-center justify-center rounded-md border border-hairline bg-white text-ink transition-all hover:bg-sunken active:scale-95"
+            title={menuOpen ? 'Tutup menu utama' : 'Buka menu utama'}
           >
             {menuOpen ? <X size={20} weight="bold" /> : <List size={22} weight="bold" />}
           </button>
@@ -269,6 +276,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -10, scale: 0.98 }}
               transition={{ duration: 0.2 }}
+              id="mobile-navigation-menu"
               className="fixed top-16 right-4 z-50 w-72 overflow-hidden"
             >
               <div className="doppel-outer">
