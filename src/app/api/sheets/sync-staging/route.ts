@@ -45,6 +45,8 @@ export async function POST() {
 
     const existingCustomers = customersRes.data.values || []
     const existingOrders = ordersRes.data.values || []
+    const customerHeaders = existingCustomers[0] || []
+    const orderHeaders = existingOrders[0] || []
 
     // Build phone -> customer lookup
     const phoneToCustomer = new Map<string, Record<string, string>>()
@@ -134,11 +136,24 @@ export async function POST() {
             created_at: new Date().toISOString(),
             branch,
           }
+          const customerValues = customerHeaders.map((header: string) => {
+            if (header === 'id') return newCustomer.id
+            if (header === 'phone_normalized') return newCustomer.phone_normalized
+            if (header === 'name') return newCustomer.name
+            if (header === 'first_order_date') return newCustomer.first_order_date
+            if (header === 'created_at') return newCustomer.created_at
+            if (header === 'version') return '1'
+            if (header === 'branch') return newCustomer.branch
+            if (header === 'order_count') return '0'
+            if (header === 'aliases') return '[]'
+            if (header === 'branch_memberships') return JSON.stringify([branch])
+            return ''
+          })
           await sheets.spreadsheets.values.append({
             spreadsheetId,
-            range: 'customers!A:G',
+            range: `customers!A:${String.fromCharCode(64 + customerHeaders.length)}`,
             valueInputOption: 'RAW',
-            requestBody: { values: [Object.values(newCustomer)] },
+            requestBody: { values: [customerValues] },
           })
           phoneToCustomer.set(phone, { id: customerId, phone_normalized: phone, name: nama })
         }
@@ -161,11 +176,21 @@ export async function POST() {
           created_at: new Date().toISOString(),
           branch,
         }
+        const orderValues = orderHeaders.map((header: string) => {
+          if (header === 'id') return newOrder.id
+          if (header === 'customer_id') return newOrder.customer_id
+          if (header === 'order_date') return newOrder.order_date
+          if (header === 'channel') return newOrder.channel
+          if (header === 'raw_phone_input') return newOrder.raw_phone_input
+          if (header === 'created_at') return newOrder.created_at
+          if (header === 'branch') return newOrder.branch
+          return ''
+        })
         await sheets.spreadsheets.values.append({
           spreadsheetId,
-          range: 'orders!A:G',
+          range: `orders!A:${String.fromCharCode(64 + orderHeaders.length)}`,
           valueInputOption: 'RAW',
-          requestBody: { values: [Object.values(newOrder)] },
+          requestBody: { values: [orderValues] },
         })
 
         existingOrderKeys.add(orderKey)

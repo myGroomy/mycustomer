@@ -13,6 +13,8 @@ export interface Branch {
   code: string
   name: string
   created_at: string
+  address?: string
+  is_active?: boolean
 }
 
 export interface ManagedUser {
@@ -44,6 +46,8 @@ export async function getBranches(): Promise<Branch[]> {
       code: r.code || '',
       name: r.name || r.code || '',
       created_at: r.created_at || '',
+      address: r.address || '',
+      is_active: r.is_active !== 'FALSE' && r.is_active !== 'false',
     }))
   } catch {
     return DEFAULT_BRANCHES
@@ -56,6 +60,8 @@ export async function createBranch(code: string, name: string): Promise<void> {
     code: code.trim(),
     name: name.trim(),
     created_at: new Date().toISOString(),
+    address: '',
+    is_active: 'TRUE',
   })
 }
 
@@ -65,6 +71,8 @@ export async function updateBranch(rowIndex: number, branch: Branch): Promise<vo
     code: branch.code.trim(),
     name: branch.name.trim(),
     created_at: branch.created_at,
+    address: branch.address || '',
+    is_active: branch.is_active === false ? 'FALSE' : 'TRUE',
   })
 }
 
