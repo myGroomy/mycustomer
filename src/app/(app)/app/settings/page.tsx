@@ -608,7 +608,7 @@ export default function SettingsPage() {
           <button
             onClick={handleRecalculate}
             disabled={recalculating}
-            className="text-[11px] text-mist/60 hover:text-mist transition-colors"
+            className="text-[11px] text-ash hover:text-ink transition-colors"
           >
             {recalculating
               ? "Menghitung ulang order_count..."
