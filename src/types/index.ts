@@ -29,6 +29,16 @@ export interface Customer {
   gender?: string
   is_followed_up?: boolean
   followed_up_at?: string
+  aliases?: CustomerAlias[]
+  branch_memberships?: string[]
+  has_other_branch_activity?: boolean
+}
+
+export interface CustomerAlias {
+  name: string
+  branch: string
+  first_seen_at: string
+  last_seen_at: string
 }
 
 export interface CustomerWithStats extends Customer {

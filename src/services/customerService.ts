@@ -1,12 +1,26 @@
 import { getSheetData, appendRow, updateRow } from './sheetsService'
 import { normalizePhone } from '@/utils/normalizePhone'
 import { generateId } from '@/utils/generateId'
-import type { Customer, CustomerWithStats, PaginatedResponse } from '@/types'
+import type { Customer, CustomerWithStats, PaginatedResponse, CustomerAlias } from '@/types'
 
 const CUSTOMERS_SHEET = 'customers'
 const ORDERS_SHEET = 'orders'
 
 function toCustomer(row: Record<string, string>): Customer {
+  let aliases: CustomerAlias[] = []
+  let branchMemberships: string[] = []
+  try {
+    const parsed = JSON.parse(row.aliases || '[]')
+    if (Array.isArray(parsed)) aliases = parsed
+  } catch {
+    aliases = []
+  }
+  try {
+    const parsed = JSON.parse(row.branch_memberships || '[]')
+    if (Array.isArray(parsed)) branchMemberships = parsed.filter((branch): branch is string => typeof branch === 'string')
+  } catch {
+    branchMemberships = []
+  }
   return {
     id: row.id,
     phone_normalized: row.phone_normalized,
@@ -20,7 +34,25 @@ function toCustomer(row: Record<string, string>): Customer {
     gender: row.gender || '',
     is_followed_up: row.is_followed_up === 'TRUE' || row.is_followed_up === 'true',
     followed_up_at: row.followed_up_at || '',
+    aliases,
+    branch_memberships: branchMemberships,
   }
+}
+
+export async function resolveCustomer(
+  phone: string,
+  name: string,
+  firstOrderDate?: string,
+  branch?: string,
+): Promise<{ customer_id: string; phone_normalized: string; name: string; created: boolean; has_other_branch_activity?: boolean }> {
+  const response = await fetch('/api/customers/resolve', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ phone, name, first_order_date: firstOrderDate, branch }),
+  })
+  const data = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(data.error || 'Gagal memproses customer')
+  return data
 }
 
 function paginate<T>(data: T[], page: number, pageSize: number): PaginatedResponse<T> {

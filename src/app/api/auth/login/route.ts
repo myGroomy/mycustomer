@@ -36,6 +36,16 @@ export async function POST(request: NextRequest) {
     return responseBody
   } catch (error) {
     console.error('Login error:', error)
+    if (error instanceof Error && (
+      error.message === 'SESSION_SECRET must be configured with at least 32 characters' ||
+      error.message === 'Missing Google Sheets env vars' ||
+      error.message === 'Missing GOOGLE_SPREADSHEET_ID env var'
+    )) {
+      return NextResponse.json(
+        { error: 'Konfigurasi server belum lengkap. Hubungi administrator.' },
+        { status: 503 },
+      )
+    }
     return NextResponse.json({ error: 'Terjadi kesalahan saat login' }, { status: 500 })
   }
 }

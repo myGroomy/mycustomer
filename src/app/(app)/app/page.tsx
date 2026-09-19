@@ -25,10 +25,9 @@ import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { createCustomer, findCustomerByPhone, getCustomersWithStats } from '@/services/customerService'
+import { resolveCustomer, getCustomersWithStats } from '@/services/customerService'
 import { createOrder } from '@/services/orderService'
 import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
-import { normalizePhone } from '@/utils/normalizePhone'
 import { DEFAULT_THRESHOLDS } from '@/constants'
 import { FLUID_EASE } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
@@ -68,18 +67,14 @@ export default function InputOrderPage() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [userBranch, setUserBranch] = useState('')
 
   // Alias dialog state
   const [aliasDialogOpen, setAliasDialogOpen] = useState(false)
   const [aliasNote, setAliasNote] = useState('')
 
-  // Get user branch from localStorage
-  const [userBranch, setUserBranch] = useState('')
   useEffect(() => {
-    try {
-      const user = getSessionUser()
-      setUserBranch(user?.branch || '')
-    } catch {}
+    setUserBranch(getSessionUser()?.branch || '')
   }, [])
 
   // Preload all customers on mount
@@ -92,8 +87,8 @@ export default function InputOrderPage() {
           retention_status: getRetentionStatus(c.last_order_date, DEFAULT_THRESHOLDS),
         }))
         setPreloadedCustomers(withStatus)
-      } catch {
-        // Silent fail search will just return empty
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Gagal memuat daftar customer')
       } finally {
         setPreloading(false)
       }
@@ -160,18 +155,8 @@ export default function InputOrderPage() {
       if (!customerId) {
         if (!newName.trim()) { setError('Nama customer wajib diisi'); setLoading(false); return }
         if (!newPhone.trim()) { setError('Nomor WhatsApp wajib diisi'); setLoading(false); return }
-        const normalizedPhone = normalizePhone(newPhone)
-        const existing = await findCustomerByPhone(newPhone)
-        if (existing) {
-          customerId = existing.id
-        } else {
-          const newCustomer = await createCustomer({
-            phone_normalized: normalizedPhone,
-            name: newName.trim(),
-            first_order_date: orderDate,
-          })
-          customerId = newCustomer.id
-        }
+        const resolved = await resolveCustomer(newPhone, newName.trim(), orderDate, userBranch)
+        customerId = resolved.customer_id
       }
 
       await createOrder({

@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
 
-const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users'])
+const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users', 'customer_branches'])
+const ORDERS_SHEET = 'orders'
 
 export async function GET(request: NextRequest) {
   const auth = await authenticatedUser()
@@ -32,13 +33,32 @@ export async function GET(request: NextRequest) {
     }
 
     const headers = rows[0]
-    const data = rows.slice(1).map(row => {
+    let data = rows.slice(1).map(row => {
       const obj: Record<string, string> = {}
       headers.forEach((header: string, index: number) => {
         obj[header] = row[index] || ''
       })
       return obj
     })
+
+    if (auth.user.role === 'kasir' && auth.user.branch && (sheet === 'orders' || sheet === 'customers')) {
+      if (sheet === 'orders') {
+        data = data.filter(row => row.branch === auth.user.branch)
+      } else {
+        const orderResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: `${ORDERS_SHEET}!A:Z`,
+        })
+        const orderRows = orderResponse.data.values || []
+        const orderHeaders = orderRows[0] || []
+        const customerIdsInBranch = new Set(
+          orderRows.slice(1)
+            .filter(row => row[orderHeaders.indexOf('branch')] === auth.user.branch)
+            .map(row => row[orderHeaders.indexOf('customer_id')]),
+        )
+        data = data.filter(row => customerIdsInBranch.has(row.id))
+      }
+    }
 
     return NextResponse.json({ data })
   } catch (error) {

@@ -69,7 +69,6 @@ export async function createOrder(order: CreateOrderInput): Promise<Order> {
     channel: order.channel,
     raw_phone_input: order.raw_phone_input || '',
     created_at: new Date().toISOString(),
-    branch: order.branch || '',
   }
 }
 

@@ -47,6 +47,7 @@ export async function PUT(request: NextRequest) {
 
     const headers = [...(rows[0] as string[])]
     const idColIdx = headers.indexOf('id')
+    const branchColIdx = headers.indexOf('branch')
 
     // Pastikan kolom is_followed_up & followed_up_at ada (auto-migrasi)
     let fuColIdx = headers.indexOf(FU_COL)
@@ -82,6 +83,9 @@ export async function PUT(request: NextRequest) {
 
     if (targetRowIdx === -1) {
       return NextResponse.json({ error: `Order dengan id ${order_id} tidak ditemukan` }, { status: 404 })
+    }
+    if (auth.user.role === 'kasir' && branchColIdx >= 0 && rows[targetRowIdx][branchColIdx] !== auth.user.branch) {
+      return NextResponse.json({ error: 'Order tidak tersedia di cabang akun ini' }, { status: 403 })
     }
 
     const fuValue = is_followed_up ? 'TRUE' : 'FALSE'

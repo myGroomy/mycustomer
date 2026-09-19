@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { normalizePhone } from '@/utils/normalizePhone'
 
 const CUSTOMERS_SHEET = 'customers'
 const ORDERS_SHEET = 'orders'
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { customer_id, order_date, channel, raw_phone_input, branch, alias_note } = body
+    const { customer_id, order_date, channel, raw_phone_input, branch: requestedBranch, alias_note } = body
 
     if (!customer_id || !order_date || !channel) {
       return NextResponse.json(
@@ -22,6 +23,12 @@ export async function POST(request: NextRequest) {
 
     const sheets = getSheets()
     const spreadsheetId = getSpreadsheetId()
+    const branch = auth.user.role === 'kasir'
+      ? auth.user.branch
+      : (typeof requestedBranch === 'string' ? requestedBranch.trim() : '') || auth.user.branch
+    if (!branch) {
+      return NextResponse.json({ error: 'Cabang order wajib dipilih' }, { status: 400 })
+    }
 
     // 1. Baca semua data customers untuk cari index customer yang benar
     const customersResponse = await sheets.spreadsheets.values.get({
@@ -58,6 +65,28 @@ export async function POST(request: NextRequest) {
 
     const orderRows = ordersResponse.data.values || []
     const orderHeaders = orderRows.length > 0 ? orderRows[0] : []
+    if (auth.user.role === 'kasir' && branch) {
+      const orderCustomerIndex = orderHeaders.indexOf('customer_id')
+      const orderBranchIndex = orderHeaders.indexOf('branch')
+      const customerHasBranchAccess = orderRows.slice(1).some(
+        row => row[orderCustomerIndex] === customer_id && row[orderBranchIndex] === branch,
+      )
+      const customerBranchIndex = customerHeaders.indexOf('branch')
+      const membershipIndex = customerHeaders.indexOf('branch_memberships')
+      let memberships: string[] = []
+      try {
+        memberships = membershipIndex >= 0 ? JSON.parse(customerRow[membershipIndex] || '[]') : []
+      } catch {
+        memberships = []
+      }
+      const customerBelongsToBranch =
+        (customerBranchIndex >= 0 && customerRow[customerBranchIndex] === branch) ||
+        (Array.isArray(memberships) && memberships.includes(branch)) ||
+        normalizePhone(raw_phone_input || '') === customerRow[customerHeaders.indexOf('phone_normalized')]
+      if (!customerHasBranchAccess && !customerBelongsToBranch) {
+        return NextResponse.json({ error: 'Customer tidak tersedia di cabang akun ini' }, { status: 403 })
+      }
+    }
 
     const newOrderValues = orderHeaders.map((header: string) => {
       switch (header) {
@@ -67,7 +96,7 @@ export async function POST(request: NextRequest) {
         case 'channel': return channel
         case 'raw_phone_input': return raw_phone_input || ''
         case 'created_at': return new Date().toISOString()
-        case 'branch': return branch || auth.user.branch || ''
+        case 'branch': return branch
         default: return ''
       }
     })
