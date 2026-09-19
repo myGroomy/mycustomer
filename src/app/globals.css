@@ -210,7 +210,7 @@
   --muted: var(--color-sunken);
   --muted-foreground: var(--color-ash);
   --accent: var(--color-accent);
-  --accent-foreground: #ffffff;
+  --accent-foreground: #1c2b42;
   --destructive: var(--color-rose);
   --border: var(--color-hairline);
   --input: var(--color-hairline);

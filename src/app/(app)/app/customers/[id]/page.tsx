@@ -62,6 +62,7 @@ export default function CustomerDetailPage() {
   const [customer, setCustomer] = useState<CustomerWithStats | null>(null)
   const [orders, setOrders] = useState<Order[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   // Edit mode state
   const [isEditing, setIsEditing] = useState(false)
@@ -81,6 +82,7 @@ export default function CustomerDetailPage() {
   const loadData = async () => {
     if (!id) return
     setLoading(true)
+    setLoadError(null)
     try {
       const [c, o] = await Promise.all([getCustomerById(id), getOrdersByCustomer(id, 0, PAGE_SIZE)])
       if (c) {
@@ -93,7 +95,11 @@ export default function CustomerDetailPage() {
         setDescription(c.description || '')
       }
       setOrders(o.data)
-    } catch { /* silent */ } finally { setLoading(false) }
+    } catch (err) {
+      setLoadError(err instanceof Error ? err.message : 'Gagal memuat data customer')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleSaveCustomer = async () => {
@@ -143,7 +149,32 @@ export default function CustomerDetailPage() {
       </div>
     )
   }
-  if (!customer) return <div className="flex flex-1 items-center justify-center text-ash min-h-[60dvh]">Customer not found</div>
+  if (loadError) {
+    return (
+      <main className="mx-auto flex min-h-[60dvh] w-full max-w-3xl flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-base font-semibold text-ink">Data customer gagal dimuat</p>
+        <p className="max-w-md text-sm text-ash">{loadError}</p>
+        <button
+          type="button"
+          onClick={loadData}
+          className="min-h-[44px] rounded-full bg-accent px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
+        >
+          Coba Lagi
+        </button>
+      </main>
+    )
+  }
+  if (!customer) {
+    return (
+      <main className="mx-auto flex min-h-[60dvh] w-full max-w-3xl flex-col items-center justify-center gap-4 px-4 text-center">
+        <p className="text-base font-semibold text-ink">Customer tidak ditemukan</p>
+        <p className="text-sm text-ash">Data mungkin sudah dihapus atau tautannya tidak valid.</p>
+        <Link href="/app/customers" className="inline-flex min-h-[44px] items-center rounded-full bg-accent px-5 text-sm font-semibold text-white">
+          Kembali ke daftar customer
+        </Link>
+      </main>
+    )
+  }
 
   const status = customer.retention_status
   const days = Math.floor((Date.now() - new Date(customer.last_order_date).getTime()) / 86400000)

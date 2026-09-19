@@ -22,7 +22,8 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getCustomersWithStats } from '@/services/customerService'
 import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
-import { CHANNELS, DEFAULT_THRESHOLDS } from '@/constants'
+import { CHANNELS } from '@/constants'
+import { getAppSettings, syncSettingsFromSheets } from '@/services/settingsService'
 import { fadeUp } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
 import { getSessionUser } from '@/utils/session'
@@ -53,6 +54,8 @@ export default function DashboardPage() {
   const [channelFilter, setChannelFilter] = useState<string>('ALL')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
+  const [thresholds, setThresholds] = useState(getAppSettings)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   const [userRole, setUserRole] = useState('')
   const [userBranch, setUserBranch] = useState('')
@@ -71,15 +74,18 @@ export default function DashboardPage() {
     setLoading(true)
     setError(null)
     try {
+      const settings = await syncSettingsFromSheets()
+      setThresholds(settings)
       const now = Date.now()
       if (dashCache && now - dashCache.ts < DASH_CACHE_TTL) {
         setCustomers(dashCache.data)
       } else {
         const r = await getCustomersWithStats(0, 10000)
-        const data = r.data.map((c) => ({ ...c, retention_status: getRetentionStatus(c.last_order_date, DEFAULT_THRESHOLDS) }))
+        const data = r.data.map((c) => ({ ...c, retention_status: getRetentionStatus(c.last_order_date, settings) }))
         dashCache = { data, ts: now }
         setCustomers(data)
       }
+      setLastUpdated(new Date())
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Terjadi kesalahan saat memuat data.')
     } finally {
@@ -136,6 +142,11 @@ export default function DashboardPage() {
   })
 
   const hasFilter = channelFilter !== 'ALL' || Boolean(dateFrom || dateTo)
+  const getDaysSince = (date: string) => Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
+  const actionCustomers = filteredCustomers
+    .filter((customer) => customer.retention_status !== 'active' && !customer.is_followed_up)
+    .sort((a, b) => getDaysSince(b.last_order_date) - getDaysSince(a.last_order_date))
+  const actionCount = actionCustomers.length
 
   const handleResetFilter = () => {
     setChannelFilter('ALL')
@@ -164,7 +175,56 @@ export default function DashboardPage() {
 
   const channelTotal = Object.values(channelCounts).reduce((a, b) => a + b, 0)
 
+  const branchPerformance = [...new Set([
+    ...Object.keys(branchCounts),
+    ...filteredCustomers.flatMap((customer) => customer.orders?.map((order) => order.branch).filter((b): b is string => Boolean(b)) || []),
+  ])].map((branch) => {
+    const branchOrders = filteredCustomers.flatMap((customer) =>
+      customer.orders?.filter((order) => order.branch === branch) || [],
+    )
+    const branchCustomers = filteredCustomers.filter((customer) =>
+      customer.orders?.some((order) => order.branch === branch) || false,
+    )
+    const branchCustomerCount = branchOrders.length > 0
+      ? branchCustomers.length
+      : filteredCustomers.filter((customer) => customer.branch === branch).length
+    const branchRepeatCount = branchCustomers.filter((customer) =>
+      (customer.orders?.filter((order) => order.branch === branch).length || 0) > 1,
+    ).length
+    return {
+      branch,
+      orders: branchOrders.length,
+      customers: branchCustomerCount,
+      repeatRate: branchCustomerCount > 0 ? Math.round((branchRepeatCount / branchCustomerCount) * 100) : 0,
+    }
+  }).sort((a, b) => b.orders - a.orders)
+
+  const monthlyTrend = Array.from({ length: 6 }, (_, offset) => {
+    const date = new Date()
+    date.setDate(1)
+    date.setMonth(date.getMonth() - (5 - offset))
+    const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+    const orders = filteredCustomers.flatMap((customer) =>
+      customer.orders?.filter((order) => order.order_date.startsWith(key)) || [],
+    )
+    return {
+      key,
+      label: date.toLocaleDateString('id-ID', { month: 'short' }),
+      orders: orders.length,
+      newCustomers: filteredCustomers.filter((customer) => customer.first_order_date.startsWith(key)).length,
+    }
+  })
+  const trendMax = Math.max(...monthlyTrend.map((month) => month.orders), 1)
+
   const total = filteredCustomers.length
+  const newCustomers = filteredCustomers.filter((customer) => customer.order_count <= 1).length
+  const returningCustomers = Math.max(total - newCustomers, 0)
+  const qualityIssues = filteredCustomers.filter((customer) =>
+    !customer.phone_normalized ||
+    !customer.last_order_date ||
+    (!customer.branch && !(customer.branch_memberships?.length)),
+  ).length
+
   const repeatCount = branchCustomers.filter((c) => (c.order_count || 0) > 1).length
   const repeatRate = total > 0 ? Math.round((repeatCount / total) * 100) : 0
   const churnRate = total > 0 ? Math.round((counts.churned / total) * 100) : 0
@@ -253,12 +313,10 @@ export default function DashboardPage() {
   ]
 
   const segments = [
-    { key: 'active' as const, label: 'Aktif', range: '0–30 hari', count: counts.active, color: 'bg-emerald', pct: total > 0 ? Math.round((counts.active / total) * 100) : 0 },
-    { key: 'at_risk' as const, label: 'At Risk', range: '31–60 hari', count: counts.at_risk, color: 'bg-amber', pct: total > 0 ? Math.round((counts.at_risk / total) * 100) : 0 },
-    { key: 'churned' as const, label: 'Churned', range: '61+ hari', count: counts.churned, color: 'bg-rose', pct: total > 0 ? Math.round((counts.churned / total) * 100) : 0 },
+    { key: 'active' as const, label: 'Aktif', range: `0–${thresholds.activeDays} hari`, count: counts.active, color: 'bg-emerald', pct: total > 0 ? Math.round((counts.active / total) * 100) : 0 },
+    { key: 'at_risk' as const, label: 'At Risk', range: `${thresholds.activeDays + 1}–${thresholds.atRiskDays} hari`, count: counts.at_risk, color: 'bg-amber', pct: total > 0 ? Math.round((counts.at_risk / total) * 100) : 0 },
+    { key: 'churned' as const, label: 'Churned', range: `${thresholds.atRiskDays + 1}+ hari`, count: counts.churned, color: 'bg-rose', pct: total > 0 ? Math.round((counts.churned / total) * 100) : 0 },
   ]
-
-  const getDaysSince = (date: string) => Math.floor((Date.now() - new Date(date).getTime()) / 86400000)
 
   const downloadCsv = (rows: Record<string, string | number>[], filename: string) => {
     if (rows.length === 0) return
@@ -423,7 +481,10 @@ export default function DashboardPage() {
             animate={ready ? 'show' : 'hidden'}
           >
             <div className="doppel-outer h-full">
-              <div className="doppel-inner flex h-full flex-col justify-between p-4 sm:p-5">
+              <Link
+                href={s.label === 'Total Customer' ? '/app/customers' : s.label === 'Repeat Rate' ? '/app/customers?order_count_min=2' : s.label === 'Churn Rate' ? '/app/customers?status=churned' : '/app/customers'}
+                className="doppel-inner flex h-full flex-col justify-between p-4 sm:p-5 transition-colors hover:bg-sunken/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              >
                 <div className="flex items-center justify-between">
                   <span className="text-[11px] font-semibold uppercase tracking-wider text-ash">{s.label}</span>
                   <span className={`flex h-9 w-9 items-center justify-center rounded-2xl ${s.glow}`}>
@@ -437,10 +498,57 @@ export default function DashboardPage() {
                   </div>
                   <div className="mt-1 text-xs text-ash">{s.sub}</div>
                 </div>
-              </div>
+              </Link>
             </div>
           </motion.div>
         ))}
+      </div>
+
+      <motion.div variants={fadeUp} custom={5.5} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-6">
+        <div className="doppel-outer">
+          <div className="doppel-inner p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-amber/10">
+                    <WarningCircle size={18} weight="duotone" className="text-amber" />
+                  </span>
+                  <h2 className="text-base font-semibold text-ink">Perlu Ditindak Hari Ini</h2>
+                </div>
+                <p className="mt-1 text-xs text-ash">
+                  {actionCount > 0
+                    ? `${actionCount} customer At Risk/Churned belum ditandai sudah dihubungi.`
+                    : 'Tidak ada customer tertunda pada scope dan filter aktif.'}
+                </p>
+              </div>
+              <Link
+                href="/app/follow-up"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-accent px-5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+              >
+                Buka Follow-up
+              </Link>
+            </div>
+            {actionCustomers.length > 0 && (
+              <div className="mt-4 grid gap-2 sm:grid-cols-3">
+                {actionCustomers.slice(0, 3).map((customer) => (
+                  <Link
+                    key={customer.id}
+                    href={`/app/customers/${customer.id}`}
+                    className="rounded-2xl border border-hairline bg-white p-3 transition-colors hover:bg-sunken/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                  >
+                    <div className="truncate text-sm font-semibold text-ink">{customer.name}</div>
+                    <div className="mt-1 text-xs text-ash">{getDaysSince(customer.last_order_date)} hari sejak order terakhir</div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </motion.div>
+
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-xs text-ash" aria-live="polite">
+        <span>Scope: {branchFilter === 'ALL' ? 'Semua cabang' : branchFilter}{channelFilter !== 'ALL' ? ` · ${getChannelLabel(channelFilter)}` : ''}</span>
+        <span>{lastUpdated ? `Diperbarui ${lastUpdated.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}` : 'Memuat data terbaru...'}</span>
       </div>
 
       {/* Segmentation & Channel */}
@@ -610,35 +718,98 @@ export default function DashboardPage() {
         </div>
       </motion.div>
 
-      {/* Branch Breakdown (owner only) */}
-      {userRole === 'owner' && Object.keys(branchCounts).length > 0 && (
-        <motion.div variants={fadeUp} custom={8} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-8">
-          <div className="doppel-outer">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 mb-8">
+        <motion.div variants={fadeUp} custom={7.8} initial="hidden" animate={ready ? 'show' : 'hidden'}>
+          <div className="doppel-outer h-full">
             <div className="doppel-inner p-5 sm:p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base font-semibold text-ink">Order per Cabang</h2>
-                <Storefront size={18} weight="duotone" className="text-accent" />
+              <div className="flex items-start justify-between gap-3 mb-5">
+                <div>
+                  <h2 className="text-base font-semibold text-ink">Trend 6 Bulan</h2>
+                  <p className="mt-1 text-xs text-ash">Order dan customer baru pada scope aktif</p>
+                </div>
+                <TrendUp size={18} weight="duotone" className="text-accent" />
               </div>
-              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-                {Object.entries(branchCounts).sort((a, b) => b[1] - a[1]).map(([branch, count]) => {
-                  const pct = totalOrdersAll > 0 ? Math.round((count / totalOrdersAll) * 100) : 0
-                  return (
-                    <div key={branch} className="rounded-2xl border border-hairline bg-white p-4">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Storefront size={14} weight="duotone" className="text-accent" />
-                        <span className="text-sm font-semibold text-ink">{branch}</span>
-                      </div>
-                      <div className="text-2xl font-bold text-ink">{count}</div>
-                      <div className="text-xs text-ash">{pct}% dari total order</div>
-                    </div>
-                  )
-                })}
+              <div className="flex h-44 items-end gap-2 sm:gap-3" role="img" aria-label="Trend order enam bulan">
+                {monthlyTrend.map((month) => (
+                  <div key={month.key} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
+                    <span className="text-[10px] font-semibold tabular-nums text-ash">{month.orders}</span>
+                    <div
+                      className="w-full max-w-10 rounded-t-xl bg-accent transition-all"
+                      style={{ height: `${Math.max((month.orders / trendMax) * 120, month.orders > 0 ? 8 : 2)}px` }}
+                      title={`${month.label}: ${month.orders} order`}
+                    />
+                    <span className="text-[10px] text-mist">{month.label}</span>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-2">
+                <div className="rounded-xl bg-sunken/50 p-3">
+                  <div className="text-xs text-ash">Customer baru</div>
+                  <div className="mt-1 text-lg font-semibold text-ink">{newCustomers}</div>
+                </div>
+                <div className="rounded-xl bg-sunken/50 p-3">
+                  <div className="text-xs text-ash">Returning</div>
+                  <div className="mt-1 text-lg font-semibold text-ink">{returningCustomers}</div>
+                </div>
               </div>
             </div>
           </div>
         </motion.div>
-      )}
 
-    </main>
+        <motion.div variants={fadeUp} custom={7.9} initial="hidden" animate={ready ? 'show' : 'hidden'}>
+          <div className="doppel-outer h-full">
+            <div className="doppel-inner p-5 sm:p-6">
+              <div className="flex items-start justify-between gap-3 mb-5">
+                <div>
+                  <h2 className="text-base font-semibold text-ink">Perbandingan Cabang</h2>
+                  <p className="mt-1 text-xs text-ash">Ranking berdasarkan order pada scope aktif</p>
+                </div>
+                <Storefront size={18} weight="duotone" className="text-accent" />
+              </div>
+              {branchPerformance.length > 0 ? (
+                <div className="space-y-3">
+                  {branchPerformance.map((item) => {
+                    const pct = totalOrdersAll > 0 ? Math.round((item.orders / totalOrdersAll) * 100) : 0
+                    return (
+                      <Link
+                        key={item.branch}
+                        href={`/app/dashboard?branch=${encodeURIComponent(item.branch)}`}
+                        className="block rounded-2xl border border-hairline bg-white p-3 transition-colors hover:bg-sunken/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-semibold text-ink">{item.branch}</span>
+                          <span className="text-xs text-ash">{item.orders} order · {item.repeatRate}% repeat</span>
+                        </div>
+                        <div className="mt-2 h-2 overflow-hidden rounded-full bg-sunken">
+                          <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+                        </div>
+                        <div className="mt-1 text-[11px] text-ash">{item.customers} customer · {pct}% kontribusi order</div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="rounded-2xl bg-sunken/50 p-8 text-center text-sm text-ash">Belum ada data cabang pada scope ini.</div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      <motion.div variants={fadeUp} custom={8.1} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-8">
+        <div className="doppel-outer">
+          <div className="doppel-inner flex flex-col gap-4 p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+            <div>
+              <h2 className="text-base font-semibold text-ink">Kualitas Data</h2>
+              <p className="mt-1 text-xs text-ash">Pemeriksaan ringan pada data yang sedang ditampilkan.</p>
+            </div>
+            <div className={`rounded-full px-4 py-2 text-xs font-semibold ${qualityIssues > 0 ? 'bg-amber/10 text-accent-deep' : 'bg-emerald/10 text-emerald'}`}>
+              {qualityIssues > 0 ? `${qualityIssues} customer perlu diperiksa` : 'Data terlihat sehat'}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+
+      </main>
   )
 }
