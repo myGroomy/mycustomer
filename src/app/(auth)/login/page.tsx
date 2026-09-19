@@ -8,7 +8,6 @@ import { ArrowRight, ArrowLeft } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { getSheetData } from '@/services/sheetsService'
 import { setSessionUser } from '@/utils/session'
 import { fadeUp, FLUID_EASE } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
@@ -44,21 +43,22 @@ export default function LoginPage() {
     const pinCode = pin.join('')
 
     try {
-      const users = await getSheetData('users')
-      const user = users.find(u => u.username === username && u.pin === pinCode)
-
-      if (!user) {
-        setError('Username atau PIN salah')
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, pin: pinCode }),
+      })
+      const result = await response.json()
+      if (!response.ok) {
+        setError(result.error || 'Username atau PIN salah')
       } else {
+        const user = result.user
         setSessionUser({
           id: user.id,
           username: user.username,
           role: user.role,
           branch: user.branch || '',
         })
-        // Set session cookie for API auth minimal
-        document.cookie = `mycustomer_session=${user.id}; path=/; max-age=${60 * 60 * 24 * 7}; SameSite=Lax`
-        document.cookie = 'retainly_session=; path=/; max-age=0'
         window.location.href = '/app'
       }
     } catch {

@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
+import { authenticatedUser } from '@/lib/apiAuth'
+
+const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users'])
 
 export async function PUT(request: NextRequest) {
+  const auth = await authenticatedUser()
+  if (auth.error) return auth.error
   try {
     const body = await request.json()
     const { sheet, rowIndex, row } = body
 
-    if (!sheet || rowIndex === undefined || !row) {
+    if (!sheet || !ALLOWED_SHEETS.has(sheet) || rowIndex === undefined || !row) {
       return NextResponse.json({ error: 'Missing sheet, rowIndex, or row parameter' }, { status: 400 })
+    }
+    if (sheet === 'users' || sheet === 'branches' || sheet === 'settings') {
+      if (!['owner', 'admin'].includes(auth.user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const sheets = getSheets()

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
-import { getSessionCookie } from '@/lib/sessionServer'
+import { authenticatedUser } from '@/lib/apiAuth'
 
 const ORDERS_SHEET = 'orders'
 const FU_COL = 'is_followed_up'
@@ -18,10 +18,8 @@ function colLetter(idx: number): string {
 }
 
 export async function PUT(request: NextRequest) {
-  const session = await getSessionCookie()
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized silakan login ulang' }, { status: 401 })
-  }
+  const auth = await authenticatedUser()
+  if (auth.error) return auth.error
 
   try {
     const body = await request.json()

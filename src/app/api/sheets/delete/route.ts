@@ -1,12 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
+import { authenticatedUser } from '@/lib/apiAuth'
+
+const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users'])
 
 export async function DELETE(request: NextRequest) {
+  const auth = await authenticatedUser(['owner', 'admin'])
+  if (auth.error) return auth.error
   try {
     const body = await request.json()
     const { sheet, rowIndex } = body
 
-    if (!sheet || rowIndex === undefined) {
+    if (!sheet || !ALLOWED_SHEETS.has(sheet) || rowIndex === undefined) {
       return NextResponse.json({ error: 'Missing sheet or rowIndex parameter' }, { status: 400 })
     }
 

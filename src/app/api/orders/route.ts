@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
-import { getSessionCookie } from '@/lib/sessionServer'
+import { authenticatedUser } from '@/lib/apiAuth'
 
 const CUSTOMERS_SHEET = 'customers'
 const ORDERS_SHEET = 'orders'
 
 export async function POST(request: NextRequest) {
-  // Auth minimal cek session cookie
-  const session = await getSessionCookie()
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized silakan login ulang' }, { status: 401 })
-  }
+  const auth = await authenticatedUser()
+  if (auth.error) return auth.error
 
   try {
     const body = await request.json()
@@ -70,7 +67,7 @@ export async function POST(request: NextRequest) {
         case 'channel': return channel
         case 'raw_phone_input': return raw_phone_input || ''
         case 'created_at': return new Date().toISOString()
-        case 'branch': return branch || ''
+        case 'branch': return branch || auth.user.branch || ''
         default: return ''
       }
     })

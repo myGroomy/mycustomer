@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { normalizePhone } from '@/utils/normalizePhone'
 import { generateId } from '@/utils/generateId'
+import { authenticatedUser } from '@/lib/apiAuth'
 
 const STAGING_SHEETS = ['staging_cmh', 'staging_bdg']
 
@@ -26,6 +27,8 @@ function mapChannel(tipeOrder: string): string {
 }
 
 export async function POST() {
+  const auth = await authenticatedUser(['owner', 'admin'])
+  if (auth.error) return auth.error
   try {
     const sheets = getSheets()
     const spreadsheetId = getSpreadsheetId()

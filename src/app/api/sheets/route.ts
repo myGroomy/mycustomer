@@ -1,13 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
+import { authenticatedUser } from '@/lib/apiAuth'
+
+const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users'])
 
 export async function GET(request: NextRequest) {
+  const auth = await authenticatedUser()
+  if (auth.error) return auth.error
   try {
     const { searchParams } = new URL(request.url)
     const sheet = searchParams.get('sheet')
 
-    if (!sheet) {
+    if (!sheet || !ALLOWED_SHEETS.has(sheet)) {
       return NextResponse.json({ error: 'Missing sheet parameter' }, { status: 400 })
+    }
+    if (sheet === 'users' && !['owner', 'admin'].includes(auth.user.role)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const sheets = getSheets()

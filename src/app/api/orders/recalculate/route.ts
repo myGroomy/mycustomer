@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
-import { getSessionCookie } from '@/lib/sessionServer'
+import { authenticatedUser } from '@/lib/apiAuth'
 
 const CUSTOMERS_SHEET = 'customers'
 const ORDERS_SHEET = 'orders'
 
 export async function POST() {
-  const session = await getSessionCookie()
-  if (!session) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
+  const auth = await authenticatedUser(['owner', 'admin'])
+  if (auth.error) return auth.error
 
   try {
     const sheets = getSheets()

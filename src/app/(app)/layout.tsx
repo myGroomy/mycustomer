@@ -22,7 +22,7 @@ import {
 import { getAppSettings, syncSettingsFromSheets } from '@/services/settingsService'
 import { syncStaging } from '@/services/sheetsService'
 import { isManagerRole } from '@/services/adminService'
-import { getSessionUser, clearSessionUser } from '@/utils/session'
+import { clearSessionUser } from '@/utils/session'
 import { Toaster } from '@/components/ui/sonner'
 import { SettingsProvider } from '@/lib/SettingsProvider'
 import type { ReactNode } from 'react'
@@ -193,31 +193,32 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    const stored = getSessionUser()
-    if (!stored) {
-      router.replace('/login')
-      return
-    }
-    setUser(stored)
-    syncSettings()
-
-    // Sync settings from Sheets in background
-    syncSettingsFromSheets().then(s => {
-      setStoreName(s.storeName)
-    }).catch(() => {})
-
-    // Auto-sync staging data
-    syncStaging().catch(() => {})
+    let active = true
+    fetch('/api/auth/me')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('Unauthorized')
+        return response.json()
+      })
+      .then(({ user: authenticatedUser }) => {
+        if (!active) return
+        setUser(authenticatedUser)
+        syncSettings()
+        syncSettingsFromSheets().then(s => setStoreName(s.storeName)).catch(() => {})
+        syncStaging().catch(() => {})
+      })
+      .catch(() => router.replace('/login'))
 
     const handleSettingsEvent = () => syncSettings()
     window.addEventListener('mycustomer_settings_changed', handleSettingsEvent)
-    return () => window.removeEventListener('mycustomer_settings_changed', handleSettingsEvent)
+    return () => {
+      active = false
+      window.removeEventListener('mycustomer_settings_changed', handleSettingsEvent)
+    }
   }, [router])
 
   const handleLogout = () => {
     clearSessionUser()
-    document.cookie = 'mycustomer_session=; path=/; max-age=0'
-    document.cookie = 'retainly_session=; path=/; max-age=0'
+    void fetch('/api/auth/logout', { method: 'POST' })
     router.replace('/login')
   }
 

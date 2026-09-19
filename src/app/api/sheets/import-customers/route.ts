@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { normalizePhone } from '@/utils/normalizePhone'
 import { generateId } from '@/utils/generateId'
+import { authenticatedUser } from '@/lib/apiAuth'
 
 export interface ImportCustomerRow {
   name: string
@@ -14,11 +15,16 @@ export interface ImportCustomerRow {
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await authenticatedUser(['owner', 'admin'])
+  if (auth.error) return auth.error
   try {
     const body = await request.json()
     const rows: ImportCustomerRow[] = Array.isArray(body.rows) ? body.rows : []
     if (rows.length === 0) {
       return NextResponse.json({ error: 'Tidak ada baris untuk diimport' }, { status: 400 })
+    }
+    if (rows.length > 1000) {
+      return NextResponse.json({ error: 'Maksimal 1000 baris per import' }, { status: 400 })
     }
 
     const sheets = getSheets()
@@ -58,6 +64,10 @@ export async function POST(request: NextRequest) {
 
       if (!name || !rawPhone) {
         errors.push(`Baris ${line}: nama & no WhatsApp wajib diisi`)
+        return
+      }
+      if (name.length > 150 || rawPhone.length > 40) {
+        errors.push(`Baris ${line}: panjang nama atau nomor WhatsApp tidak valid`)
         return
       }
 
