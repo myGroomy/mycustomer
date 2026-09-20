@@ -4,6 +4,7 @@ const LEGACY_USER_KEY = 'retainly_user'
 export interface SessionUser {
   id: string
   username: string
+  display_name?: string
   role: string
   branch?: string
 }

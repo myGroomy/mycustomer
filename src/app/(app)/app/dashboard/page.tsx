@@ -59,6 +59,7 @@ export default function DashboardPage() {
 
   const [userRole, setUserRole] = useState('')
   const [userBranch, setUserBranch] = useState('')
+  const canExport = userRole === 'owner' || userRole === 'admin'
   useEffect(() => {
     try {
       const user = getSessionUser()
@@ -117,7 +118,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={() => loadData()}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-full  bg-[#022D4E] px-5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#022D4E] px-5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
           >
             <ArrowsClockwise size={16} weight="bold" />
             Coba Lagi
@@ -280,7 +281,7 @@ export default function DashboardPage() {
       unit: 'orang',
       sub: `${counts.active} aktif · ${counts.at_risk} risk`,
       icon: UsersThree,
-      hue: 'text-accent',
+      hue: 'text-[#022D4E]',
       glow: ' bg-[#022D4E]/10',
     },
     {
@@ -307,7 +308,7 @@ export default function DashboardPage() {
       unit: 'x',
       sub: `Channel #1: ${topChannelLabel}`,
       icon: ShoppingBag,
-      hue: 'text-accent-deep',
+      hue: 'text-[#022D4E]-deep',
       glow: 'bg-amber/10',
     },
   ]
@@ -364,19 +365,19 @@ export default function DashboardPage() {
       <motion.div variants={fadeUp} custom={0} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Laporan Retensi & Analitik</Badge>
+            <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#022D4E]">Laporan Retensi & Analitik</Badge>
             <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-4xl">Dashboard Retensi</h1>
             <p className="mt-1.5 text-xs text-ash sm:text-sm">Analisis detail kesehatan basis pelanggan dan performa transaksi F&B</p>
           </div>
-          <button
+          {canExport && <button
             type="button"
             onClick={handleDownload}
             disabled={filteredCustomers.length === 0}
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-white px-5 min-h-[44px] text-sm font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 shrink-0"
           >
-            <DownloadSimple size={18} weight="duotone" className="text-accent" />
+            <DownloadSimple size={18} weight="duotone" className="text-[#022D4E]" />
             Download Laporan
-          </button>
+          </button>}
         </div>
       </motion.div>
 
@@ -420,7 +421,7 @@ export default function DashboardPage() {
           <div className="doppel-inner p-4 sm:p-5">
             <div className="flex items-center justify-between gap-3 mb-3">
               <div className="flex items-center gap-2">
-                <FunnelSimple size={16} weight="duotone" className="text-accent" />
+                <FunnelSimple size={16} weight="duotone" className="text-[#022D4E]" />
                 <span className="text-xs font-semibold uppercase tracking-wider text-ash">Filter Laporan</span>
               </div>
               {hasFilter && (
@@ -429,7 +430,7 @@ export default function DashboardPage() {
                   onClick={handleResetFilter}
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-ink rounded-full px-4 min-h-[44px] ring-1 ring-ink/10 bg-white transition-all hover:bg-ink/5 active:scale-95"
                 >
-                  <Prohibit size={13} weight="duotone" className="text-accent" />
+                  <Prohibit size={13} weight="duotone" className="text-[#022D4E]" />
                   Reset Filter
                 </button>
               )}
@@ -523,7 +524,7 @@ export default function DashboardPage() {
               </div>
               <Link
                 href="/app/follow-up"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-full  bg-[#022D4E] px-5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-[#022D4E] px-5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
               >
                 Buka Follow-up
               </Link>
@@ -559,7 +560,7 @@ export default function DashboardPage() {
               <div>
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-base font-semibold text-ink">Segmentasi Status Retensi</h2>
-                  <Link href="/app/customers" className="text-xs font-semibold text-accent hover:underline">Lihat semua →</Link>
+                  <Link href="/app/customers" className="text-xs font-semibold text-[#022D4E] hover:underline">Lihat semua →</Link>
                 </div>
                 <div className="space-y-4">
                   {segments.map((s) => (
@@ -571,7 +572,7 @@ export default function DashboardPage() {
                       <div className="mb-1.5 flex items-center justify-between text-xs">
                         <div className="flex items-center gap-2">
                           <span className={`h-2.5 w-2.5 rounded-full ${s.color}`} />
-                          <span className="font-semibold text-ink group-hover:text-accent transition-colors">{s.label}</span>
+                          <span className="font-semibold text-ink group-hover:text-[#022D4E] transition-colors">{s.label}</span>
                           <span className="text-mist">({s.range})</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -592,7 +593,7 @@ export default function DashboardPage() {
 
               <div className="mt-6 flex items-center justify-between rounded-2xl bg-sunken/60 p-3 text-xs text-ash">
                 <div className="flex items-center gap-1.5">
-                  <TrendUp size={16} className="text-accent" />
+                  <TrendUp size={16} className="text-[#022D4E]" />
                   <span>Strategi Retensi:</span>
                 </div>
                 <span className="font-medium text-ink">Segera hubungi customer At Risk & Churned</span>
@@ -608,7 +609,7 @@ export default function DashboardPage() {
                 <h2 className="text-base font-semibold text-ink">Distribusi Channel Order</h2>
                 <div className="flex items-center gap-2">
                   <span className="font-mono text-xs text-ash">{channelTotal} order</span>
-                  <ChartPie size={18} weight="duotone" className="text-accent" />
+                  <ChartPie size={18} weight="duotone" className="text-[#022D4E]" />
                 </div>
               </div>
 
@@ -676,7 +677,7 @@ export default function DashboardPage() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-2.5">
                 <span className="flex h-9 w-9 items-center justify-center rounded-2xl  bg-[#022D4E]-wash">
-                  <ChartBar size={18} weight="duotone" className="text-accent" />
+                  <ChartBar size={18} weight="duotone" className="text-[#022D4E]" />
                 </span>
                 <div>
                   <h2 className="text-base font-semibold text-ink">Distribusi Frekuensi Order</h2>
@@ -697,7 +698,7 @@ export default function DashboardPage() {
                       className="group flex h-full flex-1 flex-col items-center justify-end gap-1.5 rounded-xl px-1 pt-2 transition-colors hover:bg-sunken/50"
                       title={`Lihat customer dengan ${b.label} order`}
                     >
-                      <span className="text-[10px] font-semibold tabular-nums text-ash group-hover:text-accent">{b.count}</span>
+                      <span className="text-[10px] font-semibold tabular-nums text-ash group-hover:text-[#022D4E]">{b.count}</span>
                       <div
                         className={`w-full max-w-[42px] rounded-t-lg transition-all ${
                           b.count > 0
@@ -706,7 +707,7 @@ export default function DashboardPage() {
                         }`}
                         style={{ height: `${barPx}px` }}
                       />
-                      <span className="text-[10px] tabular-nums text-mist group-hover:text-accent group-hover:font-semibold">{b.label}</span>
+                      <span className="text-[10px] tabular-nums text-mist group-hover:text-[#022D4E] group-hover:font-semibold">{b.label}</span>
                     </Link>
                   )
                 })}
@@ -727,7 +728,7 @@ export default function DashboardPage() {
                   <h2 className="text-base font-semibold text-ink">Trend 6 Bulan</h2>
                   <p className="mt-1 text-xs text-ash">Order dan customer baru pada scope aktif</p>
                 </div>
-                <TrendUp size={18} weight="duotone" className="text-accent" />
+                <TrendUp size={18} weight="duotone" className="text-[#022D4E]" />
               </div>
               <div className="flex h-44 items-end gap-2 sm:gap-3" role="img" aria-label="Trend order enam bulan">
                 {monthlyTrend.map((month) => (
@@ -764,7 +765,7 @@ export default function DashboardPage() {
                   <h2 className="text-base font-semibold text-ink">Perbandingan Cabang</h2>
                   <p className="mt-1 text-xs text-ash">Ranking berdasarkan order pada scope aktif</p>
                 </div>
-                <Storefront size={18} weight="duotone" className="text-accent" />
+                <Storefront size={18} weight="duotone" className="text-[#022D4E]" />
               </div>
               {branchPerformance.length > 0 ? (
                 <div className="space-y-3">
@@ -803,7 +804,7 @@ export default function DashboardPage() {
               <h2 className="text-base font-semibold text-ink">Kualitas Data</h2>
               <p className="mt-1 text-xs text-ash">Pemeriksaan ringan pada data yang sedang ditampilkan.</p>
             </div>
-            <div className={`rounded-full px-4 py-2 text-xs font-semibold ${qualityIssues > 0 ? 'bg-amber/10 text-accent-deep' : 'bg-emerald/10 text-emerald'}`}>
+            <div className={`rounded-full px-4 py-2 text-xs font-semibold ${qualityIssues > 0 ? 'bg-amber/10 text-[#022D4E]-deep' : 'bg-emerald/10 text-emerald'}`}>
               {qualityIssues > 0 ? `${qualityIssues} customer perlu diperiksa` : 'Data terlihat sehat'}
             </div>
           </div>

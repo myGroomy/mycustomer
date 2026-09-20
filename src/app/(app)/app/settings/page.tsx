@@ -37,6 +37,8 @@ import {
 } from "@/utils/csvImport";
 import { fadeUp } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
+import { getSessionUser } from "@/utils/session";
+import { isManagerRole } from "@/services/adminService";
 
 export default function SettingsPage() {
   const ready = useMounted();
@@ -46,6 +48,7 @@ export default function SettingsPage() {
   const [savedToast, setSavedToast] = useState(false);
   const [recalculating, setRecalculating] = useState(false);
   const [recalcResult, setRecalcResult] = useState<string | null>(null);
+  const [canImport, setCanImport] = useState(false);
 
   // Import customer state
   const [importFile, setImportFile] = useState<{
@@ -61,6 +64,8 @@ export default function SettingsPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    const user = getSessionUser();
+    setCanImport(Boolean(user && isManagerRole(user.role)));
     loadSettings();
   }, []);
 
@@ -182,7 +187,7 @@ export default function SettingsPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className="fixed top-20 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-emerald px-5 py-2.5 text-sm font-semibold text-white shadow-xl shadow-emerald/30"
+            className="fixed top-20 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-emerald px-5 py-2.5 text-sm font-semibold text-[#022D4E] shadow-xl shadow-emerald/30"
           >
             <Check size={18} weight="bold" /> Pengaturan Berhasil Disimpan!
           </motion.div>
@@ -197,7 +202,7 @@ export default function SettingsPage() {
         animate={ready ? "show" : "hidden"}
         className="mb-8"
       >
-        <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
+        <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#022D4E]">
           Preferensi
         </Badge>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-4xl">
@@ -220,7 +225,7 @@ export default function SettingsPage() {
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-[#022D4E]">
                   <Storefront size={20} weight="duotone" />
                 </span>
                 <div>
@@ -260,7 +265,7 @@ export default function SettingsPage() {
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-[#022D4E]">
                   <Gear size={20} weight="duotone" />
                 </span>
                 <div>
@@ -312,7 +317,7 @@ export default function SettingsPage() {
                   />
                   <p className="mt-1.5 text-[11px] text-ash">
                     {settings.activeDays + 1} &ndash; {settings.atRiskDays} hari
-                    = <strong className="text-accent-deep">At Risk</strong>
+                    = <strong className="text-[#022D4E]-deep">At Risk</strong>
                   </p>
                 </div>
               </div>
@@ -321,7 +326,7 @@ export default function SettingsPage() {
                 <Info
                   size={18}
                   weight="duotone"
-                  className="mt-0.5 shrink-0 text-accent-deep"
+                  className="mt-0.5 shrink-0 text-[#022D4E]-deep"
                 />
                 <p className="text-xs leading-relaxed text-ash">
                   Customer yang tidak melakukan transaksi lebih dari{" "}
@@ -335,7 +340,8 @@ export default function SettingsPage() {
           </div>
         </motion.div>
 
-        {/* Import Data Customer */}
+        {canImport && (
+        /* Import Data Customer */
         <motion.div
           variants={fadeUp}
           custom={3}
@@ -345,7 +351,7 @@ export default function SettingsPage() {
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-[#022D4E]">
                   <UploadSimple size={20} weight="duotone" />
                 </span>
                 <div>
@@ -377,7 +383,7 @@ export default function SettingsPage() {
                   <DownloadSimple
                     size={14}
                     weight="bold"
-                    className="text-accent"
+                    className="text-[#022D4E]"
                   />
                   Download Template
                 </button>
@@ -409,7 +415,7 @@ export default function SettingsPage() {
                       <FileCsv
                         size={24}
                         weight="duotone"
-                        className="text-accent"
+                        className="text-[#022D4E]"
                       />
                       <span className="text-xs font-semibold text-ink">
                         {importFile.name}
@@ -439,7 +445,7 @@ export default function SettingsPage() {
               </div>
 
               {parseErrors.length > 0 && (
-                <div className="mt-4 rounded-2xl border border-amber/30 bg-amber/5 p-3 text-[11px] leading-relaxed text-accent-deep">
+                <div className="mt-4 rounded-2xl border border-amber/30 bg-amber/5 p-3 text-[11px] leading-relaxed text-[#022D4E]-deep">
                   {parseErrors.map((err, i) => (
                     <p key={i}>{err}</p>
                   ))}
@@ -451,7 +457,7 @@ export default function SettingsPage() {
                   className={cn(
                     "mt-4 rounded-2xl border p-3 text-[11px] leading-relaxed",
                     importResult.errors.length > 0
-                      ? "border-amber/30 bg-amber/5 text-accent-deep"
+                      ? "border-amber/30 bg-amber/5 text-[#022D4E]-deep"
                       : "border-emerald/30 bg-emerald/5 text-emerald",
                   )}
                 >
@@ -475,7 +481,7 @@ export default function SettingsPage() {
                   importFile.mapped.data.length === 0 ||
                   importing
                 }
-                className="mt-5 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full  bg-[#022D4E] px-5 py-2.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-5 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-[#022D4E] px-5 py-2.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {importing ? (
                   <>
@@ -496,6 +502,7 @@ export default function SettingsPage() {
             </div>
           </div>
         </motion.div>
+        )}
 
         {/* WhatsApp Message Template */}
         <motion.div
@@ -516,11 +523,11 @@ export default function SettingsPage() {
                   </h2>
                   <p className="mt-0.5 text-xs text-ash">
                     Variabel yang didukung:{" "}
-                    <code className="text-accent font-semibold">
+                    <code className="text-[#022D4E] font-semibold">
                       {"{nama}"}
                     </code>{" "}
                     dan{" "}
-                    <code className="text-accent font-semibold">
+                    <code className="text-[#022D4E] font-semibold">
                       {"{toko}"}
                     </code>
                   </p>
@@ -562,10 +569,10 @@ export default function SettingsPage() {
               <CloudCheck
                 size={16}
                 weight="duotone"
-                className="mt-0.5 shrink-0 text-accent"
+                className="mt-0.5 shrink-0 text-[#022D4E]"
               />
               <span>
-                <strong className="text-accent">Tersimpan di Cloud</strong>{" "}
+                <strong className="text-[#022D4E]">Tersimpan di Cloud</strong>{" "}
                 Pengaturan ini disimpan di Google Sheets dan akan sync ke semua
                 perangkat yang login dengan akun yang sama.
               </span>
@@ -583,7 +590,7 @@ export default function SettingsPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="group flex min-h-[50px] h-13 w-full items-center justify-center gap-3 rounded-full  bg-[#022D4E] text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
+            className="group flex min-h-[50px] h-13 w-full items-center justify-center gap-3 rounded-full bg-[#022D4E] text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
             style={{ boxShadow: "0 8px 24px -8px rgba(28, 43, 66, 0.5)" }}
           >
             {saving ? (

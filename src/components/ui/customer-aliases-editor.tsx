@@ -88,7 +88,7 @@ export function CustomerAliasesEditor({
     <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2">
-        <Tag size={15} weight="duotone" className="text-accent" />
+        <Tag size={15} weight="duotone" className="text-[#022D4E]" />
         <Label className="text-xs font-semibold uppercase tracking-wider text-ash">
           Nama Alias / Cadangan
         </Label>
@@ -176,7 +176,7 @@ export function CustomerAliasesEditor({
             type="button"
             onClick={handleAdd}
             disabled={disabled || saving || !newName.trim()}
-            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-accent/30 bg-accent/5 px-4 text-xs font-semibold text-accent transition-all hover:bg-accent/10 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex h-10 items-center justify-center gap-1.5 rounded-xl border border-accent/30 bg-accent/5 px-4 text-xs font-semibold text-[#022D4E] transition-all hover:bg-accent/10 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <Plus size={14} weight="bold" />
             Tambah

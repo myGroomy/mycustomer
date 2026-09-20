@@ -106,17 +106,17 @@ const METRIC_CHIPS = [
   {
     icon: Receipt,
     value: "Rekam order",
-    hue: " bg-[#022D4E]-wash text-accent-deep",
+    hue: " bg-[#022D4E]-wash text-[#022D4E]-deep",
   },
   {
     icon: UsersThree,
     value: "Profil otomatis",
-    hue: " bg-[#022D4E]/10 text-accent",
+    hue: " bg-[#022D4E]/10 text-[#022D4E]",
   },
   {
     icon: ChartLineUp,
     value: "Retensi real-time",
-    hue: " bg-[#022D4E]-soft/20 text-accent-deep",
+    hue: " bg-[#022D4E]-soft/20 text-[#022D4E]-deep",
   },
   { icon: WhatsappLogo, value: "Follow-up 1 ketik", hue: "bg-ink/5 text-ink" },
 ];
@@ -317,7 +317,7 @@ export default function LandingPage() {
                     borderRadius: "9999px",
                   }}
                 />
-                <span className="text-accent">lupa</span> balik lagi.
+                <span className="text-[#022D4E]">lupa</span> balik lagi.
               </span>
             </span>
           </h1>
@@ -401,8 +401,8 @@ export default function LandingPage() {
                     <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
                       {[
                         ["Total Customer", "1,247", "text-ink"],
-                        ["Repeat Rate", "73%", "text-accent"],
-                        ["At Risk", "89", "text-accent-deep"],
+                        ["Repeat Rate", "73%", "text-[#022D4E]"],
+                        ["At Risk", "89", "text-[#022D4E]-deep"],
                         ["Churned", "34", "text-ink"],
                       ].map(([label, value, hue]) => (
                         <div
@@ -476,7 +476,7 @@ export default function LandingPage() {
             >
               <div className="doppel-inner flex h-full flex-col justify-between gap-6 p-6 sm:p-8">
                 <div>
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-[#022D4E]">
                     <Receipt size={22} weight="duotone" />
                   </div>
                   <h3 className="max-w-sm text-2xl font-semibold tracking-tight text-ink sm:text-[1.7rem] sm:leading-tight">
@@ -516,7 +516,7 @@ export default function LandingPage() {
               data-soar
               className="group col-span-1 overflow-hidden rounded-3xl border border-hairline bg-white p-6 transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(16,18,20,0.25)]"
             >
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]/10 text-accent">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]/10 text-[#022D4E]">
                 <WhatsappLogo size={22} weight="duotone" />
               </div>
               <h3 className="text-lg font-semibold tracking-tight text-ink">
@@ -533,7 +533,7 @@ export default function LandingPage() {
               data-soar
               className="group col-span-1 overflow-hidden rounded-3xl border border-hairline bg-white p-6 transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(16,18,20,0.25)]"
             >
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]-soft/20 text-accent-deep">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]-soft/20 text-[#022D4E]-deep">
                 <ChartLineUp size={22} weight="duotone" />
               </div>
               <h3 className="text-lg font-semibold tracking-tight text-ink">
@@ -566,7 +566,7 @@ export default function LandingPage() {
                     return (
                       <span
                         key={c.name}
-                        className="flex h-10 w-10 items-center justify-center rounded-full border border-hairline bg-canvas text-ash transition-colors duration-500 hover:border-accent/30 hover:text-accent"
+                        className="flex h-10 w-10 items-center justify-center rounded-full border border-hairline bg-canvas text-ash transition-colors duration-500 hover:border-accent/30 hover:text-[#022D4E]"
                       >
                         <Icon size={18} weight="duotone" />
                       </span>
@@ -595,14 +595,14 @@ export default function LandingPage() {
               data-soar
               className="col-span-1 flex flex-col justify-between gap-6 bg-ink p-6 text-white sm:col-span-2 md:col-span-1"
             >
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-white">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-[#022D4E]">
                 <Lightning size={22} weight="duotone" />
               </div>
               <div>
                 <div className="text-3xl font-semibold tracking-tight">
                   2 menit
                 </div>
-                <p className="mt-1 text-sm leading-relaxed text-white/70">
+                <p className="mt-1 text-sm leading-relaxed text-[#022D4E]/70">
                   dari browser tidak perlu install aplikasi atau training
                   panjang.
                 </p>
@@ -660,7 +660,7 @@ export default function LandingPage() {
                       key={c.tag}
                       className="inline-flex items-center gap-2 rounded-full border border-accent/15 bg-white px-3.5 py-1.5 text-xs font-semibold text-ink-soft"
                     >
-                      <Icon size={14} weight="bold" className="text-accent" />
+                      <Icon size={14} weight="bold" className="text-[#022D4E]" />
                       {c.tag}
                     </span>
                   );
@@ -682,11 +682,11 @@ export default function LandingPage() {
                   <div className="doppel-outer">
                     <div className="doppel-inner p-6 sm:p-8">
                       <div className="flex gap-5">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent-deep">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-[#022D4E]-deep">
                           <Icon size={24} weight="duotone" />
                         </span>
                         <div>
-                          <span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">
+                          <span className="text-xs font-bold uppercase tracking-[0.2em] text-[#022D4E]">
                             {c.tag}
                           </span>
                           <h3 className="mt-1.5 text-xl font-semibold leading-snug tracking-[-0.02em] text-ink sm:text-[1.45rem]">
@@ -737,23 +737,23 @@ export default function LandingPage() {
                   />
                   <div className="relative flex h-full flex-col justify-between p-7 sm:p-8">
                     <span
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-colors duration-500 ${active ? "bg-white/15 text-white" : " bg-[#022D4E]-wash text-accent"}`}
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-colors duration-500 ${active ? "bg-white/15 text-[#022D4E]" : " bg-[#022D4E]-wash text-[#022D4E]"}`}
                     >
                       <Icon size={24} weight="duotone" />
                     </span>
                     <div>
                       <span
-                        className={`text-xs font-semibold uppercase tracking-[0.18em] transition-colors duration-500 ${active ? "text-white/60" : "text-mist"}`}
+                        className={`text-xs font-semibold uppercase tracking-[0.18em] transition-colors duration-500 ${active ? "text-[#022D4E]/60" : "text-mist"}`}
                       >
                         {c.note}
                       </span>
                       <h3
-                        className={`mt-2 text-xl font-semibold tracking-tight transition-colors duration-500 sm:text-2xl ${active ? "text-white" : "text-ink"}`}
+                        className={`mt-2 text-xl font-semibold tracking-tight transition-colors duration-500 sm:text-2xl ${active ? "text-[#022D4E]" : "text-ink"}`}
                       >
                         {c.name}
                       </h3>
                       <p
-                        className={`mt-2 text-sm leading-relaxed transition-opacity duration-500 lg:max-w-xs ${active ? "text-white/75 opacity-100" : "opacity-0"}`}
+                        className={`mt-2 text-sm leading-relaxed transition-opacity duration-500 lg:max-w-xs ${active ? "text-[#022D4E]/75 opacity-100" : "opacity-0"}`}
                       >
                         {c.desc}
                       </p>
@@ -814,14 +814,14 @@ export default function LandingPage() {
                   <button
                     onClick={() => goReview(-1)}
                     aria-label="Review sebelumnya"
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-hairline bg-white text-ash transition-all duration-300 hover:border-accent/30 hover:text-accent active:scale-95"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-hairline bg-white text-ash transition-all duration-300 hover:border-accent/30 hover:text-[#022D4E] active:scale-95"
                   >
                     <CaretLeft size={17} weight="bold" />
                   </button>
                   <button
                     onClick={() => goReview(1)}
                     aria-label="Review berikutnya"
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-hairline bg-white text-ash transition-all duration-300 hover:border-accent/30 hover:text-accent active:scale-95"
+                    className="flex h-11 w-11 items-center justify-center rounded-full border border-hairline bg-white text-ash transition-all duration-300 hover:border-accent/30 hover:text-[#022D4E] active:scale-95"
                   >
                     <CaretRight size={17} weight="bold" />
                   </button>
@@ -853,10 +853,10 @@ export default function LandingPage() {
             <div className="absolute -bottom-24 right-1/4 h-80 w-80 rounded-full  bg-[#022D4E]-soft/25 blur-[110px]" />
           </div>
           <div className="relative">
-            <h2 className="mx-auto max-w-3xl text-3xl font-semibold leading-[1.08] tracking-[-0.02em] text-white sm:text-5xl">
+            <h2 className="mx-auto max-w-3xl text-3xl font-semibold leading-[1.08] tracking-[-0.02em] text-[#022D4E] sm:text-5xl">
               Siap mempertahankan pelanggan yang sudah susah payah kamu jaga?
             </h2>
-            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-white/70 sm:text-lg">
+            <p className="mx-auto mt-5 max-w-md text-base leading-relaxed text-[#022D4E]/70 sm:text-lg">
               Mulai gratis, tanpa kartu kredit. Setup dari browser selesai dalam
               2 menit.
             </p>

@@ -33,6 +33,8 @@ import { CHANNELS, DEFAULT_THRESHOLDS, PAGE_SIZE } from "@/constants";
 import { fadeUp } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
 import type { CustomerWithStats, RetentionStatus } from "@/types";
+import { getSessionUser } from "@/utils/session";
+import { isManagerRole } from "@/services/adminService";
 
 type RepeatFilter = "all" | "1x" | "2-5x" | "6-10x" | "11-20x" | "21x+";
 
@@ -76,6 +78,7 @@ function CustomerListView() {
   // Date Filter State
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const canExport = isManagerRole(getSessionUser()?.role);
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);
@@ -324,7 +327,7 @@ function CustomerListView() {
       );
     if (status === "at_risk")
       return (
-        <Badge className="bg-amber/10 text-accent-deep border-amber/20">
+        <Badge className="bg-amber/10 text-[#022D4E]-deep border-amber/20">
           {days}d Risk
         </Badge>
       );
@@ -336,8 +339,8 @@ function CustomerListView() {
   };
 
   const getAvatarStyle = (status: RetentionStatus) => {
-    if (status === "active") return " bg-[#022D4E]-wash text-accent-deep";
-    if (status === "at_risk") return "bg-amber/10 text-accent-deep";
+    if (status === "active") return " bg-[#022D4E]-wash text-[#022D4E]-deep";
+    if (status === "at_risk") return "bg-amber/10 text-[#022D4E]-deep";
     return "bg-rose/10 text-ink";
   };
 
@@ -384,7 +387,7 @@ function CustomerListView() {
         animate={ready ? "show" : "hidden"}
         className="mb-6"
       >
-        <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
+        <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#022D4E]">
           Database
         </Badge>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-4xl">
@@ -407,29 +410,29 @@ function CustomerListView() {
           <div className="doppel-inner p-4 sm:p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <Funnel size={16} weight="duotone" className="text-accent" />
+                <Funnel size={16} weight="duotone" className="text-[#022D4E]" />
                 <span className="text-xs font-semibold uppercase tracking-wider text-ash">
                   Filter Customer
                 </span>
               </div>
               <div className="flex items-center gap-2">
-                <button
+                {canExport && <button
                   type="button"
                   onClick={handleDownload}
                   disabled={downloading || loading}
-                  className="inline-flex items-center gap-1.5 rounded-full  bg-[#022D4E] px-4 min-h-[44px] text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-[#022D4E] px-4 min-h-[44px] text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   title="Download CSV data sesuai filter aktif"
                 >
                   <DownloadSimple size={14} weight="bold" />
                   {downloading ? "Menyiapkan..." : "Download CSV"}
-                </button>
+                </button>}
                 {hasActiveFilter && (
                   <button
                     type="button"
                     onClick={handleResetAll}
                     className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 min-h-[44px] text-xs font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95"
                   >
-                    <X size={13} weight="bold" className="text-accent" />
+                    <X size={13} weight="bold" className="text-[#022D4E]" />
                     Reset Filter
                   </button>
                 )}
@@ -539,7 +542,7 @@ function CustomerListView() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setCountRange(null)}
-                  className="flex items-center gap-1.5 rounded-full border border-accent  bg-[#022D4E] px-4 min-h-[44px] text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                  className="flex items-center gap-1.5 rounded-full border border-accent bg-[#022D4E] px-4 min-h-[44px] text-[11px] font-semibold text-white transition-all hover:opacity-90"
                   title="Reset filter order count"
                 >
                   Order: {countRangeLabel}
@@ -572,7 +575,7 @@ function CustomerListView() {
           <button
             type="button"
             onClick={() => loadCustomers()}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-full  bg-[#022D4E] px-4 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 sm:ml-4"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-[#022D4E] px-4 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 sm:ml-4"
           >
             Coba Lagi
           </button>
@@ -634,14 +637,14 @@ function CustomerListView() {
                               {getStatusBadge(status, days)}
                               <Badge
                                 variant="outline"
-                                className="border-accent/20 text-accent"
+                                className="border-accent/20 text-[#022D4E]"
                               >
                                 Order ke-{(customer.order_count || 0) + 1}
                               </Badge>
                               {(!customer.age_range || !customer.gender) && (
                                 <Badge
                                   variant="outline"
-                                  className="border-accent-soft/40 text-accent-deep"
+                                  className="border-accent-soft/40 text-[#022D4E]-deep"
                                 >
                                   profil belum lengkap
                                 </Badge>
@@ -669,7 +672,7 @@ function CustomerListView() {
                                 // Highlight: "Ditemukan via alias: ..."
                                 return (
                                   <div className="mt-1 flex flex-wrap items-center gap-1.5">
-                                    <span className="inline-flex items-center gap-1 rounded-full bg-amber/10 px-2 py-0.5 text-[10px] font-semibold text-accent-deep ring-1 ring-amber/30">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-amber/10 px-2 py-0.5 text-[10px] font-semibold text-[#022D4E]-deep ring-1 ring-amber/30">
                                       <svg
                                         width="9"
                                         height="9"
@@ -713,7 +716,7 @@ function CustomerListView() {
                                 {customer.phone_normalized}
                               </span>
                               <span>&middot;</span>
-                              <span className="font-semibold text-accent">
+                              <span className="font-semibold text-[#022D4E]">
                                 {customer.order_count}x order
                               </span>
                               {favCh && (
@@ -731,7 +734,7 @@ function CustomerListView() {
                         {/* Right info (Dates) */}
                         <div className="flex sm:flex-col items-center sm:items-end justify-between border-t sm:border-t-0 border-hairline pt-2.5 sm:pt-0 text-xs text-ash gap-1 shrink-0">
                           <div className="flex items-center gap-1 text-[11px]">
-                            <Calendar size={13} className="text-accent" />
+                            <Calendar size={13} className="text-[#022D4E]" />
                             <span>
                               Order Terakhir:{" "}
                               <strong className="text-ink">

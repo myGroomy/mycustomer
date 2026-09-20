@@ -285,9 +285,9 @@ Found 8 matches
 
   Line 212:                 <Storefront size={14} weight="duotone" />
 
-  Line 344:                 <Storefront size={18} weight="duotone" className="text-accent" />
+  Line 344:                 <Storefront size={18} weight="duotone" className="text-[#022D4E]" />
 
-  Line 352:                         <Storefront size={14} weight="duotone" className="text-accent" />
+  Line 352:                         <Storefront size={14} weight="duotone" className="text-[#022D4E]" />
 
 
 /home/bradley/project/Retain-ly/src/app/(app)/app/settings/page.tsx:

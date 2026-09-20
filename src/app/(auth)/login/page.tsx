@@ -104,7 +104,7 @@ export default function LoginPage() {
         >
           <div className="mb-10 text-center">
             <motion.div variants={fadeUp} custom={0} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-5 flex justify-center">
-              <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Terminal Kasir</Badge>
+              <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#022D4E]">Terminal Kasir</Badge>
             </motion.div>
             <motion.h1
               variants={fadeUp}
@@ -200,7 +200,7 @@ export default function LoginPage() {
           >
             <Link
               href="/"
-              className="group inline-flex items-center gap-2 text-sm text-ash transition-colors duration-300 hover:text-accent"
+              className="group inline-flex items-center gap-2 text-sm text-ash transition-colors duration-300 hover:text-[#022D4E]"
             >
               <ArrowLeft size={15} weight="bold" className="transition-transform duration-300 group-hover:-translate-x-0.5" />
               Kembali ke beranda

@@ -242,7 +242,7 @@ export default function InputOrderPage() {
       );
     if (status === "at_risk")
       return (
-        <Badge className="bg-amber/10 text-accent-deep border-amber/20">
+        <Badge className="bg-amber/10 text-[#022D4E]-deep border-amber/20">
           At Risk
         </Badge>
       );
@@ -277,7 +277,7 @@ export default function InputOrderPage() {
         animate={ready ? "show" : "hidden"}
         className="mb-6"
       >
-        <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
+        <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#022D4E]">
           Rekam Transaksi
         </Badge>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-4xl">
@@ -340,7 +340,7 @@ export default function InputOrderPage() {
                           <button
                             type="button"
                             onClick={handleCreateNew}
-                            className="flex items-center gap-2 rounded-full  bg-[#022D4E]-wash px-4 py-2 text-sm font-medium text-accent-deep transition-colors hover: bg-[#022D4E]/20"
+                            className="flex items-center gap-2 rounded-full  bg-[#022D4E]-wash px-4 py-2 text-sm font-medium text-[#022D4E]-deep transition-colors hover: bg-[#022D4E]/20"
                           >
                             <UserPlus size={16} weight="duotone" />
                             Buat Pelanggan Baru
@@ -358,7 +358,7 @@ export default function InputOrderPage() {
                           className="flex items-center justify-between gap-3 p-3 rounded-xl cursor-pointer"
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-xs font-semibold text-accent-deep">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-xs font-semibold text-[#022D4E]-deep">
                               {c.name
                                 .split(" ")
                                 .map((n: string) => n[0])
@@ -377,7 +377,7 @@ export default function InputOrderPage() {
                                   <Phone size={11} />
                                   {c.phone_normalized}
                                 </span>
-                                <span className="rounded-full  bg-[#022D4E]-wash px-2 py-0.5 text-[10px] font-semibold text-accent-deep">
+                                <span className="rounded-full  bg-[#022D4E]-wash px-2 py-0.5 text-[10px] font-semibold text-[#022D4E]-deep">
                                   Order ke-{(c.order_count || 0) + 1}
                                 </span>
                               </div>
@@ -416,7 +416,7 @@ export default function InputOrderPage() {
                           onClick={handleCreateNew}
                           className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left transition-colors duration-200 hover:bg-sunken"
                         >
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sunken text-accent">
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sunken text-[#022D4E]">
                             <UserPlus size={18} weight="duotone" />
                           </div>
                           <div>
@@ -453,7 +453,7 @@ export default function InputOrderPage() {
               <div className="doppel-inner p-4 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-sm font-semibold text-accent-deep">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-sm font-semibold text-[#022D4E]-deep">
                       {selectedCustomer.name
                         .split(" ")
                         .map((n: string) => n[0])
@@ -469,7 +469,7 @@ export default function InputOrderPage() {
                       </div>
                       <a
                         href={`tel:${selectedCustomer.phone_normalized}`}
-                        className="mt-1 flex items-center gap-1 font-mono text-xs text-ash hover:text-accent"
+                        className="mt-1 flex items-center gap-1 font-mono text-xs text-ash hover:text-[#022D4E]"
                       >
                         <Phone size={12} weight="bold" />
                         {selectedCustomer.phone_normalized}
@@ -495,7 +495,7 @@ export default function InputOrderPage() {
                       <ShoppingBag
                         size={14}
                         weight="duotone"
-                        className="text-accent"
+                        className="text-[#022D4E]"
                       />
                     </div>
                     <div className="mt-1 text-base font-semibold text-ink sm:text-lg">
@@ -511,7 +511,7 @@ export default function InputOrderPage() {
                       <ClockCounterClockwise
                         size={14}
                         weight="duotone"
-                        className="text-accent"
+                        className="text-[#022D4E]"
                       />
                     </div>
                     <div className="mt-1 truncate text-xs font-semibold text-ink sm:text-sm">
@@ -527,14 +527,14 @@ export default function InputOrderPage() {
                   <button
                     type="button"
                     onClick={() => setAliasDialogOpen(true)}
-                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-hairline bg-white px-3 text-xs text-ash transition-colors hover:border-accent/30 hover:bg-sunken hover:text-accent"
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-hairline bg-white px-3 text-xs text-ash transition-colors hover:border-accent/30 hover:bg-sunken hover:text-[#022D4E]"
                   >
                     <Warning size={14} weight="duotone" />
                     Tambahkan alias customer
                   </button>
                   <Link
                     href={`/app/customers/${selectedCustomer.id}`}
-                    className="group inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent-deep"
+                    className="group inline-flex items-center gap-1.5 text-xs font-semibold text-[#022D4E] hover:text-[#022D4E]-deep"
                   >
                     <span>Detail Profil</span>
                     <ArrowSquareOut
@@ -567,7 +567,7 @@ export default function InputOrderPage() {
                     <UserPlus
                       size={18}
                       weight="duotone"
-                      className="text-accent"
+                      className="text-[#022D4E]"
                     />
                     <span className="text-base font-semibold text-ink">
                       Pelanggan Baru
@@ -680,7 +680,7 @@ export default function InputOrderPage() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={!canSubmit}
-                  className="group flex min-h-[48px] h-12 sm:h-13 flex-1 items-center justify-center gap-2.5 rounded-full  bg-[#022D4E] text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
+                  className="group flex min-h-[48px] h-12 sm:h-13 flex-1 items-center justify-center gap-2.5 rounded-full bg-[#022D4E] text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
                   style={{ boxShadow: "0 8px 24px -8px rgba(28, 43, 66, 0.5)" }}
                 >
                   {loading ? (
@@ -714,7 +714,7 @@ export default function InputOrderPage() {
           transition={{ delay: 0.4 }}
           className="mt-8 flex items-center justify-center gap-2 text-sm text-mist"
         >
-          <Basket size={16} weight="duotone" className="text-accent" />
+          <Basket size={16} weight="duotone" className="text-[#022D4E]" />
           Pilih atau buat pelanggan untuk melanjutkan
         </motion.p>
       )}

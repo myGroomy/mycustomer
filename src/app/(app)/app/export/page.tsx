@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   DownloadSimple,
@@ -20,6 +20,8 @@ import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
 import { CHANNELS } from '@/constants'
 import { fadeUp, FLUID_EASE } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
+import { getSessionUser } from '@/utils/session'
+import { isManagerRole } from '@/services/adminService'
 
 export default function ExportPage() {
   const ready = useMounted()
@@ -28,8 +30,17 @@ export default function ExportPage() {
   const [dateTo, setDateTo] = useState('')
   const [exportType, setExportType] = useState<'orders' | 'customers'>('orders')
   const [downloadSuccess, setDownloadSuccess] = useState(false)
+  const [canExport, setCanExport] = useState(false)
+  const [accessChecked, setAccessChecked] = useState(false)
+
+  useEffect(() => {
+    const user = getSessionUser()
+    setCanExport(Boolean(user && isManagerRole(user.role)))
+    setAccessChecked(true)
+  }, [])
 
   const handleExport = async () => {
+    if (!canExport) return
     setLoading(true)
     setDownloadSuccess(false)
     try {
@@ -65,6 +76,17 @@ export default function ExportPage() {
               total_order_customer: c.order_count,
               status_retensi: statusLabel,
             })
+          }
+
+          if (accessChecked && !canExport) {
+            return (
+              <main className="mx-auto flex min-h-[60dvh] max-w-2xl items-center justify-center px-4 text-center">
+                <div>
+                  <h1 className="text-xl font-semibold text-ink">Akses export dibatasi</h1>
+                  <p className="mt-2 text-sm text-ash">Export data hanya tersedia untuk Owner/Admin.</p>
+                </div>
+              </main>
+            )
           }
         }
 
@@ -139,7 +161,7 @@ export default function ExportPage() {
     <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:py-10 pb-28 md:pb-20">
       {/* Heading */}
       <motion.div variants={fadeUp} custom={0} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-8">
-        <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Export Laporan</Badge>
+        <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#022D4E]">Export Laporan</Badge>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-4xl">Export Data (CSV / Excel)</h1>
         <p className="mt-1.5 text-xs text-ash sm:text-sm">Unduh data transaksi & customer dalam format file CSV yang siap dibuka di Excel</p>
       </motion.div>
@@ -149,7 +171,7 @@ export default function ExportPage() {
           <div className="doppel-inner p-5 sm:p-7">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-base font-semibold text-ink">Pilih Jenis Data Export</h2>
-              <FileCsv size={24} weight="duotone" className="text-accent" />
+              <FileCsv size={24} weight="duotone" className="text-[#022D4E]" />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
@@ -165,7 +187,7 @@ export default function ExportPage() {
                   }`}
                 >
                   <span className={`mb-3 flex h-10 w-10 items-center justify-center rounded-2xl transition-all ${
-                    exportType === opt.key ? 'bg-white text-ink ring-1 ring-ink/10 shadow-sm' : ' bg-[#022D4E]-wash text-accent'
+                    exportType === opt.key ? 'bg-white text-ink ring-1 ring-ink/10 shadow-sm' : ' bg-[#022D4E]-wash text-[#022D4E]'
                   }`}>
                     <opt.icon size={20} weight="duotone" />
                   </span>
@@ -183,7 +205,7 @@ export default function ExportPage() {
                 className="mt-6 rounded-2xl border border-hairline bg-sunken/40 p-4"
               >
                 <div className="flex items-center gap-2 mb-3">
-                  <Calendar size={16} weight="duotone" className="text-accent" />
+                  <Calendar size={16} weight="duotone" className="text-[#022D4E]" />
                   <span className="text-xs font-semibold uppercase tracking-wider text-ink">Filter Periode Transaksi (Opsional)</span>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -210,7 +232,7 @@ export default function ExportPage() {
               onClick={handleExport}
               disabled={loading}
               // Saya mengganti  bg-[#022D4E] menjadi  bg-[#022D4E] agar tombol berwarna biru gelap dan teks putihnya terlihat jelas
-              className="mt-6 group flex min-h-[48px] h-13 w-full items-center justify-center gap-3 rounded-full  bg-[#022D4E] text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] hover:bg-blue-700 disabled:opacity-50"
+              className="mt-6 group flex min-h-[48px] h-13 w-full items-center justify-center gap-3 rounded-full bg-[#022D4E] text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] hover:bg-blue-700 disabled:opacity-50"
               style={{ boxShadow: '0 8px 24px -8px rgba(28, 43, 66, 0.5)' }}
             >
               {loading ? (

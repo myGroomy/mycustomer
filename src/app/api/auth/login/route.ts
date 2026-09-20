@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     const sessionUser = {
       id: user.id,
       username: user.username,
+      display_name: user.role === 'owner' || user.role === 'admin' ? 'Admin' : user.display_name || user.branch || user.username,
       role: user.role,
       branch: user.branch || '',
     }

@@ -69,6 +69,7 @@ export interface OrderWithCustomer extends Order {
 export interface User {
   id: string
   username: string
+  display_name?: string
   pin: string
   role: 'owner' | 'kasir'
   created_at: string

@@ -32,6 +32,7 @@ import type { ReactNode } from "react";
 
 interface User {
   username: string;
+  display_name?: string;
   role: string;
 }
 
@@ -78,7 +79,7 @@ function NavLink({
       aria-current={isActive ? "page" : undefined}
       className={`group relative flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm transition-all duration-300 active:scale-[0.98] ${
         isActive
-          ? "bg-white font-semibold text-accent shadow-[0_2px_8px_-4px_rgba(28,43,66,0.4)] ring-1 ring-hairline"
+          ? "bg-white font-semibold text-[#022D4E] shadow-[0_2px_8px_-4px_rgba(28,43,66,0.4)] ring-1 ring-hairline"
           : "text-ash hover:bg-sunken hover:text-ink"
       }`}
     >
@@ -88,7 +89,7 @@ function NavLink({
       <Icon
         size={20}
         weight={isActive ? "fill" : "regular"}
-        className={isActive ? "text-accent" : ""}
+        className={isActive ? "text-[#022D4E]" : ""}
       />
       <span>{label}</span>
     </Link>
@@ -140,13 +141,15 @@ function Sidebar({
                 <NavLink key={item.href} {...item} />
               ))}
               {/* Export Link in Sidebar */}
-              <Link
-                href="/app/export"
-                className="group relative flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm text-ash transition-all duration-300 hover:bg-sunken hover:text-ink active:scale-[0.98]"
-              >
-                <FileCsv size={20} weight="duotone" className="text-accent" />
-                <span>Export Data CSV</span>
-              </Link>
+              {user && isManagerRole(user.role) && (
+                <Link
+                  href="/app/export"
+                  className="group relative flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm text-ash transition-all duration-300 hover:bg-sunken hover:text-ink active:scale-[0.98]"
+                >
+                  <FileCsv size={20} weight="duotone" className="text-[#022D4E]" />
+                  <span>Export Data CSV</span>
+                </Link>
+              )}
             </nav>
           </div>
 
@@ -154,11 +157,11 @@ function Sidebar({
             {user && (
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full  bg-[#022D4E]-wash text-xs font-semibold text-accent-deep">
-                    {user.username.slice(0, 2).toUpperCase()}
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full  bg-[#022D4E]-wash text-xs font-semibold text-[#022D4E]-deep">
+                    {(user.display_name || user.username).slice(0, 2).toUpperCase()}
                   </div>
                   <span className="text-sm font-medium text-ink">
-                    {user.username}
+                    {user.display_name || user.username}
                   </span>
                 </div>
                 <button
@@ -213,7 +216,7 @@ function BottomNav({
                   />
                 </span>
                 <span
-                  className={`text-[11px] font-medium ${isActive ? "text-accent" : "text-ash"}`}
+                  className={`text-[11px] font-medium ${isActive ? "text-[#022D4E]" : "text-ash"}`}
                 >
                   {item.label}
                 </span>
@@ -358,7 +361,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                           {storeName}
                         </div>
                         <div className="text-xs text-ash">
-                          {user?.username} ({user?.role || "Kasir"})
+                          {user?.display_name || user?.username} ({user?.role || "Kasir"})
                         </div>
                       </div>
                       <button
@@ -381,7 +384,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                       <Link
                         href="/app/export"
                         onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold text-accent  bg-[#022D4E]-wash/60 transition-all hover: bg-[#022D4E]-wash"
+                        className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold text-[#022D4E]  bg-[#022D4E]-wash/60 transition-all hover: bg-[#022D4E]-wash"
                       >
                         <FileCsv size={20} weight="duotone" />
                         <span>Export Data (CSV / Excel)</span>

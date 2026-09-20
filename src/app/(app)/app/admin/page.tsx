@@ -33,6 +33,7 @@ import { getSessionUser } from '@/utils/session'
 interface SessionUser {
   id: string
   username: string
+  display_name?: string
   role: string
   branch?: string
 }
@@ -54,6 +55,7 @@ export default function AdminPage() {
   const [newBranchName, setNewBranchName] = useState('')
   // User add form
   const [newUsername, setNewUsername] = useState('')
+  const [newDisplayName, setNewDisplayName] = useState('')
   const [newPin, setNewPin] = useState('')
   const [newRole, setNewRole] = useState('kasir')
   const [newUserBranch, setNewUserBranch] = useState('')
@@ -161,9 +163,12 @@ export default function AdminPage() {
     if (users.some((u) => u.username === username)) return flash('err', `Username ${username} sudah dipakai`)
     setBusy(true)
     try {
-      await createUser(username, newPin, newRole, newUserBranch)
+      const displayName = newRole === 'owner' || newRole === 'admin' ? 'Admin' : newDisplayName.trim()
+      if (!displayName) return flash('err', 'Nama tampilan wajib diisi')
+      await createUser(username, newPin, newRole, newUserBranch, displayName)
       await loadAll()
       setNewUsername('')
+      setNewDisplayName('')
       setNewPin('')
       setNewRole('kasir')
       setNewUserBranch('')
@@ -180,6 +185,9 @@ export default function AdminPage() {
     if (!username) return flash('err', 'Username wajib diisi')
     if (!/^\d{6}$/.test(editDraft.pin || '')) return flash('err', 'PIN harus 6 digit angka')
     if (!editDraft.branch) return flash('err', 'Pilih cabang')
+    if (editDraft.role !== 'owner' && editDraft.role !== 'admin' && !(editDraft.display_name || '').trim()) {
+      return flash('err', 'Nama tampilan wajib diisi')
+    }
     if (users.some((u, i) => i !== index && u.username === username)) {
       return flash('err', `Username ${username} sudah dipakai`)
     }
@@ -192,7 +200,7 @@ export default function AdminPage() {
     }
     setBusy(true)
     try {
-      await updateUser(index, { ...original, username, pin: editDraft.pin, role: editDraft.role, branch: editDraft.branch })
+      await updateUser(index, { ...original, username, pin: editDraft.pin, role: editDraft.role, branch: editDraft.branch, display_name: editDraft.role === 'owner' || editDraft.role === 'admin' ? 'Admin' : (editDraft.display_name || '').trim() })
       await loadAll()
       setEditing(null)
       flash('ok', 'User diperbarui')
@@ -238,7 +246,7 @@ export default function AdminPage() {
         <motion.div variants={fadeUp} custom={0} initial="hidden" animate={ready ? 'show' : 'hidden'}>
           <div className="doppel-outer">
             <div className="doppel-inner p-8 text-center">
-              <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl  bg-[#022D4E]-wash text-accent-deep">
+              <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl  bg-[#022D4E]-wash text-[#022D4E]-deep">
                 <ShieldCheck size={30} weight="duotone" />
               </span>
               <h1 className="mt-5 text-2xl font-semibold tracking-tight text-ink">Khusus Owner / Admin</h1>
@@ -265,7 +273,7 @@ export default function AdminPage() {
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`fixed top-20 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold shadow-xl ${notice.type === 'ok' ? 'bg-emerald text-white shadow-emerald/30' : 'bg-rose text-white shadow-rose/30'}`}
+            className={`fixed top-20 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold shadow-xl ${notice.type === 'ok' ? 'bg-emerald text-[#022D4E] shadow-emerald/30' : 'bg-rose text-[#022D4E] shadow-rose/30'}`}
           >
             <Check size={18} weight="bold" /> {notice.msg}
           </motion.div>
@@ -274,7 +282,7 @@ export default function AdminPage() {
 
       {/* Heading */}
       <motion.div variants={fadeUp} custom={0} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-8">
-        <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">Admin</Badge>
+        <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#022D4E]">Admin</Badge>
         <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-4xl">Manajemen Cabang &amp; User</h1>
         <p className="mt-1.5 text-xs text-ash sm:text-sm">Kelola daftar cabang, kasir, dan owner aplikasi (tersimpan di cloud Google Sheets)</p>
       </motion.div>
@@ -285,14 +293,14 @@ export default function AdminPage() {
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-[#022D4E]">
                   <Storefront size={20} weight="duotone" />
                 </span>
                 <div>
                   <h2 className="text-base font-semibold text-ink">Manajemen Cabang</h2>
                   <p className="mt-0.5 text-xs text-ash">Kode cabang dipakai di data customer &amp; order</p>
                 </div>
-                <Badge className="ml-auto rounded-full  bg-[#022D4E]-wash text-accent-deep">{branches.length} cabang</Badge>
+                <Badge className="ml-auto rounded-full  bg-[#022D4E]-wash text-[#022D4E]-deep">{branches.length} cabang</Badge>
               </div>
 
               {/* Add branch form */}
@@ -346,7 +354,7 @@ export default function AdminPage() {
                         </div>
                       ) : (
                         <>
-                          <Badge className="h-auto rounded-full  bg-[#022D4E] px-2.5 py-1 text-xs font-bold text-white">{b.code}</Badge>
+                          <Badge className="h-auto rounded-full bg-[#022D4E] px-2.5 py-1 text-xs font-bold text-white">{b.code}</Badge>
                           <div className="min-w-0 flex-1">
                             <div className="truncate text-sm font-semibold text-ink">{b.name}</div>
                             <div className="text-[11px] text-ash">{userCountByBranch(b.code)} user terdaftar</div>
@@ -360,7 +368,7 @@ export default function AdminPage() {
                             <button
                               onClick={() => handleSaveBranch(i, b)}
                               disabled={busy}
-                              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald text-white transition-all active:scale-95 disabled:opacity-50"
+                              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald text-[#022D4E] transition-all active:scale-95 disabled:opacity-50"
                               title="Simpan"
                             >
                               <Check size={15} weight="bold" />
@@ -406,14 +414,14 @@ export default function AdminPage() {
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-[#022D4E]">
                   <UsersThree size={20} weight="duotone" />
                 </span>
                 <div>
                   <h2 className="text-base font-semibold text-ink">Manajemen User</h2>
                   <p className="mt-0.5 text-xs text-ash">Kasir terbatas ke cabangnya sendiri; Owner dapat mengakses semua</p>
                 </div>
-                <Badge className="ml-auto rounded-full  bg-[#022D4E]-wash text-accent-deep">{users.length} user</Badge>
+                <Badge className="ml-auto rounded-full  bg-[#022D4E]-wash text-[#022D4E]-deep">{users.length} user</Badge>
               </div>
 
               {/* Add user form */}
@@ -442,7 +450,7 @@ export default function AdminPage() {
                   </div>
                   <div>
                     <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">Role</Label>
-                    <Select value={newRole} onValueChange={(v) => v && setNewRole(v)}>
+                    <Select value={newRole} onValueChange={(v) => { if (v) { setNewRole(v); if (v === 'owner' || v === 'admin') setNewDisplayName('Admin') } }}>
                       <SelectTrigger className="h-11 rounded-2xl">
                         <SelectValue />
                       </SelectTrigger>
@@ -455,7 +463,14 @@ export default function AdminPage() {
                   </div>
                   <div>
                     <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">Cabang</Label>
-                    <Select value={newUserBranch} onValueChange={(v) => v && setNewUserBranch(v)}>
+                    <Select value={newUserBranch} onValueChange={(v) => {
+                      if (v) {
+                        setNewUserBranch(v)
+                        if (newRole !== 'owner' && newRole !== 'admin') {
+                          setNewDisplayName(branches.find((branch) => branch.code === v)?.name || v)
+                        }
+                      }
+                    }}>
                       <SelectTrigger className="h-11 rounded-2xl">
                         <SelectValue placeholder="Pilih cabang" />
                       </SelectTrigger>
@@ -465,6 +480,16 @@ export default function AdminPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">Nama Tampilan Akun</Label>
+                    <Input
+                      value={newDisplayName}
+                      onChange={(e) => setNewDisplayName(e.target.value)}
+                      placeholder="Contoh: Cabang Cimahi"
+                      className="h-11"
+                    />
+                    <p className="mt-1 text-[11px] text-mist">Nama ini yang tampil di aplikasi. Akun Owner/Admin otomatis tampil sebagai Admin.</p>
                   </div>
                 </div>
                 <button
@@ -488,6 +513,13 @@ export default function AdminPage() {
                           <Input
                             value={editDraft.username || ''}
                             onChange={(e) => setEditDraft({ ...editDraft, username: e.target.value })}
+                            className="h-10 flex-1 sm:min-w-[10rem]"
+                          />
+                          <Input
+                            value={editDraft.display_name || ''}
+                            onChange={(e) => setEditDraft({ ...editDraft, display_name: e.target.value })}
+                            placeholder="Nama tampilan"
+                            disabled={editDraft.role === 'owner'}
                             className="h-10 flex-1 sm:min-w-[10rem]"
                           />
                           <Input
@@ -520,22 +552,22 @@ export default function AdminPage() {
                         </div>
                       ) : (
                         <>
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full  bg-[#022D4E]-wash text-xs font-semibold text-accent-deep">
-                            {u.username.slice(0, 2).toUpperCase()}
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full  bg-[#022D4E]-wash text-xs font-semibold text-[#022D4E]-deep">
+                            {(u.display_name || u.username).slice(0, 2).toUpperCase()}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="truncate text-sm font-semibold text-ink">{u.username}</span>
-                              {isSelf && <Badge className="h-auto rounded-full  bg-[#022D4E]/10 px-2 py-0.5 text-[10px] font-semibold text-accent">Anda</Badge>}
-                              <Badge className={`hidden h-auto rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${u.role === 'owner' ? 'bg-ink/5 text-ink' : ' bg-[#022D4E]-soft/20 text-accent-deep'}`}>
+                              <span className="truncate text-sm font-semibold text-ink">{u.display_name || (u.role === 'owner' || u.role === 'admin' ? 'Admin' : u.username)}</span>
+                              {isSelf && <Badge className="h-auto rounded-full  bg-[#022D4E]/10 px-2 py-0.5 text-[10px] font-semibold text-[#022D4E]">Anda</Badge>}
+                              <Badge className={`hidden h-auto rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${u.role === 'owner' ? 'bg-ink/5 text-ink' : ' bg-[#022D4E]-soft/20 text-[#022D4E]-deep'}`}>
                                 {u.role === 'owner' ? 'Owner / Admin' : 'Kasir'}
                               </Badge>
                             </div>
                             <div className="text-[11px] text-ash">
-                              {u.branch || 'Tanpa cabang'} • PIN {isEditing ? '' : PIN_BLANK}
+                              {u.username} • {u.branch || 'Tanpa cabang'} • PIN {isEditing ? '' : PIN_BLANK}
                             </div>
                           </div>
-                          <Badge className={`h-auto rounded-full px-2.5 py-1 text-[10px] font-semibold sm:hidden ${u.role === 'owner' ? 'bg-ink/5 text-ink' : ' bg-[#022D4E]-soft/20 text-accent-deep'}`}>
+                          <Badge className={`h-auto rounded-full px-2.5 py-1 text-[10px] font-semibold sm:hidden ${u.role === 'owner' ? 'bg-ink/5 text-ink' : ' bg-[#022D4E]-soft/20 text-[#022D4E]-deep'}`}>
                             {u.role === 'owner' ? 'Owner' : 'Kasir'}
                           </Badge>
                         </>
@@ -547,7 +579,7 @@ export default function AdminPage() {
                             <button
                               onClick={() => handleSaveUser(i, u)}
                               disabled={busy}
-                              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald text-white transition-all active:scale-95 disabled:opacity-50"
+                              className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald text-[#022D4E] transition-all active:scale-95 disabled:opacity-50"
                               title="Simpan"
                             >
                               <Check size={15} weight="bold" />
@@ -563,7 +595,7 @@ export default function AdminPage() {
                         ) : (
                           <>
                             <button
-                              onClick={() => { setEditing({ kind: 'user', index: i }); setEditDraft({ username: u.username, pin: u.pin || '', role: u.role, branch: u.branch || '' }) }}
+                              onClick={() => { setEditing({ kind: 'user', index: i }); setEditDraft({ username: u.username, display_name: u.display_name || '', pin: u.pin || '', role: u.role, branch: u.branch || '' }) }}
                               className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline text-ash transition-colors hover:bg-sunken hover:text-ink"
                               title="Edit"
                             >
@@ -591,9 +623,9 @@ export default function AdminPage() {
         {/* Info */}
         <motion.div variants={fadeUp} custom={3} initial="hidden" animate={ready ? 'show' : 'hidden'}>
           <div className="flex items-start gap-3 rounded-2xl border border-accent/20  bg-[#022D4E]/5 p-4">
-            <Info size={18} weight="duotone" className="mt-0.5 shrink-0 text-accent" />
+            <Info size={18} weight="duotone" className="mt-0.5 shrink-0 text-[#022D4E]" />
             <p className="text-xs leading-relaxed text-ash">
-              <strong className="text-accent">☁️ Tersimpan di Cloud</strong> Perubahan cabang &amp; user langsung tersimpan di Google Sheets dan efektif untuk semua perangkat. Owner tidak bisa menghapus akun sendiri atau mengubah role-nya jika menjadi owner terakhir.
+              <strong className="text-[#022D4E]">☁️ Tersimpan di Cloud</strong> Perubahan cabang &amp; user langsung tersimpan di Google Sheets dan efektif untuk semua perangkat. Owner tidak bisa menghapus akun sendiri atau mengubah role-nya jika menjadi owner terakhir.
             </p>
           </div>
         </motion.div>

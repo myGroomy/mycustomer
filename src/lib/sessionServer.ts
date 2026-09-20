@@ -8,6 +8,7 @@ const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
 export interface AuthenticatedUser {
   id: string
   username: string
+  display_name: string
   role: string
   branch: string
 }
@@ -49,7 +50,7 @@ export function verifySessionToken(token: string | undefined): AuthenticatedUser
     if (!parsed.id || !parsed.username || !parsed.role || !parsed.exp || parsed.exp < Math.floor(Date.now() / 1000)) {
       return null
     }
-    return { id: parsed.id, username: parsed.username, role: parsed.role, branch: parsed.branch || '' }
+    return { id: parsed.id, username: parsed.username, display_name: parsed.display_name || parsed.branch || parsed.username, role: parsed.role, branch: parsed.branch || '' }
   } catch {
     return null
   }
@@ -79,6 +80,7 @@ export async function requireSession(roles?: string[]): Promise<AuthenticatedUse
     const currentUser = {
       id: current.id,
       username: current.username,
+      display_name: current.role === 'owner' || current.role === 'admin' ? 'Admin' : current.display_name || current.branch || current.username,
       role: current.role,
       branch: current.branch || '',
     }

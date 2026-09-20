@@ -20,6 +20,7 @@ export interface Branch {
 export interface ManagedUser {
   id: string
   username: string
+  display_name: string
   pin: string
   role: string
   created_at: string
@@ -87,6 +88,7 @@ export async function getUsers(): Promise<ManagedUser[]> {
   return rows.map((r) => ({
     id: r.id || '',
     username: r.username || '',
+    display_name: r.display_name || (isManagerRole(r.role || 'kasir') ? 'Admin' : r.branch || ''),
     pin: r.pin || '',
     role: r.role || 'kasir',
     created_at: r.created_at || '',
@@ -99,10 +101,12 @@ export async function createUser(
   pin: string,
   role: string,
   branch: string,
+  displayName: string,
 ): Promise<void> {
   await appendRow(USERS_SHEET, {
     id: crypto.randomUUID(),
     username: username.trim(),
+    display_name: role === 'owner' || role === 'admin' ? 'Admin' : displayName.trim(),
     pin,
     role,
     created_at: new Date().toISOString(),
@@ -117,6 +121,7 @@ export async function updateUser(
   await updateRow(USERS_SHEET, rowIndex, {
     id: user.id,
     username: user.username.trim(),
+    display_name: user.role === 'owner' || user.role === 'admin' ? 'Admin' : user.display_name.trim(),
     pin: user.pin,
     role: user.role,
     created_at: user.created_at,

@@ -221,7 +221,7 @@ export default function FollowUpPage() {
                 ? loadDailyOrders(selectedDate)
                 : loadChurnCustomers()
             }
-            className="min-h-[40px] rounded-full bg-rose px-4 text-xs font-semibold text-white transition-opacity hover:opacity-90"
+            className="min-h-[40px] rounded-full bg-rose px-4 text-xs font-semibold text-[#022D4E] transition-opacity hover:opacity-90"
           >
             Coba Lagi
           </button>
@@ -236,7 +236,7 @@ export default function FollowUpPage() {
         className="mb-6 flex flex-wrap items-start justify-between gap-4"
       >
         <div>
-          <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-accent">
+          <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#022D4E]">
             Pusat Interaksi
           </Badge>
           <h1 className="mt-3 text-2xl font-semibold tracking-tight text-ink sm:text-4xl">
@@ -291,7 +291,7 @@ export default function FollowUpPage() {
             <DownloadSimple
               size={16}
               weight="duotone"
-              className="text-accent"
+              className="text-[#022D4E]"
             />
             <span>Download Semua .vcf ({dailyOrders.length})</span>
           </button>
@@ -305,7 +305,7 @@ export default function FollowUpPage() {
             <DownloadSimple
               size={16}
               weight="duotone"
-              className="text-accent"
+              className="text-[#022D4E]"
             />
             <span>Download .vcf ({churnCustomers.length})</span>
           </button>
@@ -330,7 +330,7 @@ export default function FollowUpPage() {
                     <Calendar
                       size={18}
                       weight="duotone"
-                      className="text-accent"
+                      className="text-[#022D4E]"
                     />
                     <span className="text-xs font-semibold uppercase tracking-wider text-ink">
                       Pilih Tanggal Order
@@ -375,7 +375,7 @@ export default function FollowUpPage() {
                     </strong>
                     :
                   </span>
-                  <span className="font-semibold text-accent">
+                  <span className="font-semibold text-[#022D4E]">
                     {dailyOrders.length} transaksi
                   </span>
                 </div>
@@ -466,7 +466,7 @@ export default function FollowUpPage() {
                                   Baru
                                 </Badge>
                               ) : (
-                                <Badge className="border-accent/25  bg-[#022D4E]-wash text-accent-deep">
+                                <Badge className="border-accent/25  bg-[#022D4E]-wash text-[#022D4E]-deep">
                                   Langganan
                                 </Badge>
                               )}
@@ -489,7 +489,7 @@ export default function FollowUpPage() {
                             href={buildWaLink(cust.phone_normalized, cust.name)}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex min-h-[44px] h-10 items-center gap-2 rounded-full bg-emerald px-4 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95"
+                            className="flex min-h-[44px] h-10 items-center gap-2 rounded-full bg-emerald px-4 text-xs font-semibold text-[#022D4E] transition-all hover:scale-105 active:scale-95"
                             style={{
                               boxShadow:
                                 "0 6px 16px -6px rgba(28, 43, 66, 0.5)",
@@ -509,7 +509,7 @@ export default function FollowUpPage() {
                             <UserPlus
                               size={15}
                               weight="duotone"
-                              className="text-accent"
+                              className="text-[#022D4E]"
                             />
                             <span className="hidden sm:inline">vCard</span>
                           </button>
@@ -566,7 +566,7 @@ export default function FollowUpPage() {
               );
               const isRisk = c.retention_status === "at_risk";
               const statusColor = isRisk
-                ? "border-amber/25 bg-amber/10 text-accent-deep"
+                ? "border-amber/25 bg-amber/10 text-[#022D4E]-deep"
                 : "border-rose/25 bg-rose/10 text-ink";
 
               return (

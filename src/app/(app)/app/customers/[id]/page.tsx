@@ -151,7 +151,7 @@ export default function CustomerDetailPage() {
         <button
           type="button"
           onClick={loadData}
-          className="min-h-[44px] rounded-full  bg-[#022D4E] px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
+          className="min-h-[44px] rounded-full bg-[#022D4E] px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
         >
           Coba Lagi
         </button>
@@ -169,7 +169,7 @@ export default function CustomerDetailPage() {
         </p>
         <Link
           href="/app/customers"
-          className="inline-flex min-h-[44px] items-center rounded-full  bg-[#022D4E] px-5 text-sm font-semibold text-white"
+          className="inline-flex min-h-[44px] items-center rounded-full bg-[#022D4E] px-5 text-sm font-semibold text-white"
         >
           Kembali ke daftar customer
         </Link>
@@ -209,7 +209,7 @@ export default function CustomerDetailPage() {
       );
     if (status === "at_risk")
       return (
-        <Badge className="bg-amber/10 text-accent-deep border-amber/20">
+        <Badge className="bg-amber/10 text-[#022D4E]-deep border-amber/20">
           At Risk
         </Badge>
       );
@@ -296,12 +296,12 @@ export default function CustomerDetailPage() {
                     </h1>
                     <a
                       href={`tel:${customer.phone_normalized}`}
-                      className="mt-1.5 inline-flex items-center gap-2 text-sm font-mono text-ash transition-colors duration-300 hover:text-accent"
+                      className="mt-1.5 inline-flex items-center gap-2 text-sm font-mono text-ash transition-colors duration-300 hover:text-[#022D4E]"
                     >
                       <Phone
                         size={16}
                         weight="bold"
-                        className="text-accent shrink-0"
+                        className="text-[#022D4E] shrink-0"
                       />
                       {customer.phone_normalized}
                     </a>
@@ -309,7 +309,7 @@ export default function CustomerDetailPage() {
                       {getStatusBadge()}
                       <Badge
                         variant="outline"
-                        className="border-accent/20 text-accent"
+                        className="border-accent/20 text-[#022D4E]"
                       >
                         {customer.order_count}x Order
                       </Badge>
@@ -324,7 +324,7 @@ export default function CustomerDetailPage() {
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2.5 shrink-0">
-                    <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-3xl  bg-[#022D4E]-wash text-lg sm:text-xl font-semibold text-accent-deep">
+                    <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-3xl  bg-[#022D4E]-wash text-lg sm:text-xl font-semibold text-[#022D4E]-deep">
                       {initials}
                     </div>
                     <button
@@ -334,7 +334,7 @@ export default function CustomerDetailPage() {
                       <PencilSimple
                         size={14}
                         weight="bold"
-                        className="text-accent"
+                        className="text-[#022D4E]"
                       />
                       Edit Profil
                     </button>
@@ -440,7 +440,7 @@ export default function CustomerDetailPage() {
                   <button
                     onClick={handleSaveProfil}
                     disabled={saving}
-                    className="group flex min-h-[44px] h-11 flex-1 items-center justify-center gap-2 rounded-full  bg-[#022D4E] text-xs sm:text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
+                    className="group flex min-h-[44px] h-11 flex-1 items-center justify-center gap-2 rounded-full bg-[#022D4E] text-xs sm:text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
                   >
                     {saving ? (
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -508,7 +508,7 @@ export default function CustomerDetailPage() {
               <div key={order.id} className="doppel-outer">
                 <div className="doppel-inner flex items-center justify-between p-4">
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-[#022D4E]">
                       <ShoppingBag size={18} weight="duotone" />
                     </div>
                     <div className="min-w-0">
@@ -555,7 +555,7 @@ export default function CustomerDetailPage() {
       >
         <div className="rounded-3xl border border-hairline bg-white p-5">
           <div className="flex items-start gap-3">
-            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber/10 text-accent-deep">
+            <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl bg-amber/10 text-[#022D4E]-deep">
               <Lightbulb size={18} weight="duotone" />
             </span>
             <div>
@@ -583,7 +583,7 @@ export default function CustomerDetailPage() {
                 href={buildWaLink(customer.phone_normalized, customer.name)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex min-h-[48px] h-12 sm:h-13 flex-1 items-center justify-center gap-2.5 rounded-full bg-emerald text-xs sm:text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98]"
+                className="group flex min-h-[48px] h-12 sm:h-13 flex-1 items-center justify-center gap-2.5 rounded-full bg-emerald text-xs sm:text-sm font-semibold text-[#022D4E] transition-all duration-500 hover:-translate-y-px active:scale-[0.98]"
                 style={{ boxShadow: "0 8px 24px -8px rgba(28, 43, 66, 0.5)" }}
               >
                 <WhatsappLogo size={20} weight="fill" />
@@ -595,7 +595,7 @@ export default function CustomerDetailPage() {
                 }
                 className="flex min-h-[48px] h-12 sm:h-13 items-center gap-2 rounded-full border border-hairline bg-white px-4 sm:px-5 text-xs sm:text-sm font-semibold text-ink-soft transition-all duration-500 hover:bg-sunken hover:text-ink active:scale-[0.96]"
               >
-                <UserPlus size={18} weight="duotone" className="text-accent" />
+                <UserPlus size={18} weight="duotone" className="text-[#022D4E]" />
                 <span className="hidden sm:inline">vCard</span>
               </button>
             </div>
