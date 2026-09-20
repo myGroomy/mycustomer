@@ -117,7 +117,7 @@ export default function DashboardPage() {
           <button
             type="button"
             onClick={() => loadData()}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-accent px-5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full  bg-[#022D4E] px-5 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95"
           >
             <ArrowsClockwise size={16} weight="bold" />
             Coba Lagi
@@ -281,7 +281,7 @@ export default function DashboardPage() {
       sub: `${counts.active} aktif · ${counts.at_risk} risk`,
       icon: UsersThree,
       hue: 'text-accent',
-      glow: 'bg-accent/10',
+      glow: ' bg-[#022D4E]/10',
     },
     {
       label: 'Repeat Rate',
@@ -523,7 +523,7 @@ export default function DashboardPage() {
               </div>
               <Link
                 href="/app/follow-up"
-                className="inline-flex min-h-[44px] items-center justify-center rounded-full bg-accent px-5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                className="inline-flex min-h-[44px] items-center justify-center rounded-full  bg-[#022D4E] px-5 text-xs font-semibold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
               >
                 Buka Follow-up
               </Link>
@@ -675,7 +675,7 @@ export default function DashboardPage() {
           <div className="doppel-inner p-5 sm:p-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
               <div className="flex items-center gap-2.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-accent-wash">
+                <span className="flex h-9 w-9 items-center justify-center rounded-2xl  bg-[#022D4E]-wash">
                   <ChartBar size={18} weight="duotone" className="text-accent" />
                 </span>
                 <div>
@@ -701,7 +701,7 @@ export default function DashboardPage() {
                       <div
                         className={`w-full max-w-[42px] rounded-t-lg transition-all ${
                           b.count > 0
-                            ? 'bg-accent group-hover:bg-accent-deep group-hover:shadow-[0_-4px_14px_-4px_rgba(28,43,66,0.6)]'
+                            ? 'bg-blue-500 group-hover: bg-[#022D4E] group-hover:shadow-[0_-4px_14px_-4px_rgba(28,43,66,0.6)]'
                             : 'bg-sunken'
                         }`}
                         style={{ height: `${barPx}px` }}
@@ -734,7 +734,7 @@ export default function DashboardPage() {
                   <div key={month.key} className="flex h-full flex-1 flex-col items-center justify-end gap-2">
                     <span className="text-[10px] font-semibold tabular-nums text-ash">{month.orders}</span>
                     <div
-                      className="w-full max-w-10 rounded-t-xl bg-accent transition-all"
+                      className="w-full max-w-10 rounded-t-xl bg-blue-500 hover: bg-[#022D4E] transition-all cursor-pointer"
                       style={{ height: `${Math.max((month.orders / trendMax) * 120, month.orders > 0 ? 8 : 2)}px` }}
                       title={`${month.label}: ${month.orders} order`}
                     />
@@ -781,7 +781,7 @@ export default function DashboardPage() {
                           <span className="text-xs text-ash">{item.orders} order · {item.repeatRate}% repeat</span>
                         </div>
                         <div className="mt-2 h-2 overflow-hidden rounded-full bg-sunken">
-                          <div className="h-full rounded-full bg-accent" style={{ width: `${pct}%` }} />
+                          <div className="h-full rounded-full  bg-[#022D4E]" style={{ width: `${pct}%` }} />
                         </div>
                         <div className="mt-1 text-[11px] text-ash">{item.customers} customer · {pct}% kontribusi order</div>
                       </Link>

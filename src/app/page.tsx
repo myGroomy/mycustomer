@@ -106,17 +106,17 @@ const METRIC_CHIPS = [
   {
     icon: Receipt,
     value: "Rekam order",
-    hue: "bg-accent-wash text-accent-deep",
+    hue: " bg-[#022D4E]-wash text-accent-deep",
   },
   {
     icon: UsersThree,
     value: "Profil otomatis",
-    hue: "bg-accent/10 text-accent",
+    hue: " bg-[#022D4E]/10 text-accent",
   },
   {
     icon: ChartLineUp,
     value: "Retensi real-time",
-    hue: "bg-accent-soft/20 text-accent-deep",
+    hue: " bg-[#022D4E]-soft/20 text-accent-deep",
   },
   { icon: WhatsappLogo, value: "Follow-up 1 ketik", hue: "bg-ink/5 text-ink" },
 ];
@@ -287,9 +287,9 @@ export default function LandingPage() {
           aria-hidden
           className="pointer-events-none absolute inset-0 overflow-hidden"
         >
-          <div className="absolute -top-32 right-[-12%] h-[34rem] w-[34rem] rounded-full bg-accent/15 blur-[130px]" />
-          <div className="absolute left-[-10%] top-1/3 h-[28rem] w-[28rem] rounded-full bg-accent-soft/25 blur-[120px]" />
-          <div className="absolute bottom-[-20%] left-1/3 h-[26rem] w-[26rem] rounded-full bg-accent-wash/50 blur-[120px]" />
+          <div className="absolute -top-32 right-[-12%] h-[34rem] w-[34rem] rounded-full  bg-[#022D4E]/15 blur-[130px]" />
+          <div className="absolute left-[-10%] top-1/3 h-[28rem] w-[28rem] rounded-full  bg-[#022D4E]-soft/25 blur-[120px]" />
+          <div className="absolute bottom-[-20%] left-1/3 h-[26rem] w-[26rem] rounded-full  bg-[#022D4E]-wash/50 blur-[120px]" />
           <div
             className="absolute inset-0 opacity-[0.05] mix-blend-multiply"
             style={{
@@ -476,7 +476,7 @@ export default function LandingPage() {
             >
               <div className="doppel-inner flex h-full flex-col justify-between gap-6 p-6 sm:p-8">
                 <div>
-                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl bg-accent-wash text-accent">
+                  <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
                     <Receipt size={22} weight="duotone" />
                   </div>
                   <h3 className="max-w-sm text-2xl font-semibold tracking-tight text-ink sm:text-[1.7rem] sm:leading-tight">
@@ -516,7 +516,7 @@ export default function LandingPage() {
               data-soar
               className="group col-span-1 overflow-hidden rounded-3xl border border-hairline bg-white p-6 transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(16,18,20,0.25)]"
             >
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-accent/10 text-accent">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]/10 text-accent">
                 <WhatsappLogo size={22} weight="duotone" />
               </div>
               <h3 className="text-lg font-semibold tracking-tight text-ink">
@@ -533,7 +533,7 @@ export default function LandingPage() {
               data-soar
               className="group col-span-1 overflow-hidden rounded-3xl border border-hairline bg-white p-6 transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(16,18,20,0.25)]"
             >
-              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl bg-accent-soft/20 text-accent-deep">
+              <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]-soft/20 text-accent-deep">
                 <ChartLineUp size={22} weight="duotone" />
               </div>
               <h3 className="text-lg font-semibold tracking-tight text-ink">
@@ -682,7 +682,7 @@ export default function LandingPage() {
                   <div className="doppel-outer">
                     <div className="doppel-inner p-6 sm:p-8">
                       <div className="flex gap-5">
-                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-wash text-accent-deep">
+                        <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent-deep">
                           <Icon size={24} weight="duotone" />
                         </span>
                         <div>
@@ -737,7 +737,7 @@ export default function LandingPage() {
                   />
                   <div className="relative flex h-full flex-col justify-between p-7 sm:p-8">
                     <span
-                      className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-colors duration-500 ${active ? "bg-white/15 text-white" : "bg-accent-wash text-accent"}`}
+                      className={`flex h-12 w-12 items-center justify-center rounded-2xl transition-colors duration-500 ${active ? "bg-white/15 text-white" : " bg-[#022D4E]-wash text-accent"}`}
                     >
                       <Icon size={24} weight="duotone" />
                     </span>
@@ -833,7 +833,7 @@ export default function LandingPage() {
                     key={r.name}
                     onClick={() => setActiveReview(i)}
                     aria-label={`Lihat review ${r.name}`}
-                    className={`h-1.5 rounded-full transition-all duration-500 ${i === activeReview ? "w-6 bg-accent" : "w-1.5 bg-mist/60 hover:bg-mist"}`}
+                    className={`h-1.5 rounded-full transition-all duration-500 ${i === activeReview ? "w-6  bg-[#022D4E]" : "w-1.5 bg-mist/60 hover:bg-mist"}`}
                   />
                 ))}
               </div>
@@ -849,8 +849,8 @@ export default function LandingPage() {
       >
         <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[2.5rem] bg-ink px-6 py-20 text-center sm:px-12 sm:py-28">
           <div aria-hidden className="pointer-events-none absolute inset-0">
-            <div className="absolute -top-24 left-1/4 h-80 w-80 rounded-full bg-accent/30 blur-[110px]" />
-            <div className="absolute -bottom-24 right-1/4 h-80 w-80 rounded-full bg-accent-soft/25 blur-[110px]" />
+            <div className="absolute -top-24 left-1/4 h-80 w-80 rounded-full  bg-[#022D4E]/30 blur-[110px]" />
+            <div className="absolute -bottom-24 right-1/4 h-80 w-80 rounded-full  bg-[#022D4E]-soft/25 blur-[110px]" />
           </div>
           <div className="relative">
             <h2 className="mx-auto max-w-3xl text-3xl font-semibold leading-[1.08] tracking-[-0.02em] text-white sm:text-5xl">

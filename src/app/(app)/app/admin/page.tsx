@@ -238,7 +238,7 @@ export default function AdminPage() {
         <motion.div variants={fadeUp} custom={0} initial="hidden" animate={ready ? 'show' : 'hidden'}>
           <div className="doppel-outer">
             <div className="doppel-inner p-8 text-center">
-              <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl bg-accent-wash text-accent-deep">
+              <span className="mx-auto flex h-16 w-16 items-center justify-center rounded-3xl  bg-[#022D4E]-wash text-accent-deep">
                 <ShieldCheck size={30} weight="duotone" />
               </span>
               <h1 className="mt-5 text-2xl font-semibold tracking-tight text-ink">Khusus Owner / Admin</h1>
@@ -285,14 +285,14 @@ export default function AdminPage() {
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-wash text-accent">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
                   <Storefront size={20} weight="duotone" />
                 </span>
                 <div>
                   <h2 className="text-base font-semibold text-ink">Manajemen Cabang</h2>
                   <p className="mt-0.5 text-xs text-ash">Kode cabang dipakai di data customer &amp; order</p>
                 </div>
-                <Badge className="ml-auto rounded-full bg-accent-wash text-accent-deep">{branches.length} cabang</Badge>
+                <Badge className="ml-auto rounded-full  bg-[#022D4E]-wash text-accent-deep">{branches.length} cabang</Badge>
               </div>
 
               {/* Add branch form */}
@@ -346,7 +346,7 @@ export default function AdminPage() {
                         </div>
                       ) : (
                         <>
-                          <Badge className="h-auto rounded-full bg-accent px-2.5 py-1 text-xs font-bold text-white">{b.code}</Badge>
+                          <Badge className="h-auto rounded-full  bg-[#022D4E] px-2.5 py-1 text-xs font-bold text-white">{b.code}</Badge>
                           <div className="min-w-0 flex-1">
                             <div className="truncate text-sm font-semibold text-ink">{b.name}</div>
                             <div className="text-[11px] text-ash">{userCountByBranch(b.code)} user terdaftar</div>
@@ -406,14 +406,14 @@ export default function AdminPage() {
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-wash text-accent">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
                   <UsersThree size={20} weight="duotone" />
                 </span>
                 <div>
                   <h2 className="text-base font-semibold text-ink">Manajemen User</h2>
                   <p className="mt-0.5 text-xs text-ash">Kasir terbatas ke cabangnya sendiri; Owner dapat mengakses semua</p>
                 </div>
-                <Badge className="ml-auto rounded-full bg-accent-wash text-accent-deep">{users.length} user</Badge>
+                <Badge className="ml-auto rounded-full  bg-[#022D4E]-wash text-accent-deep">{users.length} user</Badge>
               </div>
 
               {/* Add user form */}
@@ -520,14 +520,14 @@ export default function AdminPage() {
                         </div>
                       ) : (
                         <>
-                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-accent-wash text-xs font-semibold text-accent-deep">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full  bg-[#022D4E]-wash text-xs font-semibold text-accent-deep">
                             {u.username.slice(0, 2).toUpperCase()}
                           </div>
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
                               <span className="truncate text-sm font-semibold text-ink">{u.username}</span>
-                              {isSelf && <Badge className="h-auto rounded-full bg-accent/10 px-2 py-0.5 text-[10px] font-semibold text-accent">Anda</Badge>}
-                              <Badge className={`hidden h-auto rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${u.role === 'owner' ? 'bg-ink/5 text-ink' : 'bg-accent-soft/20 text-accent-deep'}`}>
+                              {isSelf && <Badge className="h-auto rounded-full  bg-[#022D4E]/10 px-2 py-0.5 text-[10px] font-semibold text-accent">Anda</Badge>}
+                              <Badge className={`hidden h-auto rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${u.role === 'owner' ? 'bg-ink/5 text-ink' : ' bg-[#022D4E]-soft/20 text-accent-deep'}`}>
                                 {u.role === 'owner' ? 'Owner / Admin' : 'Kasir'}
                               </Badge>
                             </div>
@@ -535,7 +535,7 @@ export default function AdminPage() {
                               {u.branch || 'Tanpa cabang'} • PIN {isEditing ? '' : PIN_BLANK}
                             </div>
                           </div>
-                          <Badge className={`h-auto rounded-full px-2.5 py-1 text-[10px] font-semibold sm:hidden ${u.role === 'owner' ? 'bg-ink/5 text-ink' : 'bg-accent-soft/20 text-accent-deep'}`}>
+                          <Badge className={`h-auto rounded-full px-2.5 py-1 text-[10px] font-semibold sm:hidden ${u.role === 'owner' ? 'bg-ink/5 text-ink' : ' bg-[#022D4E]-soft/20 text-accent-deep'}`}>
                             {u.role === 'owner' ? 'Owner' : 'Kasir'}
                           </Badge>
                         </>
@@ -590,7 +590,7 @@ export default function AdminPage() {
 
         {/* Info */}
         <motion.div variants={fadeUp} custom={3} initial="hidden" animate={ready ? 'show' : 'hidden'}>
-          <div className="flex items-start gap-3 rounded-2xl border border-accent/20 bg-accent/5 p-4">
+          <div className="flex items-start gap-3 rounded-2xl border border-accent/20  bg-[#022D4E]/5 p-4">
             <Info size={18} weight="duotone" className="mt-0.5 shrink-0 text-accent" />
             <p className="text-xs leading-relaxed text-ash">
               <strong className="text-accent">☁️ Tersimpan di Cloud</strong> Perubahan cabang &amp; user langsung tersimpan di Google Sheets dan efektif untuk semua perangkat. Owner tidak bisa menghapus akun sendiri atau mengubah role-nya jika menjadi owner terakhir.

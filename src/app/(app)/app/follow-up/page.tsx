@@ -466,7 +466,7 @@ export default function FollowUpPage() {
                                   Baru
                                 </Badge>
                               ) : (
-                                <Badge className="border-accent/25 bg-accent-wash text-accent-deep">
+                                <Badge className="border-accent/25  bg-[#022D4E]-wash text-accent-deep">
                                   Langganan
                                 </Badge>
                               )}

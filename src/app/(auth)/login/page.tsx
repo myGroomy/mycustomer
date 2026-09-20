@@ -71,7 +71,7 @@ export default function LoginPage() {
   return (
     <div className="sky-hero grain relative flex min-h-[100dvh] flex-col overflow-hidden">
       {/* Ambient orbs */}
-      <div className="pointer-events-none absolute -top-40 right-[-10%] h-[40rem] w-[40rem] rounded-full bg-accent/15 blur-[120px]" />
+      <div className="pointer-events-none absolute -top-40 right-[-10%] h-[40rem] w-[40rem] rounded-full  bg-[#022D4E]/15 blur-[120px]" />
       <div className="pointer-events-none absolute bottom-[-20%] left-[-8%] h-[32rem] w-[32rem] rounded-full bg-emerald/10 blur-[120px]" />
 
       <header className="relative z-10">

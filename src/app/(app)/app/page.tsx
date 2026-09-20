@@ -340,7 +340,7 @@ export default function InputOrderPage() {
                           <button
                             type="button"
                             onClick={handleCreateNew}
-                            className="flex items-center gap-2 rounded-full bg-accent-wash px-4 py-2 text-sm font-medium text-accent-deep transition-colors hover:bg-accent/20"
+                            className="flex items-center gap-2 rounded-full  bg-[#022D4E]-wash px-4 py-2 text-sm font-medium text-accent-deep transition-colors hover: bg-[#022D4E]/20"
                           >
                             <UserPlus size={16} weight="duotone" />
                             Buat Pelanggan Baru
@@ -358,7 +358,7 @@ export default function InputOrderPage() {
                           className="flex items-center justify-between gap-3 p-3 rounded-xl cursor-pointer"
                         >
                           <div className="flex items-center gap-3 min-w-0 flex-1">
-                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent-wash text-xs font-semibold text-accent-deep">
+                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-xs font-semibold text-accent-deep">
                               {c.name
                                 .split(" ")
                                 .map((n: string) => n[0])
@@ -377,7 +377,7 @@ export default function InputOrderPage() {
                                   <Phone size={11} />
                                   {c.phone_normalized}
                                 </span>
-                                <span className="rounded-full bg-accent-wash px-2 py-0.5 text-[10px] font-semibold text-accent-deep">
+                                <span className="rounded-full  bg-[#022D4E]-wash px-2 py-0.5 text-[10px] font-semibold text-accent-deep">
                                   Order ke-{(c.order_count || 0) + 1}
                                 </span>
                               </div>
@@ -453,7 +453,7 @@ export default function InputOrderPage() {
               <div className="doppel-inner p-4 sm:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-accent-wash text-sm font-semibold text-accent-deep">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-sm font-semibold text-accent-deep">
                       {selectedCustomer.name
                         .split(" ")
                         .map((n: string) => n[0])
@@ -680,7 +680,7 @@ export default function InputOrderPage() {
                   type="button"
                   onClick={handleSubmit}
                   disabled={!canSubmit}
-                  className="group flex min-h-[48px] h-12 sm:h-13 flex-1 items-center justify-center gap-2.5 rounded-full bg-accent text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
+                  className="group flex min-h-[48px] h-12 sm:h-13 flex-1 items-center justify-center gap-2.5 rounded-full  bg-[#022D4E] text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
                   style={{ boxShadow: "0 8px 24px -8px rgba(28, 43, 66, 0.5)" }}
                 >
                   {loading ? (

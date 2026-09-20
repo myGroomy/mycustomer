@@ -155,12 +155,12 @@ export default function ExportPage() {
                   onClick={() => setExportType(opt.key)}
                   className={`group rounded-3xl p-4 text-left transition-all duration-300 ${
                     exportType === opt.key
-                      ? 'border-2 border-accent bg-accent-wash/50 shadow-sm'
+                      ? 'border-2 border-accent  bg-[#022D4E]-wash/50 shadow-sm'
                       : 'border border-hairline bg-white hover:bg-sunken/60'
                   }`}
                 >
                   <span className={`mb-3 flex h-10 w-10 items-center justify-center rounded-2xl transition-all ${
-                    exportType === opt.key ? 'bg-white text-ink ring-1 ring-ink/10 shadow-sm' : 'bg-accent-wash text-accent'
+                    exportType === opt.key ? 'bg-white text-ink ring-1 ring-ink/10 shadow-sm' : ' bg-[#022D4E]-wash text-accent'
                   }`}>
                     <opt.icon size={20} weight="duotone" />
                   </span>
@@ -204,7 +204,8 @@ export default function ExportPage() {
               type="button"
               onClick={handleExport}
               disabled={loading}
-              className="mt-6 group flex min-h-[48px] h-13 w-full items-center justify-center gap-3 rounded-full bg-accent text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
+              // Saya mengganti  bg-[#022D4E] menjadi  bg-[#022D4E] agar tombol berwarna biru gelap dan teks putihnya terlihat jelas
+              className="mt-6 group flex min-h-[48px] h-13 w-full items-center justify-center gap-3 rounded-full  bg-[#022D4E] text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] hover:bg-blue-700 disabled:opacity-50"
               style={{ boxShadow: '0 8px 24px -8px rgba(28, 43, 66, 0.5)' }}
             >
               {loading ? (

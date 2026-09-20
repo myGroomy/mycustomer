@@ -25,7 +25,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -35,7 +34,7 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { getCustomerById, updateCustomer } from "@/services/customerService";
+import { getCustomerById, updateCustomer, updateCustomerProfile } from "@/services/customerService";
 import { getOrdersByCustomer } from "@/services/orderService";
 import { getRetentionStatus, getRetentionLabel } from "@/utils/churnStatus";
 import { buildWaLink } from "@/utils/waLinkBuilder";
@@ -44,20 +43,6 @@ import { CHANNELS, DEFAULT_THRESHOLDS, PAGE_SIZE } from "@/constants";
 import { fadeUp, FLUID_EASE } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
 import type { CustomerWithStats, Order } from "@/types";
-
-const AGE_RANGES = [
-  { value: "<17", label: "<17 Anak-anak/Remaja awal" },
-  { value: "17-25", label: "17-25 Gen Z / Pelajar-Mahasiswa" },
-  { value: "26-35", label: "26-35 Muda bekerja" },
-  { value: "36-45", label: "36-45 Keluarga muda" },
-  { value: "46-55", label: "46-55 Dewasa mapan" },
-  { value: "56+", label: "56+ Senior" },
-];
-
-const GENDERS = [
-  { value: "L", label: "Laki-laki" },
-  { value: "P", label: "Perempuan" },
-];
 
 export default function CustomerDetailPage() {
   const ready = useMounted();
@@ -70,18 +55,19 @@ export default function CustomerDetailPage() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  // Edit mode state
-  const [isEditing, setIsEditing] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editPhone, setEditPhone] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+   // Edit mode state
+   const [isEditing, setIsEditing] = useState(false);
+   const [editName, setEditName] = useState("");
+   const [editPhone, setEditPhone] = useState("");
+   const [saving, setSaving] = useState(false);
+   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Detail fields
-  const [ageRange, setAgeRange] = useState("");
-  const [gender, setGender] = useState("");
-  const [description, setDescription] = useState("");
-  const [savingDetails, setSavingDetails] = useState(false);
+   // Unified Profil Edit fields
+   const [editAlias, setEditAlias] = useState("");
+  const [editUsia, setEditUsia] = useState("");
+  const [editJenisKelamin, setEditJenisKelamin] = useState("");
+  const [savingProfil, setSavingProfil] = useState(false);
+  const [profilSaved, setProfilSaved] = useState(false);
 
   useEffect(() => {
     if (id) loadData();
@@ -104,9 +90,9 @@ export default function CustomerDetailPage() {
         setCustomer({ ...c, retention_status: status });
         setEditName(c.name);
         setEditPhone(c.phone_normalized);
-        setAgeRange(c.age_range || "");
-        setGender(c.gender || "");
-        setDescription(c.description || "");
+        setEditAlias(c.aliases && c.aliases.length > 0 ? c.aliases.map((a) => a.name).join(", ") : "");
+        setEditUsia(c.usia || "");
+        setEditJenisKelamin(c.jenis_kelamin || c.gender || "");
       }
       setOrders(o.data);
     } catch (err) {
@@ -156,25 +142,28 @@ export default function CustomerDetailPage() {
     }
   };
 
-  const handleSaveDetails = async () => {
+  const handleSaveProfil = async () => {
     if (!customer) return;
-    setSavingDetails(true);
+    setSavingProfil(true);
+    setProfilSaved(false);
     try {
-      await updateCustomer(customer.id, {
-        age_range: ageRange,
-        gender: gender,
-        description: description,
-      });
+      const payload: { aliases?: string; usia?: string; jenis_kelamin?: string } = {};
+      if (editAlias !== undefined) payload.aliases = editAlias;
+      if (editUsia !== undefined) payload.usia = editUsia;
+      if (editJenisKelamin !== undefined) payload.jenis_kelamin = editJenisKelamin;
+
+      const updated = await updateCustomerProfile(customer.id, payload);
       setCustomer((prev) =>
-        prev ? { ...prev, age_range: ageRange, gender, description } : null,
+        prev ? { ...prev, aliases: updated.aliases, usia: updated.usia, jenis_kelamin: updated.jenis_kelamin, gender: updated.jenis_kelamin } : null,
       );
-      toast.success("Detail customer diperbarui");
+      toast.success("Profil customer berhasil disimpan");
+      setProfilSaved(true);
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Gagal menyimpan detail",
+        err instanceof Error ? err.message : "Gagal menyimpan profil",
       );
     } finally {
-      setSavingDetails(false);
+      setSavingProfil(false);
     }
   };
 
@@ -195,7 +184,7 @@ export default function CustomerDetailPage() {
         <button
           type="button"
           onClick={loadData}
-          className="min-h-[44px] rounded-full bg-accent px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
+          className="min-h-[44px] rounded-full  bg-[#022D4E] px-5 text-sm font-semibold text-white transition-opacity hover:opacity-90 active:scale-[0.98]"
         >
           Coba Lagi
         </button>
@@ -213,7 +202,7 @@ export default function CustomerDetailPage() {
         </p>
         <Link
           href="/app/customers"
-          className="inline-flex min-h-[44px] items-center rounded-full bg-accent px-5 text-sm font-semibold text-white"
+          className="inline-flex min-h-[44px] items-center rounded-full  bg-[#022D4E] px-5 text-sm font-semibold text-white"
         >
           Kembali ke daftar customer
         </Link>
@@ -357,18 +346,18 @@ export default function CustomerDetailPage() {
                       >
                         {customer.order_count}x Order
                       </Badge>
-                      {ageRange && (
-                        <Badge variant="secondary">{ageRange}</Badge>
+                      {customer.usia && (
+                        <Badge variant="secondary">{customer.usia}</Badge>
                       )}
-                      {gender && (
+                      {customer.jenis_kelamin && (
                         <Badge variant="secondary">
-                          {gender === "L" ? "Laki-laki" : "Perempuan"}
+                          {customer.jenis_kelamin === "L" ? "Laki-laki" : "Perempuan"}
                         </Badge>
                       )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-2.5 shrink-0">
-                    <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-3xl bg-accent-wash text-lg sm:text-xl font-semibold text-accent-deep">
+                    <div className="flex h-14 w-14 sm:h-16 sm:w-16 items-center justify-center rounded-3xl  bg-[#022D4E]-wash text-lg sm:text-xl font-semibold text-accent-deep">
                       {initials}
                     </div>
                     <button
@@ -440,7 +429,7 @@ export default function CustomerDetailPage() {
                   <button
                     onClick={handleSaveCustomer}
                     disabled={saving}
-                    className="group flex min-h-[44px] h-11 flex-1 items-center justify-center gap-2 rounded-full bg-accent text-xs sm:text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
+                    className="group flex min-h-[44px] h-11 flex-1 items-center justify-center gap-2 rounded-full  bg-[#022D4E] text-xs sm:text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
                   >
                     {saving ? (
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
@@ -515,7 +504,7 @@ export default function CustomerDetailPage() {
                   <div key={order.id} className="doppel-outer">
                     <div className="doppel-inner flex items-center justify-between p-4">
                       <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-accent-wash text-accent">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
                           <ShoppingBag size={18} weight="duotone" />
                         </div>
                         <div className="min-w-0">
@@ -555,76 +544,76 @@ export default function CustomerDetailPage() {
           <TabsContent value="details">
             <div className="doppel-outer">
               <div className="doppel-inner p-5 space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
-                      Kategori Usia
-                    </Label>
-                    <Select
-                      value={ageRange}
-                      onValueChange={(v) => setAgeRange(v || "")}
-                    >
-                      <SelectTrigger className="h-11 rounded-2xl">
-                        <SelectValue placeholder="Pilih rentang usia" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {AGE_RANGES.map((ar) => (
-                          <SelectItem key={ar.value} value={ar.value}>
-                            {ar.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                {/* ── Unified Profil Card ────────────────────────────── */}
+                <div className="border-t border-hairline pt-5">
+                  <h3 className="mb-4 text-sm font-semibold text-ink">Detail Profil</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
+                        Alias
+                      </Label>
+                      <Input
+                        type="text"
+                        value={editAlias}
+                        onChange={(e) => setEditAlias(e.target.value)}
+                        placeholder="Nama panggilan atau alias"
+                        className="h-11 rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
+                        Usia
+                      </Label>
+                      <Input
+                        type="text"
+                        value={editUsia}
+                        onChange={(e) => setEditUsia(e.target.value)}
+                        placeholder="Contoh: 25 atau 26-35"
+                        className="h-11 rounded-2xl"
+                      />
+                    </div>
+                    <div>
+                      <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
+                        Jenis Kelamin
+                      </Label>
+                      <Select
+                        value={editJenisKelamin}
+                        onValueChange={(v) => setEditJenisKelamin(v || "")}
+                      >
+                        <SelectTrigger className="h-11 rounded-2xl">
+                          <SelectValue placeholder="Pilih jenis kelamin" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="L">Laki-laki</SelectItem>
+                          <SelectItem value="P">Perempuan</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
-                  <div>
-                    <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
-                      Gender
-                    </Label>
-                    <Select
-                      value={gender}
-                      onValueChange={(v) => setGender(v || "")}
+
+                  {profilSaved && (
+                    <div className="mt-3 rounded-2xl border border-emerald/20 bg-emerald/10 p-3 text-xs text-emerald">
+                      <CheckCircle size={14} weight="fill" className="inline mr-1" />
+                      Profil berhasil diperbarui
+                    </div>
+                  )}
+
+                  <div className="mt-4 flex justify-end">
+                    <Button
+                      onClick={handleSaveProfil}
+                      disabled={savingProfil}
+                      className="rounded-full"
                     >
-                      <SelectTrigger className="h-11 rounded-2xl">
-                        <SelectValue placeholder="Pilih gender" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {GENDERS.map((g) => (
-                          <SelectItem key={g.value} value={g.value}>
-                            {g.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                      {savingProfil ? (
+                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      ) : (
+                        <>
+                          <FloppyDisk size={16} weight="bold" className="mr-2" />
+                          Simpan Profil
+                        </>
+                      )}
+                    </Button>
                   </div>
-                </div>
-
-                <div>
-                  <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
-                    Deskripsi / Catatan
-                  </Label>
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Contoh: suka pedas, biasa dine-in weekend, kadang dipesan oleh adiknya..."
-                    className="min-h-[100px] rounded-2xl"
-                  />
-                </div>
-
-                <div className="flex justify-end">
-                  <Button
-                    onClick={handleSaveDetails}
-                    disabled={savingDetails}
-                    className="rounded-full"
-                  >
-                    {savingDetails ? (
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    ) : (
-                      <>
-                        <FloppyDisk size={16} weight="bold" className="mr-2" />
-                        Simpan Detail
-                      </>
-                    )}
-                  </Button>
                 </div>
               </div>
             </div>

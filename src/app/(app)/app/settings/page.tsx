@@ -220,7 +220,7 @@ export default function SettingsPage() {
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-wash text-accent">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
                   <Storefront size={20} weight="duotone" />
                 </span>
                 <div>
@@ -260,7 +260,7 @@ export default function SettingsPage() {
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-wash text-accent">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
                   <Gear size={20} weight="duotone" />
                 </span>
                 <div>
@@ -345,7 +345,7 @@ export default function SettingsPage() {
           <div className="doppel-outer">
             <div className="doppel-inner p-5 sm:p-7">
               <div className="mb-4 flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-accent-wash text-accent">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
                   <UploadSimple size={20} weight="duotone" />
                 </span>
                 <div>
@@ -400,8 +400,8 @@ export default function SettingsPage() {
                   className={cn(
                     "flex w-full flex-col items-center justify-center gap-1.5 rounded-2xl border-2 border-dashed bg-muted/20 px-4 py-6 text-center transition-colors",
                     importFile
-                      ? "border-accent/50 bg-accent/5"
-                      : "border-hairline hover:border-accent/40 hover:bg-accent/5",
+                      ? "border-accent/50  bg-[#022D4E]/5"
+                      : "border-hairline hover:border-accent/40 hover: bg-[#022D4E]/5",
                   )}
                 >
                   {importFile ? (
@@ -475,7 +475,7 @@ export default function SettingsPage() {
                   importFile.mapped.data.length === 0 ||
                   importing
                 }
-                className="mt-5 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full bg-accent px-5 py-2.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-5 inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full  bg-[#022D4E] px-5 py-2.5 text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {importing ? (
                   <>
@@ -557,7 +557,7 @@ export default function SettingsPage() {
           initial="hidden"
           animate={ready ? "show" : "hidden"}
         >
-          <div className="rounded-2xl border border-accent/20 bg-accent/5 p-4">
+          <div className="rounded-2xl border border-accent/20  bg-[#022D4E]/5 p-4">
             <p className="flex items-start gap-2 text-xs text-ash">
               <CloudCheck
                 size={16}
@@ -583,7 +583,7 @@ export default function SettingsPage() {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="group flex min-h-[50px] h-13 w-full items-center justify-center gap-3 rounded-full bg-accent text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
+            className="group flex min-h-[50px] h-13 w-full items-center justify-center gap-3 rounded-full  bg-[#022D4E] text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
             style={{ boxShadow: "0 8px 24px -8px rgba(28, 43, 66, 0.5)" }}
           >
             {saving ? (

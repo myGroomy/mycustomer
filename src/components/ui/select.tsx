@@ -116,7 +116,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "relative flex w-full cursor-default items-center gap-1.5 rounded-md border border-transparent py-1 pr-8 pl-1.5 text-sm text-ink outline-hidden select-none focus:bg-accent/10 focus:text-ink focus:border-accent/40 data-selected:border-accent/50 data-selected:bg-accent/5 data-highlighted:bg-accent/10 data-highlighted:text-ink data-highlighted:border-accent/60 not-data-[variant=destructive]:focus:**:text-ink not-data-[variant=destructive]:data-highlighted:**:text-ink data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "relative flex w-full cursor-default items-center gap-1.5 rounded-md border border-transparent py-1 pr-8 pl-1.5 text-sm text-ink outline-hidden select-none focus: bg-[#022D4E]/10 focus:text-ink focus:border-accent/40 data-selected:border-accent/50 data-selected: bg-[#022D4E]/5 data-highlighted: bg-[#022D4E]/10 data-highlighted:text-ink data-highlighted:border-accent/60 not-data-[variant=destructive]:focus:**:text-ink not-data-[variant=destructive]:data-highlighted:**:text-ink data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}

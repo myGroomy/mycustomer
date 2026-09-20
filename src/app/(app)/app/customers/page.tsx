@@ -83,25 +83,39 @@ function CustomerListView() {
     try {
       if (searchQuery) {
         const result = await searchCustomers(searchQuery, page, PAGE_SIZE);
-        const withStats: CustomerWithStats[] = result.data.map((c) => ({
-          ...c,
-          retention_status: getRetentionStatus(
-            c.last_order_date,
-            DEFAULT_THRESHOLDS,
-          ),
-        }));
+        const seenIds = new Set<string>();
+        const withStats: CustomerWithStats[] = result.data
+          .filter((c) => {
+            if (seenIds.has(c.id)) return false;
+            seenIds.add(c.id);
+            return true;
+          })
+          .map((c) => ({
+            ...c,
+            retention_status: getRetentionStatus(
+              c.last_order_date,
+              DEFAULT_THRESHOLDS,
+            ),
+          }));
         setCustomers(withStats);
         setTotalPages(result.totalPages);
         setTotal(result.count);
       } else {
         const result = await getCustomersWithStats(page, PAGE_SIZE);
-        const withStatus = result.data.map((c) => ({
-          ...c,
-          retention_status: getRetentionStatus(
-            c.last_order_date,
-            DEFAULT_THRESHOLDS,
-          ),
-        }));
+        const seenIds = new Set<string>();
+        const withStatus = result.data
+          .filter((c) => {
+            if (seenIds.has(c.id)) return false;
+            seenIds.add(c.id);
+            return true;
+          })
+          .map((c) => ({
+            ...c,
+            retention_status: getRetentionStatus(
+              c.last_order_date,
+              DEFAULT_THRESHOLDS,
+            ),
+          }));
         setCustomers(withStatus);
         setTotalPages(result.totalPages);
         setTotal(result.count);
@@ -148,17 +162,29 @@ function CustomerListView() {
       const q = searchQuery.toLowerCase();
       const qNoZero = q.startsWith("0") ? q.slice(1) : q;
       const phone = c.phone_normalized || "";
-      if (
-        !c.name?.toLowerCase().includes(q) &&
-        !phone.includes(q) &&
-        !phone.includes(qNoZero)
-      )
-        return false;
+
+      const nameMatch = c.name?.toLowerCase().includes(q);
+      const phoneMatch = phone.includes(q) || phone.includes(qNoZero);
+      // Cocokkan juga dengan nama alias (case-insensitive)
+      const aliasMatch =
+        c.aliases?.some((a) => a.name.toLowerCase().includes(q)) ?? false;
+      // Cocokkan juga dengan usia dan jenis_kelamin (case-insensitive)
+      const usiaMatch = (c.usia || "").toLowerCase().includes(q);
+      const genderMatch = (c.gender || "").toLowerCase().includes(q);
+      const jenisKelaminMatch = (c.jenis_kelamin || "").toLowerCase().includes(q);
+
+      if (!nameMatch && !phoneMatch && !aliasMatch && !usiaMatch && !genderMatch && !jenisKelaminMatch) return false;
     }
     return true;
   };
 
-  const filtered = customers.filter(matchesAllFilters);
+
+  const seenFilterIds = new Set<string>();
+  const filtered = customers.filter((c) => {
+    if (seenFilterIds.has(c.id)) return false;
+    seenFilterIds.add(c.id);
+    return matchesAllFilters(c);
+  });
 
   const countRangeLabel = countRange
     ? countRange.max === Number.MAX_SAFE_INTEGER
@@ -310,7 +336,7 @@ function CustomerListView() {
   };
 
   const getAvatarStyle = (status: RetentionStatus) => {
-    if (status === "active") return "bg-accent-wash text-accent-deep";
+    if (status === "active") return " bg-[#022D4E]-wash text-accent-deep";
     if (status === "at_risk") return "bg-amber/10 text-accent-deep";
     return "bg-rose/10 text-ink";
   };
@@ -391,7 +417,7 @@ function CustomerListView() {
                   type="button"
                   onClick={handleDownload}
                   disabled={downloading || loading}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-accent px-4 min-h-[44px] text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 rounded-full  bg-[#022D4E] px-4 min-h-[44px] text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   title="Download CSV data sesuai filter aktif"
                 >
                   <DownloadSimple size={14} weight="bold" />
@@ -513,7 +539,7 @@ function CustomerListView() {
               <div className="mt-3 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setCountRange(null)}
-                  className="flex items-center gap-1.5 rounded-full border border-accent bg-accent px-4 min-h-[44px] text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                  className="flex items-center gap-1.5 rounded-full border border-accent  bg-[#022D4E] px-4 min-h-[44px] text-[11px] font-semibold text-white transition-all hover:opacity-90"
                   title="Reset filter order count"
                 >
                   Order: {countRangeLabel}
@@ -546,7 +572,7 @@ function CustomerListView() {
           <button
             type="button"
             onClick={() => loadCustomers()}
-            className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-accent px-4 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 sm:ml-4"
+            className="inline-flex min-h-[44px] items-center gap-2 rounded-full  bg-[#022D4E] px-4 text-sm font-semibold text-white transition-all hover:opacity-90 active:scale-95 sm:ml-4"
           >
             Coba Lagi
           </button>
@@ -621,6 +647,66 @@ function CustomerListView() {
                                 </Badge>
                               )}
                             </div>
+
+                            {/* ── Baris alias ─────────────────────────────────────── */}
+                            {(() => {
+                              const aliases = customer.aliases ?? [];
+                              if (aliases.length === 0) return null;
+
+                              const q = searchQuery.toLowerCase();
+                              // Alias yang cocok dengan query aktif
+                              const matchedAliases = q
+                                ? aliases.filter((a) =>
+                                    a.name.toLowerCase().includes(q),
+                                  )
+                                : [];
+                              // Hanya match via alias (bukan nama utama atau telepon)
+                              const isAliasOnlyMatch =
+                                matchedAliases.length > 0 &&
+                                !customer.name?.toLowerCase().includes(q);
+
+                              if (isAliasOnlyMatch) {
+                                // Highlight: "Ditemukan via alias: ..."
+                                return (
+                                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                                    <span className="inline-flex items-center gap-1 rounded-full bg-amber/10 px-2 py-0.5 text-[10px] font-semibold text-accent-deep ring-1 ring-amber/30">
+                                      <svg
+                                        width="9"
+                                        height="9"
+                                        viewBox="0 0 12 12"
+                                        fill="currentColor"
+                                        aria-hidden="true"
+                                      >
+                                        <path d="M6 1a5 5 0 1 0 0 10A5 5 0 0 0 6 1Zm.5 7.5h-1v-1h1v1Zm0-2.25h-1V3.5h1v2.75Z" />
+                                      </svg>
+                                      Ditemukan via alias
+                                    </span>
+                                    {matchedAliases.map((a) => (
+                                      <span
+                                        key={a.name}
+                                        className="rounded-full bg-amber/10 px-2.5 py-0.5 text-[11px] font-medium text-ink-soft ring-1 ring-amber/20"
+                                      >
+                                        {a.name}
+                                        {a.branch && a.branch !== "-" && (
+                                          <span className="ml-1 text-mist">
+                                            · {a.branch}
+                                          </span>
+                                        )}
+                                      </span>
+                                    ))}
+                                  </div>
+                                );
+                              }
+
+                              // Tidak sedang mencari, atau search cocok lewat nama utama →
+                              // tampilkan semua alias dengan gaya muted seperti sebelumnya
+                              return (
+                                <div className="mt-0.5 text-[11px] text-mist">
+                                  Alias:{" "}
+                                  {aliases.map((a) => a.name).join(", ")}
+                                </div>
+                              );
+                            })()}
 
                             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ash">
                               <span className="font-mono text-ink-soft">

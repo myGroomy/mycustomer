@@ -26,7 +26,9 @@ export interface Customer {
   order_count?: number
   description?: string
   age_range?: string
+  usia?: string
   gender?: string
+  jenis_kelamin?: string
   is_followed_up?: boolean
   followed_up_at?: string
   aliases?: CustomerAlias[]

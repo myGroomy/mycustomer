@@ -11,9 +11,14 @@ function toCustomer(row: Record<string, string>): Customer {
   let branchMemberships: string[] = []
   try {
     const parsed = JSON.parse(row.aliases || '[]')
-    if (Array.isArray(parsed)) aliases = parsed
+    if (Array.isArray(parsed)) {
+      aliases = parsed
+    }
   } catch {
-    aliases = []
+    // aliases mungkin berupa teks biasa, bukan JSON
+    if (row.aliases && typeof row.aliases === 'string') {
+      aliases = [{ name: row.aliases, branch: '', first_seen_at: '', last_seen_at: '' }]
+    }
   }
   try {
     const parsed = JSON.parse(row.branch_memberships || '[]')
@@ -31,7 +36,9 @@ function toCustomer(row: Record<string, string>): Customer {
     order_count: parseInt(row.order_count || '0', 10),
     description: row.description || '',
     age_range: row.age_range || '',
+    usia: row.usia || '',
     gender: row.gender || '',
+    jenis_kelamin: row.jenis_kelamin || '',
     is_followed_up: row.is_followed_up === 'TRUE' || row.is_followed_up === 'true',
     followed_up_at: row.followed_up_at || '',
     aliases,
@@ -84,7 +91,30 @@ export async function searchCustomers(
       const phone = c.phone_normalized || ''
       // Match both with and without leading 0
       const phoneMatch = phone.includes(q) || phone.includes(qNoZero)
-      return nameMatch || phoneMatch
+
+      // Cocokkan juga dengan setiap nama alias (case-insensitive)
+      let aliasMatch = false
+      try {
+        const parsed = JSON.parse(c.aliases || '[]')
+        if (Array.isArray(parsed)) {
+          aliasMatch = parsed.some(
+            (a: { name?: string }) =>
+              typeof a.name === 'string' && a.name.toLowerCase().includes(q),
+          )
+        }
+      } catch {
+        // Fallback: aliases mungkin berupa teks biasa
+        if (c.aliases && typeof c.aliases === 'string') {
+          aliasMatch = c.aliases.toLowerCase().includes(q)
+        }
+      }
+
+      // Cocokkan juga dengan usia dan jenis_kelamin (case-insensitive)
+      const usiaMatch = (c.usia || '').toLowerCase().includes(q)
+      const genderMatch = (c.gender || '').toLowerCase().includes(q)
+      const jenisKelaminMatch = (c.jenis_kelamin || '').toLowerCase().includes(q)
+
+      return nameMatch || phoneMatch || aliasMatch || usiaMatch || genderMatch || jenisKelaminMatch
     })
     .map(c => ({
       ...toCustomer(c),
@@ -198,7 +228,9 @@ export async function createCustomer(
     order_count: 0,
     description: customer.description || '',
     age_range: customer.age_range || '',
+    usia: customer.usia || '',
     gender: customer.gender || '',
+    jenis_kelamin: customer.jenis_kelamin || '',
   }
 
   await appendRow(CUSTOMERS_SHEET, {
@@ -212,7 +244,9 @@ export async function createCustomer(
     order_count: '0',
     description: newCustomer.description || '',
     age_range: newCustomer.age_range || '',
+    usia: newCustomer.usia || '',
     gender: newCustomer.gender || '',
+    jenis_kelamin: newCustomer.jenis_kelamin || '',
   })
 
   return newCustomer
@@ -220,7 +254,7 @@ export async function createCustomer(
 
 export async function updateCustomer(
   id: string,
-  updates: Partial<Pick<Customer, 'name' | 'phone_normalized' | 'age_range' | 'gender' | 'description'>>,
+  updates: Partial<Pick<Customer, 'name' | 'phone_normalized' | 'age_range' | 'usia' | 'gender' | 'jenis_kelamin' | 'description' | 'aliases'>>,
 ): Promise<Customer> {
   const customers = await getSheetData(CUSTOMERS_SHEET)
   const index = customers.findIndex(c => c.id === id)
@@ -230,6 +264,13 @@ export async function updateCustomer(
   }
 
   const existing = customers[index]
+
+  // Resolve aliases: gunakan update jika ada, fallback ke data existing di sheet
+  let aliasesJson = existing.aliases || '[]'
+  if (updates.aliases !== undefined) {
+    aliasesJson = JSON.stringify(updates.aliases)
+  }
+
   const updatedData: Record<string, string> = {
     id: existing.id,
     phone_normalized: updates.phone_normalized
@@ -243,7 +284,71 @@ export async function updateCustomer(
     order_count: existing.order_count || '0',
     description: updates.description !== undefined ? updates.description : (existing.description || ''),
     age_range: updates.age_range !== undefined ? updates.age_range : (existing.age_range || ''),
+    usia: updates.usia !== undefined ? updates.usia : (existing.usia || ''),
     gender: updates.gender !== undefined ? updates.gender : (existing.gender || ''),
+    jenis_kelamin: updates.jenis_kelamin !== undefined ? updates.jenis_kelamin : (existing.jenis_kelamin || ''),
+    aliases: aliasesJson,
+    branch_memberships: existing.branch_memberships || '[]',
+  }
+
+  await updateRow(CUSTOMERS_SHEET, index, updatedData)
+
+  let parsedAliases: CustomerAlias[] = []
+  try {
+    const p = JSON.parse(aliasesJson)
+    if (Array.isArray(p)) parsedAliases = p
+  } catch { /* kosongkan */ }
+
+  return {
+    id: updatedData.id,
+    phone_normalized: updatedData.phone_normalized,
+    name: updatedData.name,
+    first_order_date: updatedData.first_order_date,
+    created_at: updatedData.created_at,
+    branch: updatedData.branch,
+    order_count: parseInt(updatedData.order_count, 10),
+    description: updatedData.description,
+    age_range: updatedData.age_range,
+    usia: updatedData.usia,
+    gender: updatedData.gender,
+    jenis_kelamin: updatedData.jenis_kelamin,
+    aliases: parsedAliases,
+  }
+}
+
+export async function updateCustomerProfile(
+  id: string,
+  payload: {
+    aliases?: string
+    usia?: string
+    jenis_kelamin?: string
+  },
+): Promise<Customer> {
+  const customers = await getSheetData(CUSTOMERS_SHEET)
+  const index = customers.findIndex(c => c.id === id)
+
+  if (index === -1) {
+    throw new Error('Customer not found')
+  }
+
+  const existing = customers[index]
+
+  const updatedData: Record<string, string> = {
+    id: existing.id,
+    phone_normalized: existing.phone_normalized,
+    name: existing.name,
+    first_order_date: existing.first_order_date,
+    created_at: existing.created_at,
+    version: String(parseInt(existing.version || '1') + 1),
+    branch: existing.branch || '',
+    order_count: existing.order_count || '0',
+    description: existing.description || '',
+    age_range: existing.age_range || '',
+    usia: payload.usia !== undefined ? payload.usia : (existing.usia || ''),
+    gender: payload.jenis_kelamin !== undefined ? payload.jenis_kelamin : (existing.gender || ''),
+    jenis_kelamin: payload.jenis_kelamin !== undefined ? payload.jenis_kelamin : (existing.jenis_kelamin || ''),
+    aliases: payload.aliases !== undefined ? payload.aliases : (existing.aliases || ''),
+    branch_memberships: existing.branch_memberships || '[]',
   }
 
   await updateRow(CUSTOMERS_SHEET, index, updatedData)
@@ -258,6 +363,23 @@ export async function updateCustomer(
     order_count: parseInt(updatedData.order_count, 10),
     description: updatedData.description,
     age_range: updatedData.age_range,
+    usia: updatedData.usia,
     gender: updatedData.gender,
+    jenis_kelamin: updatedData.jenis_kelamin,
+    aliases: [],
   }
+}
+
+/**
+ * Menyimpan perubahan daftar alias customer ke Google Sheets.
+ * Alias disimpan sebagai JSON string di kolom `aliases`.
+ *
+ * @param id - ID customer
+ * @param aliases - Array CustomerAlias yang akan disimpan
+ */
+export async function updateCustomerAliases(
+  id: string,
+  aliases: CustomerAlias[],
+): Promise<Customer> {
+  return updateCustomer(id, { aliases })
 }

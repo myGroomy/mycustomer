@@ -130,8 +130,8 @@ Mark terdiri dari kanopi toko / etalase sederhana yang menyatu dengan bentuk pel
 
 | Lokasi | Implementasi |
 |--------|--------------|
-| Landing nav | Phosphor `Storefront` 18px, `bg-accent` rounded `0.9rem`, putih |
-| Sidebar app | Phosphor `Storefront` 22px, `bg-accent` rounded `2xl`, putih |
+| Landing nav | Phosphor `Storefront` 18px, ` bg-[#022D4E]` rounded `0.9rem`, putih |
+| Sidebar app | Phosphor `Storefront` 22px, ` bg-[#022D4E]` rounded `2xl`, putih |
 | Login | Phosphor `Storefront` 20px, `bg-white` ring hairline, warna accent |
 | Favicon | `public/favicon.svg` petir ungu `#863bff` **TIDAK konsisten** |
 
@@ -142,14 +142,14 @@ Mark terdiri dari kanopi toko / etalase sederhana yang menyatu dengan bentuk pel
 - **Don'ts:**
   - Jangan rotasi / skew / stretch.
   - Jangan ganti warna di luar palet.
-  - Jangan tambah shadow/efek (logo icon boleh memakai `bg-accent` seperti di UI saat ini).
+  - Jangan tambah shadow/efek (logo icon boleh memakai ` bg-[#022D4E]` seperti di UI saat ini).
   - Jangan taruh di background ramai tanpa kontras cukup.
 
 ### 3.4 Iconography Rules (UI icons)
 
 - Sumber: **@phosphor-icons/react** (`weight="fill"` untuk aksen aktif, regular untuk netral).
 - Ukuran konsisten satu-dimensi dalam satu context (mis. 18px header, 20px login, 22px sidebar).
-- Icon container: rounded (`0.9rem` / `lg` / `2xl`), `bg-accent` + icon putih untuk aktif/primary.
+- Icon container: rounded (`0.9rem` / `lg` / `2xl`), ` bg-[#022D4E]` + icon putih untuk aktif/primary.
 
 ---
 
