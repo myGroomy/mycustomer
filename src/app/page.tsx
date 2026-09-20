@@ -905,6 +905,12 @@ export default function LandingPage() {
             >
               Masuk
             </a>
+            <Link
+              href="/docs"
+              className="transition-colors duration-300 hover:text-ink"
+            >
+              Dokumentasi
+            </Link>
           </div>
           <div>
             &copy; {new Date().getFullYear()} MYCUSTOMER. Semua hak dilindungi.

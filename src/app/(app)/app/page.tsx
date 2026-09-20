@@ -357,7 +357,7 @@ export default function InputOrderPage() {
                           onSelect={() => handleSelectCustomer(c)}
                           className="flex items-center justify-between gap-3 p-3 rounded-xl cursor-pointer"
                         >
-                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <div className="flex min-w-0 flex-1 items-center gap-3">
                             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-xs font-semibold text-[#022D4E]-deep">
                               {c.name
                                 .split(" ")
@@ -365,23 +365,23 @@ export default function InputOrderPage() {
                                 .join("")
                                 .slice(0, 2)}
                             </div>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center gap-2">
-                                <span className="truncate text-sm font-medium text-ink">
+                            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                              <div className="flex min-w-0 items-center gap-2">
+                                <span className="min-w-0 truncate text-sm font-medium text-ink">
                                   {c.name}
                                 </span>
                                 {getStatusBadge(c.retention_status)}
                               </div>
-                              <div className="flex items-center gap-2 mt-0.5">
-                                <span className="font-mono text-xs text-ash flex items-center gap-1">
+                              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                                <span className="flex min-w-0 items-center gap-1 font-mono text-xs text-ash">
                                   <Phone size={11} />
-                                  {c.phone_normalized}
+                                  <span className="truncate">{c.phone_normalized}</span>
                                 </span>
-                                <span className="rounded-full  bg-[#022D4E]-wash px-2 py-0.5 text-[10px] font-semibold text-[#022D4E]-deep">
+                                <span className="shrink-0 rounded-full bg-[#022D4E]-wash px-2 py-0.5 text-[10px] font-semibold text-[#022D4E]-deep">
                                   Order ke-{(c.order_count || 0) + 1}
                                 </span>
                               </div>
-                              <div className="text-[11px] text-mist mt-0.5">
+                              <div className="truncate text-xs text-ash">
                                 {c.orders && c.orders.length > 0
                                   ? `Terakhir: ${c.orders[0].channel} • ${c.last_order_date}`
                                   : `Pertama: ${c.first_order_date}`}
