@@ -3,10 +3,9 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useRef, useState } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import { FLUID_EASE, fadeUp, heroMaskReveal, wordReveal } from "@/lib/motion";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -21,8 +20,6 @@ import {
   Receipt,
   Lightning,
 } from "@phosphor-icons/react";
-
-gsap.registerPlugin(ScrollTrigger, useGSAP);
 
 const CTA_STYLE =
   "bg-white text-ink ring-1 ring-ink/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_12px_32px_-24px_rgba(16,18,20,0.45)]";
@@ -130,101 +127,29 @@ export default function LandingPage() {
   const [accordion, setAccordion] = useState<number | null>(null);
   const [activeReview, setActiveReview] = useState(0);
 
-  useGSAP(
-    () => {
-      const sTl = gsap.timeline({ defaults: { ease: "power3.out" } });
-      sTl
-        .from(heroRef.current?.querySelector("[data-hero-mask] span") ?? null, {
-          yPercent: 115,
-          duration: 1.1,
-        })
-        .from(
-          heroRef.current?.querySelector("[data-fade]") ?? null,
-          { opacity: 0, y: 28, duration: 0.9 },
-          "-=0.55",
-        )
-        .from(
-          heroRef.current?.querySelector("[data-cta]") ?? null,
-          { opacity: 0, y: 20, stagger: 0.1, duration: 0.7 },
-          "-=0.5",
-        )
-        .from(
-          mockupRef.current,
-          { opacity: 0, y: 60, scale: 0.96, duration: 1.1 },
-          "-=0.5",
-        );
+  const { scrollYProgress } = useScroll({
+    target: heroRef,
+    offset: ["start end", "end start"],
+  });
+  const heroMockupY = useTransform(scrollYProgress, [0, 1], [0, 42]);
 
-      if (mockupRef.current) {
-        gsap.to(mockupRef.current, {
-          yPercent: 10,
-          ease: "none",
-          scrollTrigger: {
-            trigger: mockupRef.current,
-            start: "top bottom",
-            end: "bottom top",
-            scrub: true,
-          },
-        });
-      }
-
-      if (bentoRef.current) {
-        const cards = bentoRef.current.querySelectorAll("[data-soar]");
-        gsap.fromTo(
-          cards,
-          { y: 48, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 1,
-            stagger: 0.12,
-            ease: "power3.out",
-            scrollTrigger: { trigger: bentoRef.current, start: "top 78%" },
-          },
-        );
-      }
-
-      if (scrubRef.current) {
-        const words =
-          scrubRef.current.querySelectorAll<HTMLElement>("[data-word]");
-        gsap.fromTo(
-          words,
-          { opacity: 0.12 },
-          {
-            opacity: 1,
-            duration: 1.2,
-            ease: "power2.inOut",
-            stagger: 0.06,
-            scrollTrigger: {
-              trigger: scrubRef.current,
-              start: "top 72%",
-              end: "bottom 45%",
-              scrub: true,
-            },
-          },
-        );
-      }
-
-      const steps = document.querySelectorAll("[data-stack-card]");
-      steps.forEach((card) => {
-        gsap.fromTo(
-          card,
-          { y: 48, opacity: 0 },
-          {
-            y: 0,
-            opacity: 1,
-            duration: 0.9,
-            ease: "power3.out",
-            scrollTrigger: { trigger: card, start: "top 88%" },
-          },
-        );
-      });
-
-      return () => {
-        ScrollTrigger.getAll().forEach((t) => t.kill());
-      };
+  const heroReveal = {
+    hidden: { opacity: 0, y: 28 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.9, ease: FLUID_EASE },
     },
-    { scope: heroRef },
-  );
+  };
+
+  const ctaReveal = {
+    hidden: { opacity: 0, y: 20 },
+    show: (i: number = 0) => ({
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.7, delay: 0.08 + i * 0.1, ease: FLUID_EASE },
+    }),
+  };
 
   const goReview = (dir: 1 | -1) => {
     setActiveReview((i) => (i + dir + REVIEWS.length) % REVIEWS.length);
@@ -232,7 +157,6 @@ export default function LandingPage() {
 
   return (
     <main className="w-full max-w-full overflow-x-hidden bg-canvas">
-      {/* Navigation - floating glass pill */}
       <nav className="fixed left-1/2 top-5 z-50 w-[min(100%-2rem,46rem)] -translate-x-1/2">
         <div className="flex items-center justify-between gap-3 rounded-full border border-hairline bg-white/80 py-2 pl-4 pr-2 shadow-[0_12px_40px_-16px_rgba(16,18,20,0.18)] backdrop-blur-xl">
           <Link href="/" className="flex items-center gap-2.5">
@@ -278,7 +202,6 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Attention - Cinematic Hero */}
       <section
         ref={heroRef}
         className="sky-hero relative px-4 pb-28 pt-44 sm:px-6 sm:pb-36 sm:pt-52 lg:px-8"
@@ -300,9 +223,13 @@ export default function LandingPage() {
         </div>
 
         <div className="relative mx-auto max-w-6xl text-center">
-          <h1 className="mx-auto text-[clamp(2.75rem,5.3vw,5.5rem)] font-semibold leading-[1.02] tracking-[-0.03em] text-ink">
+          <motion.h1
+            initial="hidden"
+            animate="show"
+            className="mx-auto text-[clamp(2.75rem,5.3vw,5.5rem)] font-semibold leading-[1.02] tracking-[-0.03em] text-ink"
+          >
             <span className="block overflow-hidden">
-              <span data-hero-mask className="block overflow-hidden">
+              <motion.span variants={heroMaskReveal} className="block overflow-hidden">
                 Jangan sampai pelanggan{" "}
                 <span
                   aria-hidden
@@ -318,49 +245,64 @@ export default function LandingPage() {
                   }}
                 />
                 <span className="text-[#022D4E]">lupa</span> balik lagi.
-              </span>
+              </motion.span>
             </span>
-          </h1>
+          </motion.h1>
 
-          <p
-            data-fade
+          <motion.p
+            initial="hidden"
+            animate="show"
+            variants={heroReveal}
             className="mx-auto mt-7 max-w-2xl text-lg leading-relaxed text-ash sm:text-xl"
           >
             MYCUSTOMER mencatat setiap repeat order bisnis F&B dan menandai
             pelanggan yang mulai jarang datang supaya kamu bisa mengirim satu
             pesan WhatsApp sebelum mereka pindah ke tempat lain.
-          </p>
+          </motion.p>
 
-          <div
-            data-fade
+          <motion.div
+            initial="hidden"
+            animate="show"
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: 0.1, delayChildren: 0.08 } },
+            }}
             className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
           >
-            <Button
-              data-cta
-              render={<Link href="/login" />}
-              className={`group h-auto gap-2 rounded-full px-8 py-4 text-base font-semibold text-ink transition-all duration-700 hover:-translate-y-[2px] active:scale-[0.98] ${CTA_STYLE}`}
-            >
-              Mulai Sekarang
-              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0.5">
-                <ArrowRight size={14} weight="bold" />
-              </span>
-            </Button>
-            <Button
-              data-cta
-              render={<a href="#features" />}
-              className="group h-auto gap-2 rounded-full border border-hairline bg-white px-7 py-4 text-base font-semibold text-ink-soft transition-all duration-700 hover:bg-sunken active:scale-[0.98]"
-            >
-              Lihat Cara Kerjanya
-              <ArrowUpRight
-                size={16}
-                weight="bold"
-                className="transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
-              />
-            </Button>
-          </div>
+            <motion.div variants={ctaReveal} custom={0}>
+              <Button
+                render={<Link href="/login" />}
+                className={`group h-auto gap-2 rounded-full px-8 py-4 text-base font-semibold text-ink transition-all duration-700 hover:-translate-y-[2px] active:scale-[0.98] ${CTA_STYLE}`}
+              >
+                Mulai Sekarang
+                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 transition-transform duration-500 group-hover:translate-x-0.5">
+                  <ArrowRight size={14} weight="bold" />
+                </span>
+              </Button>
+            </motion.div>
+            <motion.div variants={ctaReveal} custom={1}>
+              <Button
+                render={<a href="#features" />}
+                className="group h-auto gap-2 rounded-full border border-hairline bg-white px-7 py-4 text-base font-semibold text-ink-soft transition-all duration-700 hover:bg-sunken active:scale-[0.98]"
+              >
+                Lihat Cara Kerjanya
+                <ArrowUpRight
+                  size={16}
+                  weight="bold"
+                  className="transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                />
+              </Button>
+            </motion.div>
+          </motion.div>
 
-          {/* Product Preview */}
-          <div ref={mockupRef} className="mt-16 sm:mt-20">
+          <motion.div
+            ref={mockupRef}
+            style={{ y: heroMockupY }}
+            initial={{ opacity: 0, y: 60, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 1.1, ease: FLUID_EASE, delay: 0.2 }}
+            className="mt-16 sm:mt-20"
+          >
             <div className="doppel-outer mx-auto max-w-5xl rounded-[2.5rem] p-2.5">
               <div className="overflow-hidden rounded-[calc(2.5rem-0.75rem)] border border-hairline bg-white">
                 <div className="flex items-center gap-2 border-b border-hairline bg-white px-5 py-3.5">
@@ -452,11 +394,10 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* Interest - Gapless Bento (3x3, dense) */}
       <section
         id="features"
         ref={bentoRef}
@@ -469,9 +410,12 @@ export default function LandingPage() {
           </p>
 
           <div className="mt-14 grid grid-flow-dense grid-cols-1 gap-4 sm:mt-16 sm:grid-cols-2 md:grid-cols-3 md:gap-5">
-            {/* A : 2x2 */}
-            <div
+            <motion.div
               data-soar
+              initial={{ y: 48, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 1, ease: FLUID_EASE }}
               className="doppel-outer col-span-1 sm:col-span-2 md:col-span-2 md:row-span-2"
             >
               <div className="doppel-inner flex h-full flex-col justify-between gap-6 p-6 sm:p-8">
@@ -509,11 +453,14 @@ export default function LandingPage() {
                   ))}
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            {/* B : 1x1 */}
-            <div
+            <motion.div
               data-soar
+              initial={{ y: 48, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 1, ease: FLUID_EASE, delay: 0.1 }}
               className="group col-span-1 overflow-hidden rounded-3xl border border-hairline bg-white p-6 transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(16,18,20,0.25)]"
             >
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]/10 text-[#022D4E]">
@@ -526,11 +473,14 @@ export default function LandingPage() {
                 Kirim pesan WhatsApp personal ke pelanggan yang mulai jarang
                 datang. Tanpa copy-paste.
               </p>
-            </div>
+            </motion.div>
 
-            {/* C : 1x1 */}
-            <div
+            <motion.div
               data-soar
+              initial={{ y: 48, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 1, ease: FLUID_EASE, delay: 0.2 }}
               className="group col-span-1 overflow-hidden rounded-3xl border border-hairline bg-white p-6 transition-all duration-700 hover:-translate-y-1 hover:shadow-[0_20px_50px_-24px_rgba(16,18,20,0.25)]"
             >
               <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-2xl  bg-[#022D4E]-soft/20 text-[#022D4E]-deep">
@@ -543,11 +493,14 @@ export default function LandingPage() {
                 Segmentasi Active, At Risk, dan Churned terbentuk otomatis dari
                 riwayat order.
               </p>
-            </div>
+            </motion.div>
 
-            {/* D : 2x1 */}
-            <div
+            <motion.div
               data-soar
+              initial={{ y: 48, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 1, ease: FLUID_EASE, delay: 0.3 }}
               className="col-span-1 rounded-3xl border border-hairline bg-white p-6 sm:col-span-2"
             >
               <div className="mb-5 flex items-center justify-between gap-4">
@@ -588,55 +541,80 @@ export default function LandingPage() {
                   );
                 })}
               </div>
-            </div>
+            </motion.div>
 
-            {/* E : 1x1 */}
-            <div
+            <motion.div
               data-soar
+              initial={{ y: 48, opacity: 0 }}
+              whileInView={{ y: 0, opacity: 1 }}
+              viewport={{ once: true, amount: 0.25 }}
+              transition={{ duration: 1, ease: FLUID_EASE, delay: 0.4 }}
               className="col-span-1 flex flex-col justify-between gap-6 bg-ink p-6 text-white sm:col-span-2 md:col-span-1"
             >
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-[#022D4E]">
                 <Lightning size={22} weight="duotone" />
               </div>
               <div>
-                <div className="text-3xl font-semibold tracking-tight">
-                  2 menit
-                </div>
+                <div className="text-3xl font-semibold tracking-tight">2 menit</div>
                 <p className="mt-1 text-sm leading-relaxed text-[#022D4E]/70">
                   dari browser tidak perlu install aplikasi atau training
                   panjang.
                 </p>
               </div>
-            </div>
+            </motion.div>
           </div>
         </div>
       </section>
 
-      {/* Desire - Scrubbing Text Reveal */}
       <section className="bg-white px-4 py-28 sm:px-6 sm:py-40 lg:px-8">
         <div ref={scrubRef} className="mx-auto max-w-5xl">
-          <h2 className="max-w-3xl text-3xl font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-4xl lg:text-[2.75rem]">
+          <motion.h2
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.5 }}
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: 0.06 } },
+            }}
+            className="max-w-3xl text-3xl font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-4xl lg:text-[2.75rem]"
+          >
             {SCRUB_TITLE.split(" ").map((w, i) => (
-              <span key={i} data-word className="mr-[0.24em] inline-block">
-                {w}
-              </span>
-            ))}
-          </h2>
-          <p className="mt-10 text-xl leading-relaxed text-ink sm:text-2xl sm:leading-relaxed">
-            {SCRUB_COPY.split(" ").map((w, i) => (
-              <span
+              <motion.span
                 key={i}
                 data-word
+                variants={wordReveal}
+                custom={i}
+                className="mr-[0.24em] inline-block"
+              >
+                {w}
+              </motion.span>
+            ))}
+          </motion.h2>
+          <motion.p
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: true, amount: 0.5 }}
+            variants={{
+              hidden: {},
+              show: { transition: { staggerChildren: 0.06 } },
+            }}
+            className="mt-10 text-xl leading-relaxed text-ink sm:text-2xl sm:leading-relaxed"
+          >
+            {SCRUB_COPY.split(" ").map((w, i) => (
+              <motion.span
+                key={i}
+                data-word
+                variants={wordReveal}
+                custom={i}
                 className="mr-[0.22em] inline-block text-ash"
               >
                 {w}
-              </span>
+              </motion.span>
             ))}
-          </p>
+          </motion.p>
         </div>
       </section>
 
-      {/* Desire - Card Stack (Cara Kerja) */}
       <section
         id="how-it-works"
         className="bg-canvas px-4 py-28 sm:px-6 sm:py-40 lg:px-8"
@@ -644,14 +622,28 @@ export default function LandingPage() {
         <div className="mx-auto grid max-w-7xl items-start gap-12 lg:grid-cols-12 lg:gap-16">
           <div className="lg:col-span-5">
             <div className="lg:sticky lg:top-32">
-              <h2 className="max-w-sm text-3xl font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-4xl lg:text-[2.75rem]">
+              <motion.h2
+                variants={fadeUp}
+                custom={0}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.3 }}
+                className="max-w-sm text-3xl font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-4xl lg:text-[2.75rem]"
+              >
                 Cara kerja. Alur yang sama tiap hari, hasil yang terus tumbuh.
-              </h2>
-              <p className="mt-5 max-w-sm text-base leading-relaxed text-ash">
+              </motion.h2>
+              <motion.p
+                variants={fadeUp}
+                custom={1}
+                initial="hidden"
+                whileInView="show"
+                viewport={{ once: true, amount: 0.3 }}
+                className="mt-5 max-w-sm text-base leading-relaxed text-ash"
+              >
                 Kasir tidak perlu mempelajari flow baru. Cukup catat order
                 seperti biasa MYCUSTOMER mengubahnya menjadi profil, segmentasi,
                 dan pengingat follow-up.
-              </p>
+              </motion.p>
               <div className="mt-10 hidden items-center gap-2 lg:flex">
                 {STACK_CARDS.map((c) => {
                   const Icon = c.icon;
@@ -673,9 +665,13 @@ export default function LandingPage() {
             {STACK_CARDS.map((c, i) => {
               const Icon = c.icon;
               return (
-                <div
+                <motion.div
                   key={c.tag}
                   data-stack-card
+                  initial={{ y: 48, opacity: 0 }}
+                  whileInView={{ y: 0, opacity: 1 }}
+                  viewport={{ once: true, amount: 0.35 }}
+                  transition={{ duration: 0.9, ease: FLUID_EASE, delay: i * 0.08 }}
                   className="lg:sticky lg:top-24"
                   style={{ zIndex: 30 - i * 10 }}
                 >
@@ -699,14 +695,13 @@ export default function LandingPage() {
                       </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
         </div>
       </section>
 
-      {/* Desire - Horizontal Accordions (channels) */}
       <section className="bg-white px-4 py-28 sm:px-6 sm:py-40 lg:px-8">
         <div className="mx-auto max-w-7xl">
           <h2 className="max-w-2xl text-3xl font-semibold leading-tight tracking-[-0.02em] text-ink sm:text-4xl lg:text-[2.75rem]">
@@ -766,7 +761,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Desire - Testimonial Carousel */}
       <section
         id="testimonials"
         className="bg-canvas px-4 py-28 sm:px-6 sm:py-40 lg:px-8"
@@ -842,7 +836,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Action - Massive CTA */}
       <section
         id="pricing"
         className="px-4 pb-28 pt-8 sm:px-6 sm:pb-36 lg:px-8"
@@ -873,7 +866,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
       <footer className="border-t border-hairline bg-canvas px-4 py-10 sm:px-6 lg:px-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 text-sm text-ash sm:flex-row">
           <div className="flex items-center gap-2.5">
