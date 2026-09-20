@@ -90,7 +90,7 @@ export async function POST(request: NextRequest) {
       await sheets.spreadsheets.values.append({
         spreadsheetId,
         range: `${CUSTOMERS_SHEET}!A:Z`,
-        valueInputOption: 'USER_ENTERED',
+        valueInputOption: 'RAW',
         requestBody: { values: [values] },
       })
       return NextResponse.json({ customer_id: customerId, phone_normalized: normalizedPhone, name, created: true })
@@ -103,6 +103,9 @@ export async function POST(request: NextRequest) {
     const membershipsIndex = headers.indexOf('branch_memberships')
     const aliases = parseAliases(aliasesIndex >= 0 ? row[aliasesIndex] : '')
     const memberships = parseBranches(membershipsIndex >= 0 ? row[membershipsIndex] : '')
+    if (auth.user.role === 'kasir' && row[headers.indexOf('branch')] !== auth.user.branch && !memberships.includes(auth.user.branch)) {
+      return NextResponse.json({ error: 'Customer tidak tersedia di cabang akun ini' }, { status: 403 })
+    }
     if (branch && !memberships.includes(branch)) memberships.push(branch)
     if (existingName && existingName !== name && !aliases.some((alias) => alias.name === existingName && alias.branch === branch)) {
       aliases.push({ name: existingName, branch, first_seen_at: row[headers.indexOf('created_at')] || now, last_seen_at: now })
@@ -115,7 +118,7 @@ export async function POST(request: NextRequest) {
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: `${CUSTOMERS_SHEET}!A${matchIndex + 1}:${colLetter(headers.length - 1)}${matchIndex + 1}`,
-        valueInputOption: 'USER_ENTERED',
+        valueInputOption: 'RAW',
         requestBody: { values: [row] },
       })
     }
@@ -140,6 +143,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error resolving customer:', error)
-    return NextResponse.json({ error: error instanceof Error ? error.message : 'Gagal memproses customer' }, { status: 500 })
+    return NextResponse.json({ error: 'Gagal memproses customer' }, { status: 500 })
   }
 }

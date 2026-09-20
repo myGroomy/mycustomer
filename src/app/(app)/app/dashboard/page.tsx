@@ -80,7 +80,7 @@ export default function DashboardPage() {
       if (dashCache && now - dashCache.ts < DASH_CACHE_TTL) {
         setCustomers(dashCache.data)
       } else {
-        const r = await getCustomersWithStats(0, 10000)
+        const r = await getCustomersWithStats(0, 1000)
         const data = r.data.map((c) => ({ ...c, retention_status: getRetentionStatus(c.last_order_date, settings) }))
         dashCache = { data, ts: now }
         setCustomers(data)

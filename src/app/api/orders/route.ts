@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { customer_id, order_date, channel, raw_phone_input, branch: requestedBranch, alias_note } = body
+    const { customer_id, order_date, channel, raw_phone_input, branch: requestedBranch, alias_name } = body
 
     if (!customer_id || !order_date || !channel) {
       return NextResponse.json(
@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: `${ORDERS_SHEET}!A:Z`,
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       requestBody: { values: [newOrderValues] },
     })
 
@@ -117,10 +117,24 @@ export async function POST(request: NextRequest) {
       rowToWrite[orderCountCol] = String(newCount)
     }
 
-    const descCol = customerHeaders.indexOf('description')
-    if (alias_note && descCol >= 0) {
-      const existingDesc = rowToWrite[descCol] || ''
-      rowToWrite[descCol] = existingDesc ? `${existingDesc}\n${alias_note}` : alias_note
+    const aliasesCol = customerHeaders.indexOf('aliases')
+    if (typeof alias_name === 'string' && alias_name.trim() && aliasesCol >= 0) {
+      let aliases: Array<{ name: string; branch: string; first_seen_at: string; last_seen_at: string }> = []
+      try {
+        const parsed = JSON.parse(rowToWrite[aliasesCol] || '[]')
+        if (Array.isArray(parsed)) aliases = parsed
+      } catch {
+        aliases = []
+      }
+      const trimmedAlias = alias_name.trim()
+      const existingAlias = aliases.find((alias) => alias.name.toLowerCase() === trimmedAlias.toLowerCase())
+      if (existingAlias) {
+        existingAlias.last_seen_at = new Date().toISOString()
+      } else {
+        const now = new Date().toISOString()
+        aliases.push({ name: trimmedAlias, branch, first_seen_at: now, last_seen_at: now })
+      }
+      rowToWrite[aliasesCol] = JSON.stringify(aliases)
     }
 
     const lastColLetter = String.fromCharCode(65 + Math.min(customerHeaders.length - 1, 25))
@@ -128,7 +142,7 @@ export async function POST(request: NextRequest) {
     await sheets.spreadsheets.values.update({
       spreadsheetId,
       range: rowUpdateRange,
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       requestBody: { values: [rowToWrite] },
     })
 
@@ -140,7 +154,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating order:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to create order' },
+      { error: 'Failed to create order' },
       { status: 500 },
     )
   }

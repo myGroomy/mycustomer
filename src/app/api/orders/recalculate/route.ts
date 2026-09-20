@@ -70,7 +70,7 @@ export async function POST() {
           sheets.spreadsheets.values.update({
             spreadsheetId,
             range,
-            valueInputOption: 'USER_ENTERED',
+            valueInputOption: 'RAW',
             requestBody: { values: [[value]] },
           })
         )
@@ -86,7 +86,7 @@ export async function POST() {
   } catch (error) {
     console.error('Recalculate error:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Recalculate failed' },
+      { error: 'Recalculate failed' },
       { status: 500 },
     )
   }

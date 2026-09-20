@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   ArrowUUpLeft,
   Phone,
@@ -21,7 +21,6 @@ import {
   FloppyDisk,
   Plus,
 } from "@phosphor-icons/react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,7 +31,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { getCustomerById, updateCustomer, updateCustomerProfile } from "@/services/customerService";
 import { getOrdersByCustomer } from "@/services/orderService";
@@ -63,11 +61,8 @@ export default function CustomerDetailPage() {
    const [saveError, setSaveError] = useState<string | null>(null);
 
    // Unified Profil Edit fields
-   const [editAlias, setEditAlias] = useState("");
   const [editUsia, setEditUsia] = useState("");
   const [editJenisKelamin, setEditJenisKelamin] = useState("");
-  const [savingProfil, setSavingProfil] = useState(false);
-  const [profilSaved, setProfilSaved] = useState(false);
 
   useEffect(() => {
     if (id) loadData();
@@ -90,7 +85,6 @@ export default function CustomerDetailPage() {
         setCustomer({ ...c, retention_status: status });
         setEditName(c.name);
         setEditPhone(c.phone_normalized);
-        setEditAlias(c.aliases && c.aliases.length > 0 ? c.aliases.map((a) => a.name).join(", ") : "");
         setEditUsia(c.usia || "");
         setEditJenisKelamin(c.jenis_kelamin || c.gender || "");
       }
@@ -104,66 +98,39 @@ export default function CustomerDetailPage() {
     }
   };
 
-  const handleSaveCustomer = async () => {
+  const handleSaveProfil = async () => {
     if (!customer) return;
-    if (!editName.trim()) {
-      setSaveError("Nama tidak boleh kosong");
-      return;
-    }
-    if (!editPhone.trim()) {
-      setSaveError("Nomor HP tidak boleh kosong");
-      return;
-    }
-
     setSaving(true);
     setSaveError(null);
     try {
-      const updated = await updateCustomer(customer.id, {
-        name: editName,
-        phone_normalized: editPhone,
-      });
+      const [updated, profile] = await Promise.all([
+        updateCustomer(customer.id, {
+          name: editName,
+          phone_normalized: editPhone,
+        }),
+        updateCustomerProfile(customer.id, {
+          usia: editUsia,
+          jenis_kelamin: editJenisKelamin,
+        }),
+      ]);
       setCustomer((prev) =>
         prev
           ? {
               ...prev,
               name: updated.name,
               phone_normalized: updated.phone_normalized,
+              usia: profile.usia,
+              jenis_kelamin: profile.jenis_kelamin,
+              gender: profile.jenis_kelamin,
             }
           : null,
       );
       setIsEditing(false);
-      toast.success("Profil customer diperbarui");
+      toast.success("Profil customer berhasil disimpan");
     } catch (err) {
-      setSaveError(
-        err instanceof Error ? err.message : "Gagal mengubah data customer",
-      );
+      setSaveError(err instanceof Error ? err.message : "Gagal menyimpan profil");
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleSaveProfil = async () => {
-    if (!customer) return;
-    setSavingProfil(true);
-    setProfilSaved(false);
-    try {
-      const payload: { aliases?: string; usia?: string; jenis_kelamin?: string } = {};
-      if (editAlias !== undefined) payload.aliases = editAlias;
-      if (editUsia !== undefined) payload.usia = editUsia;
-      if (editJenisKelamin !== undefined) payload.jenis_kelamin = editJenisKelamin;
-
-      const updated = await updateCustomerProfile(customer.id, payload);
-      setCustomer((prev) =>
-        prev ? { ...prev, aliases: updated.aliases, usia: updated.usia, jenis_kelamin: updated.jenis_kelamin, gender: updated.jenis_kelamin } : null,
-      );
-      toast.success("Profil customer berhasil disimpan");
-      setProfilSaved(true);
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Gagal menyimpan profil",
-      );
-    } finally {
-      setSavingProfil(false);
     }
   };
 
@@ -377,6 +344,21 @@ export default function CustomerDetailPage() {
                   <CheckCircle size={14} weight="fill" />
                   WA Verified
                 </div>
+                <div className="mt-5 border-t border-hairline pt-5">
+                  <h2 className="mb-4 text-sm font-semibold text-ink">Detail Profil</h2>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <span className="block text-[10px] font-semibold uppercase tracking-wider text-ash">Usia</span>
+                      <span className="mt-1 block text-sm text-ink">{customer.usia || "Belum diisi"}</span>
+                    </div>
+                    <div>
+                      <span className="block text-[10px] font-semibold uppercase tracking-wider text-ash">Jenis Kelamin</span>
+                      <span className="mt-1 block text-sm text-ink">
+                        {customer.jenis_kelamin === "L" ? "Laki-laki" : customer.jenis_kelamin === "P" ? "Perempuan" : "Belum diisi"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </>
             ) : (
               <div className="space-y-4">
@@ -425,9 +407,38 @@ export default function CustomerDetailPage() {
                   />
                 </div>
 
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
+                      Usia
+                    </Label>
+                    <Input
+                      type="text"
+                      value={editUsia}
+                      onChange={(e) => setEditUsia(e.target.value)}
+                      placeholder="Contoh: 25 atau 26-35"
+                      className="h-11 rounded-2xl"
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
+                      Jenis Kelamin
+                    </Label>
+                    <Select value={editJenisKelamin} onValueChange={(value) => setEditJenisKelamin(value || "")}>
+                      <SelectTrigger className="h-11 rounded-2xl">
+                        <SelectValue placeholder="Pilih" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="L">Laki-laki</SelectItem>
+                        <SelectItem value="P">Perempuan</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="flex items-center gap-3 pt-2">
                   <button
-                    onClick={handleSaveCustomer}
+                    onClick={handleSaveProfil}
                     disabled={saving}
                     className="group flex min-h-[44px] h-11 flex-1 items-center justify-center gap-2 rounded-full  bg-[#022D4E] text-xs sm:text-sm font-semibold text-white transition-all duration-300 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
                   >
@@ -482,7 +493,7 @@ export default function CustomerDetailPage() {
         ))}
       </motion.div>
 
-      {/* Tabs: Riwayat / Detail */}
+      {/* Riwayat order */}
       <motion.div
         variants={fadeUp}
         custom={3}
@@ -490,135 +501,48 @@ export default function CustomerDetailPage() {
         animate={ready ? "show" : "hidden"}
         className="mt-8 sm:mt-10"
       >
-        <Tabs defaultValue="history">
-          <TabsList className="mb-4">
-            <TabsTrigger value="history">Riwayat Order</TabsTrigger>
-            <TabsTrigger value="details">Detail Profil</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="history">
-            <div className="space-y-3">
-              {orders.map((order, idx) => {
-                const ch = CHANNELS.find((c) => c.id === order.channel);
-                return (
-                  <div key={order.id} className="doppel-outer">
-                    <div className="doppel-inner flex items-center justify-between p-4">
-                      <div className="flex items-center gap-3.5 min-w-0">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
-                          <ShoppingBag size={18} weight="duotone" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm font-semibold text-ink">
-                              {order.order_date}
-                            </span>
-                            <Badge variant="outline" className="text-[10px]">
-                              Order ke-{idx + 1} dari {orders.length}
-                            </Badge>
-                          </div>
-                          <div className="text-xs text-ash">
-                            Cabang {order.branch || "-"}
-                          </div>
-                        </div>
+        <div className="space-y-3">
+          {orders.map((order, idx) => {
+            const ch = CHANNELS.find((c) => c.id === order.channel);
+            return (
+              <div key={order.id} className="doppel-outer">
+                <div className="doppel-inner flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-accent">
+                      <ShoppingBag size={18} weight="duotone" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold text-ink">
+                          {order.order_date}
+                        </span>
+                        <Badge variant="outline" className="text-[10px]">
+                          Order ke-{idx + 1} dari {orders.length}
+                        </Badge>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="rounded-full border border-hairline bg-white px-3 py-1 text-[11px] font-semibold text-ink-soft">
-                          {ch?.label || order.channel}
-                        </span>
-                        <span className="flex items-center gap-1 text-xs text-emerald">
-                          <CheckCircle size={13} weight="fill" /> Selesai
-                        </span>
+                      <div className="text-xs text-ash">
+                        Cabang {order.branch || "-"}
                       </div>
                     </div>
                   </div>
-                );
-              })}
-              {orders.length === 0 && (
-                <div className="py-10 text-center text-sm text-ash">
-                  Belum ada riwayat order
-                </div>
-              )}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="details">
-            <div className="doppel-outer">
-              <div className="doppel-inner p-5 space-y-5">
-                {/* ── Unified Profil Card ────────────────────────────── */}
-                <div className="border-t border-hairline pt-5">
-                  <h3 className="mb-4 text-sm font-semibold text-ink">Detail Profil</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
-                        Alias
-                      </Label>
-                      <Input
-                        type="text"
-                        value={editAlias}
-                        onChange={(e) => setEditAlias(e.target.value)}
-                        placeholder="Nama panggilan atau alias"
-                        className="h-11 rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
-                        Usia
-                      </Label>
-                      <Input
-                        type="text"
-                        value={editUsia}
-                        onChange={(e) => setEditUsia(e.target.value)}
-                        placeholder="Contoh: 25 atau 26-35"
-                        className="h-11 rounded-2xl"
-                      />
-                    </div>
-                    <div>
-                      <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
-                        Jenis Kelamin
-                      </Label>
-                      <Select
-                        value={editJenisKelamin}
-                        onValueChange={(v) => setEditJenisKelamin(v || "")}
-                      >
-                        <SelectTrigger className="h-11 rounded-2xl">
-                          <SelectValue placeholder="Pilih jenis kelamin" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="L">Laki-laki</SelectItem>
-                          <SelectItem value="P">Perempuan</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  {profilSaved && (
-                    <div className="mt-3 rounded-2xl border border-emerald/20 bg-emerald/10 p-3 text-xs text-emerald">
-                      <CheckCircle size={14} weight="fill" className="inline mr-1" />
-                      Profil berhasil diperbarui
-                    </div>
-                  )}
-
-                  <div className="mt-4 flex justify-end">
-                    <Button
-                      onClick={handleSaveProfil}
-                      disabled={savingProfil}
-                      className="rounded-full"
-                    >
-                      {savingProfil ? (
-                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      ) : (
-                        <>
-                          <FloppyDisk size={16} weight="bold" className="mr-2" />
-                          Simpan Profil
-                        </>
-                      )}
-                    </Button>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="rounded-full border border-hairline bg-white px-3 py-1 text-[11px] font-semibold text-ink-soft">
+                      {ch?.label || order.channel}
+                    </span>
+                    <span className="flex items-center gap-1 text-xs text-emerald">
+                      <CheckCircle size={13} weight="fill" /> Selesai
+                    </span>
                   </div>
                 </div>
               </div>
+            );
+          })}
+          {orders.length === 0 && (
+            <div className="py-10 text-center text-sm text-ash">
+              Belum ada riwayat order
             </div>
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </motion.div>
 
       {/* Recommendation */}

@@ -72,7 +72,7 @@ export default function FollowUpPage() {
     setLoading(true);
     setLoadError(null);
     try {
-      const r = await getCustomersWithStats(0, 10000);
+      const r = await getCustomersWithStats(0, 1000);
       const filtered = r.data
         .map((c) => ({
           ...c,

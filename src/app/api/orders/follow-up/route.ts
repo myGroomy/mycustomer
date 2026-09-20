@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest) {
     await sheets.spreadsheets.values.batchUpdate({
       spreadsheetId,
       requestBody: {
-        valueInputOption: 'USER_ENTERED',
+        valueInputOption: 'RAW',
         data: [
           {
             range: `${ORDERS_SHEET}!${colLetter(fuColIdx)}${targetRowIdx + 1}`,
@@ -118,7 +118,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('Error updating order follow-up:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Gagal menyimpan follow-up' },
+      { error: 'Gagal menyimpan follow-up' },
       { status: 500 },
     )
   }

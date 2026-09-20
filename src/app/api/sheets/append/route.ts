@@ -14,9 +14,7 @@ export async function POST(request: NextRequest) {
     if (!sheet || !ALLOWED_SHEETS.has(sheet) || !row) {
       return NextResponse.json({ error: 'Missing sheet or row parameter' }, { status: 400 })
     }
-    if (sheet === 'users' || sheet === 'branches' || sheet === 'settings') {
-      if (!['owner', 'admin'].includes(auth.user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    if (!['owner', 'admin'].includes(auth.user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const sheets = getSheets()
     const spreadsheetId = getSpreadsheetId()
@@ -38,7 +36,7 @@ export async function POST(request: NextRequest) {
     await sheets.spreadsheets.values.append({
       spreadsheetId,
       range: `${sheet}!A:Z`,
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       requestBody: { values: [values] },
     })
 
@@ -46,7 +44,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error appending row:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to append row' },
+      { error: 'Failed to append row' },
       { status: 500 },
     )
   }

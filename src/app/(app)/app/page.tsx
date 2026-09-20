@@ -98,7 +98,7 @@ export default function InputOrderPage() {
 
   // Alias dialog state
   const [aliasDialogOpen, setAliasDialogOpen] = useState(false);
-  const [aliasNote, setAliasNote] = useState("");
+  const [aliasName, setAliasName] = useState("");
 
   useEffect(() => {
     setUserBranch(getSessionUser()?.branch || "");
@@ -108,7 +108,7 @@ export default function InputOrderPage() {
   useEffect(() => {
     async function preload() {
       try {
-        const res = await getCustomersWithStats(0, 10000);
+        const res = await getCustomersWithStats(0, 1000);
         const withStatus = res.data.map((c) => ({
           ...c,
           retention_status: getRetentionStatus(
@@ -178,7 +178,7 @@ export default function InputOrderPage() {
     setCustomChannel("");
     setOrderDate(new Date().toISOString().split("T")[0]);
     setError(null);
-    setAliasNote("");
+    setAliasName("");
     inputRef.current?.focus();
   };
 
@@ -213,7 +213,7 @@ export default function InputOrderPage() {
         channel: channel === "custom" ? "custom" : channel,
         raw_phone_input: newPhone || selectedCustomer?.phone_normalized || "",
         branch: userBranch,
-        alias_note: aliasNote.trim() || undefined,
+        alias_name: aliasName.trim() || undefined,
       });
 
       toast.success("Order tersimpan", {
@@ -527,16 +527,16 @@ export default function InputOrderPage() {
                   <button
                     type="button"
                     onClick={() => setAliasDialogOpen(true)}
-                    className="flex items-center gap-1.5 text-xs text-ash hover:text-accent transition-colors"
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-full border border-hairline bg-white px-3 text-xs text-ash transition-colors hover:border-accent/30 hover:bg-sunken hover:text-accent"
                   >
                     <Warning size={14} weight="duotone" />
-                    Nama beda? tambah keterangan
+                    Tambahkan alias customer
                   </button>
                   <Link
                     href={`/app/customers/${selectedCustomer.id}`}
                     className="group inline-flex items-center gap-1.5 text-xs font-semibold text-accent hover:text-accent-deep"
                   >
-                    <span>Lihat Profil Lengkap</span>
+                    <span>Detail Profil</span>
                     <ArrowSquareOut
                       size={14}
                       weight="bold"
@@ -723,16 +723,16 @@ export default function InputOrderPage() {
       <Dialog open={aliasDialogOpen} onOpenChange={setAliasDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Keterangan Alias</DialogTitle>
+            <DialogTitle>Tambah Alias Customer</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <p className="text-sm text-ash">
-              Contoh: &quot;kadang dipesan oleh adiknya, nama: Sinta&quot;
+              Masukkan nama lain yang digunakan customer saat order.
             </p>
             <Input
-              value={aliasNote}
-              onChange={(e) => setAliasNote(e.target.value)}
-              placeholder="Tulis keterangan di sini..."
+              value={aliasName}
+              onChange={(e) => setAliasName(e.target.value)}
+              placeholder="Contoh: Sinta"
               className="rounded-2xl"
             />
           </div>
@@ -746,8 +746,8 @@ export default function InputOrderPage() {
             </Button>
             <Button
               onClick={() => {
-                if (aliasNote.trim()) {
-                  toast.success("Keterangan tersimpan");
+                if (aliasName.trim()) {
+                  toast.success("Alias akan disimpan bersama order");
                 }
                 setAliasDialogOpen(false);
               }}

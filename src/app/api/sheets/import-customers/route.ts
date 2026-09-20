@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       await sheets.spreadsheets.values.append({
         spreadsheetId,
         range: 'customers!A:Z',
-        valueInputOption: 'USER_ENTERED',
+        valueInputOption: 'RAW',
         requestBody: { values: toAppend },
       })
     }
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Import customers error:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Import failed' },
+      { error: 'Import failed' },
       { status: 500 },
     )
   }

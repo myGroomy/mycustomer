@@ -36,7 +36,7 @@ export interface CreateOrderInput {
   channel: Order['channel']
   raw_phone_input?: string | null
   branch?: string
-  alias_note?: string
+  alias_name?: string
 }
 
 export async function createOrder(order: CreateOrderInput): Promise<Order> {
@@ -49,7 +49,7 @@ export async function createOrder(order: CreateOrderInput): Promise<Order> {
       channel: order.channel,
       raw_phone_input: order.raw_phone_input || '',
       branch: order.branch || '',
-      alias_note: order.alias_note || '',
+      alias_name: order.alias_name || '',
     }),
   })
 

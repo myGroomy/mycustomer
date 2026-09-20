@@ -35,7 +35,7 @@ export default function ExportPage() {
     try {
       if (exportType === 'orders') {
         // Fetch all customers & orders within date range
-        const result = await getCustomersWithStats(0, 10000)
+        const result = await getCustomersWithStats(0, 1000)
         const rows: Array<{
           no: number
           tanggal_order: string
@@ -80,7 +80,7 @@ export default function ExportPage() {
         downloadCsv(rows, filename)
       } else {
         // Customer Database Export
-        const result = await getCustomersWithStats(0, 10000)
+        const result = await getCustomersWithStats(0, 1000)
         const rows = result.data.map((c, idx) => ({
           no: idx + 1,
           nama_customer: c.name,
@@ -109,9 +109,14 @@ export default function ExportPage() {
     
     // Add UTF-8 BOM so Excel opens it with correct encoding & column separation
     const BOM = '\uFEFF'
+    const escapeCell = (value: string | number) => {
+      const text = String(value)
+      const safeText = /^[=+\-@]/.test(text) ? `'${text}` : text
+      return `"${safeText.replace(/"/g, '""')}"`
+    }
     const csvContent = [
       headers.map((h) => `"${h.replace(/_/g, ' ').toUpperCase()}"`).join(','),
-      ...rows.map((row) => headers.map((h) => `"${String(row[h]).replace(/"/g, '""')}"`).join(',')),
+      ...rows.map((row) => headers.map((h) => escapeCell(row[h])).join(',')),
     ].join('\n')
 
     const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' })

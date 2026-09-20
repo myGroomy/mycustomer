@@ -4,6 +4,10 @@ import { authenticatedUser } from '@/lib/apiAuth'
 
 const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users', 'customer_branches'])
 const ORDERS_SHEET = 'orders'
+const CLIENT_COLUMNS: Record<string, Set<string>> = {
+  customers: new Set(['id', 'phone_normalized', 'name', 'first_order_date', 'created_at', 'branch', 'order_count', 'description', 'age_range', 'usia', 'gender', 'jenis_kelamin', 'aliases', 'branch_memberships', 'is_followed_up', 'followed_up_at']),
+  orders: new Set(['id', 'customer_id', 'order_date', 'channel', 'raw_phone_input', 'created_at', 'branch', 'is_followed_up', 'followed_up_at']),
+}
 
 export async function GET(request: NextRequest) {
   const auth = await authenticatedUser()
@@ -33,10 +37,11 @@ export async function GET(request: NextRequest) {
     }
 
     const headers = rows[0]
+    const visibleColumns = CLIENT_COLUMNS[sheet]
     let data = rows.slice(1).map(row => {
       const obj: Record<string, string> = {}
       headers.forEach((header: string, index: number) => {
-        obj[header] = row[index] || ''
+        if (!visibleColumns || visibleColumns.has(header)) obj[header] = row[index] || ''
       })
       return obj
     })
@@ -64,7 +69,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Error reading sheet:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to read sheet' },
+      { error: 'Failed to read sheet' },
       { status: 500 },
     )
   }

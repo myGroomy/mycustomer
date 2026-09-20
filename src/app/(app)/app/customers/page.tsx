@@ -290,7 +290,7 @@ function CustomerListView() {
     if (downloading) return;
     setDownloading(true);
     try {
-      const r = await getCustomersWithStats(0, 10000);
+      const r = await getCustomersWithStats(0, 1000);
       const all = r.data.map((c) => ({
         ...c,
         retention_status: getRetentionStatus(

@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       await sheets.spreadsheets.values.batchUpdate({
         spreadsheetId,
         requestBody: {
-          valueInputOption: 'USER_ENTERED',
+          valueInputOption: 'RAW',
           data: updates.map((update) => ({
             range: `${CUSTOMERS_SHEET}!${columnLetter(targetMembershipsIndex)}${update.row}`,
             values: [[JSON.stringify(update.branches)]],
@@ -133,7 +133,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error backfilling branch memberships:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Gagal melakukan backfill membership cabang' },
+      { error: 'Gagal melakukan backfill membership cabang' },
       { status: 500 },
     )
   }

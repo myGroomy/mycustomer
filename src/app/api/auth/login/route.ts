@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE } from '@/lib/sessionServer'
+import { checkRateLimit } from '@/lib/rateLimit'
 
 export async function POST(request: NextRequest) {
   try {
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    if (!checkRateLimit(`login:${ip}`, 10, 15 * 60 * 1000)) {
+      return NextResponse.json({ error: 'Terlalu banyak percobaan login. Coba lagi nanti.' }, { status: 429 })
+    }
     const { username, pin } = await request.json()
     if (typeof username !== 'string' || typeof pin !== 'string' || !username.trim() || !/^\d{6}$/.test(pin)) {
       return NextResponse.json({ error: 'Username dan PIN tidak valid' }, { status: 400 })

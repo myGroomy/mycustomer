@@ -224,7 +224,7 @@ export async function POST() {
   } catch (error) {
     console.error('Sync staging error:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Sync failed' },
+      { error: 'Sync failed' },
       { status: 500 },
     )
   }

@@ -45,6 +45,19 @@ export async function PATCH(request: NextRequest) {
     if (matchIndex === -1) {
       return NextResponse.json({ error: `Customer dengan id ${id} tidak ditemukan` }, { status: 404 })
     }
+    if (auth.user.role === 'kasir') {
+      const branchIndex = headers.indexOf('branch')
+      const membershipIndex = headers.indexOf('branch_memberships')
+      let memberships: string[] = []
+      try {
+        memberships = membershipIndex >= 0 ? JSON.parse(rows[matchIndex][membershipIndex] || '[]') : []
+      } catch {
+        memberships = []
+      }
+      if (branchIndex < 0 || (rows[matchIndex][branchIndex] !== auth.user.branch && !memberships.includes(auth.user.branch))) {
+        return NextResponse.json({ error: 'Customer tidak tersedia di cabang akun ini' }, { status: 403 })
+      }
+    }
 
     const targetRow = [...(rows[matchIndex] as string[])]
     while (targetRow.length < headers.length) targetRow.push('')
@@ -80,7 +93,7 @@ export async function PATCH(request: NextRequest) {
       await sheets.spreadsheets.values.update({
         spreadsheetId,
         range: `${CUSTOMERS_SHEET}!A${matchIndex + 1}:${colLetter(headers.length - 1)}${matchIndex + 1}`,
-        valueInputOption: 'USER_ENTERED',
+        valueInputOption: 'RAW',
         requestBody: { values: [updateData] },
       })
     }
@@ -93,7 +106,7 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     console.error('Error updating customer profile:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Gagal memperbarui profil customer' },
+      { error: 'Gagal memperbarui profil customer' },
       { status: 500 },
     )
   }

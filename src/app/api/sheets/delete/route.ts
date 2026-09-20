@@ -44,7 +44,7 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     console.error('Error deleting row:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to delete row' },
+      { error: 'Failed to delete row' },
       { status: 500 },
     )
   }

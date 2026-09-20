@@ -14,9 +14,7 @@ export async function PUT(request: NextRequest) {
     if (!sheet || !ALLOWED_SHEETS.has(sheet) || rowIndex === undefined || !row) {
       return NextResponse.json({ error: 'Missing sheet, rowIndex, or row parameter' }, { status: 400 })
     }
-    if (sheet === 'users' || sheet === 'branches' || sheet === 'settings') {
-      if (!['owner', 'admin'].includes(auth.user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    }
+    if (!['owner', 'admin'].includes(auth.user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const sheets = getSheets()
     const spreadsheetId = getSpreadsheetId()
@@ -38,7 +36,7 @@ export async function PUT(request: NextRequest) {
     await sheets.spreadsheets.values.update({
       spreadsheetId,
       range: `${sheet}!A${rowIndex + 2}`,
-      valueInputOption: 'USER_ENTERED',
+      valueInputOption: 'RAW',
       requestBody: { values: [values] },
     })
 
@@ -46,7 +44,7 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error('Error updating row:', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to update row' },
+      { error: 'Failed to update row' },
       { status: 500 },
     )
   }
