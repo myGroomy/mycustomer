@@ -33,6 +33,7 @@ import type {
   CustomerWithStats,
   RetentionStatus,
 } from "@/types";
+import { formatPhoneDisplay } from "@/utils/phoneDisplay";
 
 export default function FollowUpPage() {
   const ready = useMounted();
@@ -473,7 +474,7 @@ export default function FollowUpPage() {
                             </div>
                             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ash">
                               <span className="font-mono text-ink-soft">
-                                {cust.phone_normalized}
+                                {formatPhoneDisplay(cust.phone_normalized)}
                               </span>
                               <span>&middot;</span>
                               <span className="rounded bg-sunken px-2 py-0.5 text-[10px] font-medium text-ink-soft">
@@ -611,7 +612,7 @@ export default function FollowUpPage() {
                           {c.name}
                         </div>
                         <div className="mt-0.5 font-mono text-xs text-ash">
-                          {c.phone_normalized} &middot; {days} hari lalu
+                          {formatPhoneDisplay(c.phone_normalized)} &middot; {days} hari lalu
                         </div>
                       </div>
                     </div>

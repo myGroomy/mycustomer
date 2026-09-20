@@ -41,6 +41,7 @@ import { CHANNELS, DEFAULT_THRESHOLDS, PAGE_SIZE } from "@/constants";
 import { fadeUp, FLUID_EASE } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
 import type { CustomerWithStats, Order } from "@/types";
+import { formatPhoneDisplay } from "@/utils/phoneDisplay";
 
 export default function CustomerDetailPage() {
   const ready = useMounted();
@@ -303,7 +304,7 @@ export default function CustomerDetailPage() {
                         weight="bold"
                         className="text-[#022D4E] shrink-0"
                       />
-                      {customer.phone_normalized}
+                      {formatPhoneDisplay(customer.phone_normalized)}
                     </a>
                     <div className="mt-3 flex flex-wrap items-center gap-2">
                       {getStatusBadge()}

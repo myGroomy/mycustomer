@@ -34,6 +34,7 @@ import { fadeUp } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
 import type { CustomerWithStats, RetentionStatus } from "@/types";
 import { getSessionUser } from "@/utils/session";
+import { formatPhoneDisplay } from "@/utils/phoneDisplay";
 
 type RepeatFilter = "all" | "1x" | "2-5x" | "6-10x" | "11-20x" | "21x+";
 
@@ -714,7 +715,7 @@ function CustomerListView() {
 
                             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ash">
                               <span className="font-mono text-ink-soft">
-                                {customer.phone_normalized}
+                                {formatPhoneDisplay(customer.phone_normalized)}
                               </span>
                               {favCh && (
                                 <>

@@ -54,6 +54,7 @@ import { DEFAULT_THRESHOLDS } from "@/constants";
 import { FLUID_EASE } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
 import { getSessionUser } from "@/utils/session";
+import { formatPhoneDisplay } from "@/utils/phoneDisplay";
 import type { ChannelType, CustomerWithStats } from "@/types";
 
 const CHANNELS = [
@@ -375,7 +376,7 @@ export default function InputOrderPage() {
                               <div className="flex min-w-0 flex-wrap items-center gap-2">
                                 <span className="flex min-w-0 items-center gap-1 font-mono text-xs text-ash">
                                   <Phone size={11} />
-                                  <span className="truncate">{c.phone_normalized}</span>
+                                  <span className="truncate">{formatPhoneDisplay(c.phone_normalized)}</span>
                                 </span>
                                 <span className="shrink-0 rounded-full bg-[#022D4E]-wash px-2 py-0.5 text-[10px] font-semibold text-[#022D4E]-deep">
                                   Order ke-{(c.order_count || 0) + 1}
@@ -472,7 +473,7 @@ export default function InputOrderPage() {
                         className="mt-1 flex items-center gap-1 font-mono text-xs text-ash hover:text-[#022D4E]"
                       >
                         <Phone size={12} weight="bold" />
-                        {selectedCustomer.phone_normalized}
+                        {formatPhoneDisplay(selectedCustomer.phone_normalized)}
                       </a>
                     </div>
                   </div>
