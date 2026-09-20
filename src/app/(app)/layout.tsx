@@ -16,18 +16,25 @@ import {
   List,
   X,
   FileCsv,
-  DownloadSimple,
   Buildings,
+  DotsThree,
 } from "@phosphor-icons/react";
 import {
   getAppSettings,
   syncSettingsFromSheets,
 } from "@/services/settingsService";
 import { syncStaging } from "@/services/sheetsService";
-import { isManagerRole } from "@/services/adminService";
 import { clearSessionUser } from "@/utils/session";
 import { Toaster } from "@/components/ui/sonner";
 import { SettingsProvider } from "@/lib/SettingsProvider";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import type { ReactNode } from "react";
 
 interface User {
@@ -50,11 +57,12 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/app/follow-up", icon: CheckSquare, label: "Follow-up" },
   { href: "/app/admin", icon: Buildings, label: "Admin", adminOnly: true },
   { href: "/app/settings", icon: Gear, label: "Settings" },
+  { href: "/app/export", icon: FileCsv, label: "Export Data CSV", adminOnly: true },
 ];
 
 function visibleNav(user: User | null): NavItem[] {
   return user
-    ? NAV_ITEMS.filter((i) => !i.adminOnly || isManagerRole(user.role))
+    ? NAV_ITEMS.filter((i) => !i.adminOnly || user.role === "admin")
     : NAV_ITEMS;
 }
 
@@ -140,16 +148,6 @@ function Sidebar({
               {visibleNav(user).map((item) => (
                 <NavLink key={item.href} {...item} />
               ))}
-              {/* Export Link in Sidebar */}
-              {user && isManagerRole(user.role) && (
-                <Link
-                  href="/app/export"
-                  className="group relative flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm text-ash transition-all duration-300 hover:bg-sunken hover:text-ink active:scale-[0.98]"
-                >
-                  <FileCsv size={20} weight="duotone" className="text-[#022D4E]" />
-                  <span>Export Data CSV</span>
-                </Link>
-              )}
             </nav>
           </div>
 
@@ -190,12 +188,16 @@ function BottomNav({
   onLogout: () => void;
 }) {
   const pathname = usePathname();
+  const primaryItems = NAV_ITEMS.slice(0, 4);
+  const secondaryItems = visibleNav(user).filter(
+    (item) => !primaryItems.some((primary) => primary.href === item.href),
+  );
 
   return (
     <nav className="fixed inset-x-4 bottom-4 z-50 md:hidden">
       <div className="doppel-outer rounded-[1.75rem]">
         <div className="doppel-inner flex h-16 items-center justify-around rounded-[calc(1.75rem-0.375rem)] px-2">
-          {visibleNav(user).map((item) => {
+          {primaryItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
@@ -223,14 +225,33 @@ function BottomNav({
               </Link>
             );
           })}
-          <button
-            onClick={onLogout}
-            aria-label="Keluar dari aplikasi"
-            className="flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-ash transition-all duration-300 active:scale-[0.95]"
-          >
-            <SignOut size={22} weight="bold" />
-            <span className="text-[11px] font-medium text-ash">Keluar</span>
-          </button>
+          <Sheet>
+            <SheetTrigger
+              aria-label="Buka menu lainnya"
+              className="flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-ash transition-all duration-300 active:scale-[0.95]"
+            >
+              <DotsThree size={22} weight="bold" />
+              <span className="text-[11px] font-medium text-ash">Lainnya</span>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-[1.75rem] px-5 pb-8">
+              <SheetHeader className="text-left">
+                <SheetTitle>Menu lainnya</SheetTitle>
+                <SheetDescription>Akses fitur tambahan dan pengaturan akun.</SheetDescription>
+              </SheetHeader>
+              <div className="mt-5 space-y-2">
+                {secondaryItems.map((item) => (
+                  <NavLink key={item.href} {...item} />
+                ))}
+                <button
+                  onClick={onLogout}
+                  className="flex w-full items-center gap-3 rounded-2xl px-3.5 py-3 text-sm font-semibold text-ink hover:bg-rose/10"
+                >
+                  <SignOut size={20} weight="bold" />
+                  <span>Keluar</span>
+                </button>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </nav>
@@ -380,15 +401,6 @@ export default function AppLayout({ children }: { children: ReactNode }) {
                           onClick={() => setMenuOpen(false)}
                         />
                       ))}
-
-                      <Link
-                        href="/app/export"
-                        onClick={() => setMenuOpen(false)}
-                        className="flex items-center gap-3 rounded-2xl px-3.5 py-2.5 text-sm font-semibold text-[#022D4E]  bg-[#022D4E]-wash/60 transition-all hover: bg-[#022D4E]-wash"
-                      >
-                        <FileCsv size={20} weight="duotone" />
-                        <span>Export Data (CSV / Excel)</span>
-                      </Link>
                     </div>
 
                     <div className="border-t border-hairline pt-3">

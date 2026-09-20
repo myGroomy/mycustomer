@@ -506,32 +506,33 @@ export default function CustomerDetailPage() {
             const ch = CHANNELS.find((c) => c.id === order.channel);
             return (
               <div key={order.id} className="doppel-outer">
-                <div className="doppel-inner flex items-center justify-between p-4">
+                <div className="doppel-inner flex items-center gap-3 p-4">
                   <div className="flex items-center gap-3.5 min-w-0">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl  bg-[#022D4E]-wash text-[#022D4E]">
                       <ShoppingBag size={18} weight="duotone" />
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold text-ink">
+                        <span className="truncate text-sm font-semibold text-ink">
                           {order.order_date}
                         </span>
+                        <span className="shrink-0 rounded-full border border-hairline bg-white px-3 py-1 text-[11px] font-semibold text-ink-soft">
+                          {ch?.label || order.channel}
+                        </span>
+                        <CheckCircle
+                          size={16}
+                          weight="fill"
+                          className="ml-auto shrink-0 text-emerald"
+                          aria-label="Selesai"
+                        />
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ash">
+                        <span>Cabang {order.branch || "-"}</span>
                         <Badge variant="outline" className="text-[10px]">
                           Order ke-{idx + 1} dari {orders.length}
                         </Badge>
                       </div>
-                      <div className="text-xs text-ash">
-                        Cabang {order.branch || "-"}
-                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="rounded-full border border-hairline bg-white px-3 py-1 text-[11px] font-semibold text-ink-soft">
-                      {ch?.label || order.channel}
-                    </span>
-                    <span className="flex items-center gap-1 text-xs text-emerald">
-                      <CheckCircle size={13} weight="fill" /> Selesai
-                    </span>
                   </div>
                 </div>
               </div>

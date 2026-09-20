@@ -34,7 +34,6 @@ import { fadeUp } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
 import type { CustomerWithStats, RetentionStatus } from "@/types";
 import { getSessionUser } from "@/utils/session";
-import { isManagerRole } from "@/services/adminService";
 
 type RepeatFilter = "all" | "1x" | "2-5x" | "6-10x" | "11-20x" | "21x+";
 
@@ -78,7 +77,7 @@ function CustomerListView() {
   // Date Filter State
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const canExport = isManagerRole(getSessionUser()?.role);
+  const canExport = getSessionUser()?.role === "admin";
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);
@@ -630,25 +629,27 @@ function CustomerListView() {
                             {getInitials(customer.name)}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-semibold text-ink truncate">
+                            <div className="min-w-0">
+                              <span className="block truncate text-sm font-semibold text-ink">
                                 {customer.name}
                               </span>
-                              {getStatusBadge(status, days)}
-                              <Badge
-                                variant="outline"
-                                className="border-accent/20 text-[#022D4E]"
-                              >
-                                Order ke-{(customer.order_count || 0) + 1}
-                              </Badge>
-                              {(!customer.age_range || !customer.gender) && (
+                              <div className="mt-1 flex flex-wrap items-center gap-2">
+                                {getStatusBadge(status, days)}
                                 <Badge
                                   variant="outline"
-                                  className="border-accent-soft/40 text-[#022D4E]-deep"
+                                  className="border-accent/20 text-[#022D4E]"
                                 >
-                                  profil belum lengkap
+                                  Order ke-{(customer.order_count || 0) + 1}
                                 </Badge>
-                              )}
+                                {(!customer.age_range || !customer.gender) && (
+                                  <Badge
+                                    variant="outline"
+                                    className="border-accent-soft/40 text-[#022D4E]-deep"
+                                  >
+                                    profil belum lengkap
+                                  </Badge>
+                                )}
+                              </div>
                             </div>
 
                             {/* ── Baris alias ─────────────────────────────────────── */}
@@ -714,10 +715,6 @@ function CustomerListView() {
                             <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ash">
                               <span className="font-mono text-ink-soft">
                                 {customer.phone_normalized}
-                              </span>
-                              <span>&middot;</span>
-                              <span className="font-semibold text-[#022D4E]">
-                                {customer.order_count}x order
                               </span>
                               {favCh && (
                                 <>

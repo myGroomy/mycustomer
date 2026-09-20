@@ -21,7 +21,6 @@ import { CHANNELS } from '@/constants'
 import { fadeUp, FLUID_EASE } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
 import { getSessionUser } from '@/utils/session'
-import { isManagerRole } from '@/services/adminService'
 
 export default function ExportPage() {
   const ready = useMounted()
@@ -35,7 +34,7 @@ export default function ExportPage() {
 
   useEffect(() => {
     const user = getSessionUser()
-    setCanExport(Boolean(user && isManagerRole(user.role)))
+    setCanExport(user?.role === 'admin')
     setAccessChecked(true)
   }, [])
 
@@ -83,7 +82,7 @@ export default function ExportPage() {
               <main className="mx-auto flex min-h-[60dvh] max-w-2xl items-center justify-center px-4 text-center">
                 <div>
                   <h1 className="text-xl font-semibold text-ink">Akses export dibatasi</h1>
-                  <p className="mt-2 text-sm text-ash">Export data hanya tersedia untuk Owner/Admin.</p>
+                  <p className="mt-2 text-sm text-ash">Export data hanya tersedia untuk Admin.</p>
                 </div>
               </main>
             )
