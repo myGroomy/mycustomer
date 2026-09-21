@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticatedUser } from '@/lib/apiAuth'
-import { supabaseTable } from '@/lib/supabaseServer'
+import { dataTable } from '@/lib/backendServer'
 import { normalizePhone } from '@/utils/normalizePhone'
 
 export async function POST(request: NextRequest) {
@@ -12,11 +12,11 @@ export async function POST(request: NextRequest) {
     if (!customer_id || !order_date || !channel) return NextResponse.json({ error: 'Missing required fields: customer_id, order_date, channel' }, { status: 400 })
     const branch = auth.user.role === 'kasir' ? auth.user.branch : String(body.branch || auth.user.branch || '').trim()
     if (!branch) return NextResponse.json({ error: 'Cabang order wajib dipilih' }, { status: 400 })
-    const customer = (await supabaseTable('customers').list<Record<string, unknown>>({ id: `eq.${customer_id}`, limit: 1 }))[0]
+    const customer = (await dataTable('customers').list<Record<string, unknown>>({ id: `eq.${customer_id}`, limit: 1 }))[0]
     if (!customer) return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
     const memberships = Array.isArray(customer.branch_memberships) ? customer.branch_memberships as string[] : []
     if (auth.user.role === 'kasir' && customer.branch !== branch && !memberships.includes(branch)) {
-      const prior = await supabaseTable('orders').list({ customer_id: `eq.${customer_id}`, branch: `eq.${branch}`, limit: 1 })
+      const prior = await dataTable('orders').list({ customer_id: `eq.${customer_id}`, branch: `eq.${branch}`, limit: 1 })
       if (!prior.length && normalizePhone(raw_phone_input || '') !== customer.phone_normalized) {
         return NextResponse.json({ error: 'Customer tidak tersedia di cabang akun ini' }, { status: 403 })
       }
@@ -28,10 +28,10 @@ export async function POST(request: NextRequest) {
       if (existing) existing.last_seen_at = now
       else aliases.push({ name: alias_name.trim(), branch, first_seen_at: now, last_seen_at: now })
     }
-    const order = (await supabaseTable('orders').insert<Record<string, unknown>>({
+    const order = (await dataTable('orders').insert<Record<string, unknown>>({
       customer_id, order_date, channel, raw_phone_input: raw_phone_input || null, created_at: now, branch,
     }))[0]
-    await supabaseTable('customers').update({ id: `eq.${customer_id}` }, {
+    await dataTable('customers').update({ id: `eq.${customer_id}` }, {
       order_count: Number(customer.order_count || 0) + 1, aliases, branch_memberships: memberships.includes(branch) ? memberships : [...memberships, branch],
     })
     return NextResponse.json({ success: true, order_id: order.id, order_count: Number(customer.order_count || 0) + 1 })

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticatedUser } from '@/lib/apiAuth'
-import { supabaseTable } from '@/lib/supabaseServer'
+import { dataTable } from '@/lib/backendServer'
 
-const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users'])
+const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users', 'customer_branches'])
 const TABLES: Record<string, string> = { users: 'app_users', settings: 'app_settings' }
 
 export async function DELETE(request: NextRequest) {
@@ -18,10 +18,10 @@ export async function DELETE(request: NextRequest) {
 
     const table = TABLES[sheet] || sheet
     const identity = sheet === 'settings' ? 'key' : 'id'
-    const rows = await supabaseTable(table).list<Record<string, unknown>>({ select: identity, order: sheet === 'settings' ? 'key.asc' : 'created_at.asc', limit: 1000 })
+    const rows = await dataTable(table).list<Record<string, unknown>>({ select: identity, order: sheet === 'settings' ? 'key.asc' : 'created_at.asc', limit: 1000 })
     const target = rows[rowIndex]
     if (!target?.[identity]) return NextResponse.json({ error: 'Row not found' }, { status: 404 })
-    await supabaseTable(table).remove({ [identity]: `eq.${target[identity]}` })
+    await dataTable(table).remove({ [identity]: `eq.${target[identity]}` })
 
     return NextResponse.json({ success: true })
   } catch (error) {

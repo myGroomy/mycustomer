@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticatedUser } from '@/lib/apiAuth'
-import { supabaseTable } from '@/lib/supabaseServer'
+import { dataTable } from '@/lib/backendServer'
 
 const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users', 'customer_branches'])
 const TABLES: Record<string, string> = { users: 'app_users', settings: 'app_settings' }
@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     }
 
     const table = TABLES[sheet] || sheet
-    const rows = await supabaseTable(table).list<Record<string, unknown>>({ limit: 1000, ...(sheet === 'settings' ? {} : { order: 'created_at.asc' }) })
+    const rows = await dataTable(table).list<Record<string, unknown>>({ limit: 1000, ...(sheet === 'settings' ? {} : { order: 'created_at.asc' }) })
     const visibleColumns = CLIENT_COLUMNS[sheet]
     let data = rows.map(serialize).map(row => visibleColumns
       ? Object.fromEntries(Object.entries(row).filter(([key]) => visibleColumns.has(key)))
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
       if (sheet === 'orders') {
         data = data.filter(row => row.branch === auth.user.branch)
       } else {
-        const orderRows = await supabaseTable('orders').list<Record<string, unknown>>({ limit: 1000 })
+        const orderRows = await dataTable('orders').list<Record<string, unknown>>({ limit: 1000 })
         const customerIdsInBranch = new Set(
           orderRows.filter(row => row.branch === auth.user.branch).map(row => row.customer_id),
         )

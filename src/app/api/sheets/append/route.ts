@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticatedUser } from '@/lib/apiAuth'
-import { supabaseTable } from '@/lib/supabaseServer'
+import { dataTable } from '@/lib/backendServer'
 
-const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users'])
+const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users', 'customer_branches'])
 const TABLES: Record<string, string> = { users: 'app_users', settings: 'app_settings' }
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     for (const key of ['aliases', 'branch_memberships']) if (typeof payload[key] === 'string') {
       try { payload[key] = JSON.parse(payload[key]) } catch {}
     }
-    await supabaseTable(table).insert(payload)
+    await dataTable(table).insert(payload)
 
     return NextResponse.json({ success: true })
   } catch (error) {

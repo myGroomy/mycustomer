@@ -38,7 +38,7 @@ export async function supabaseRest<T = unknown>(
     method: options.method || 'GET',
     headers: {
       apikey: key,
-      Authorization: `Bearer ${key}`,
+      Authorization: "Bearer " + key,
       'Content-Type': 'application/json',
       ...(options.method === 'POST' || options.method === 'PATCH' ? { Prefer: 'return=representation' } : {}),
       ...options.headers,

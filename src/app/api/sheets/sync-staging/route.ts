@@ -3,6 +3,7 @@ import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { normalizePhone } from '@/utils/normalizePhone'
 import { generateId } from '@/utils/generateId'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { getAppDataBackend } from '@/lib/backendServer'
 
 const STAGING_SHEETS = ['staging_cmh', 'staging_bdg']
 
@@ -30,6 +31,9 @@ export async function POST() {
   const auth = await authenticatedUser(['owner', 'admin'])
   if (auth.error) return auth.error
   try {
+    if (getAppDataBackend() !== 'sheets') {
+      return NextResponse.json({ error: 'Staging sync requires APP_DATA_BACKEND=sheets' }, { status: 400 })
+    }
     const sheets = getSheets()
     const spreadsheetId = getSpreadsheetId()
 

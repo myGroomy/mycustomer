@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticatedUser } from '@/lib/apiAuth'
-import { supabaseTable } from '@/lib/supabaseServer'
+import { dataTable } from '@/lib/backendServer'
 import { normalizePhone } from '@/utils/normalizePhone'
 
 export async function POST(request: NextRequest) {
@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     if (!phone || !name) return NextResponse.json({ error: 'Nomor telepon dan nama wajib diisi' }, { status: 400 })
     const normalizedPhone = normalizePhone(phone)
     const branch = auth.user.role === 'kasir' ? auth.user.branch : String(body.branch || auth.user.branch || '').trim()
-    const table = supabaseTable('customers')
+    const table = dataTable('customers')
     const found = (await table.list<Record<string, unknown>>({ phone_normalized: `eq.${normalizedPhone}`, limit: 1 }))[0]
     const now = new Date().toISOString()
     if (!found) {
@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Customer tidak tersedia di cabang akun ini' }, { status: 403 })
     }
     await table.update({ id: `eq.${found.id}` }, { name, aliases, branch_memberships: memberships })
-    const orders = await supabaseTable('orders').list<Record<string, unknown>>({ customer_id: `eq.${found.id}`, branch: branch ? `neq.${branch}` : undefined, limit: 1 })
+    const orders = await dataTable('orders').list<Record<string, unknown>>({ customer_id: `eq.${found.id}`, branch: branch ? `neq.${branch}` : undefined, limit: 1 })
     return NextResponse.json({ customer_id: found.id, phone_normalized: normalizedPhone, name, created: false, has_other_branch_activity: orders.length > 0 })
   } catch (error) {
     console.error('Error resolving customer:', error)

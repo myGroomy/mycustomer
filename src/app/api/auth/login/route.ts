@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseTable } from '@/lib/supabaseServer'
+import { dataTable } from '@/lib/backendServer'
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE } from '@/lib/sessionServer'
 import { checkRateLimit } from '@/lib/rateLimit'
 
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Username dan PIN tidak valid' }, { status: 400 })
     }
 
-    const users = await supabaseTable('app_users').list({
+    const users = await dataTable('app_users').list({
       username: `eq.${username.trim()}`,
       pin: `eq.${pin}`,
       active: 'eq.true',

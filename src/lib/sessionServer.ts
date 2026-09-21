@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { cookies } from 'next/headers'
-import { supabaseTable } from '@/lib/supabaseServer'
+import { dataTable } from '@/lib/backendServer'
 
 const SESSION_COOKIE = 'mycustomer_session'
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
@@ -65,7 +65,7 @@ export async function requireSession(roles?: string[]): Promise<AuthenticatedUse
   const user = await getSessionUser()
   if (!user) throw new Error('UNAUTHORIZED')
   try {
-    const current = (await supabaseTable('app_users').list({
+    const current = (await dataTable('app_users').list({
       id: `eq.${user.id}`,
       active: 'eq.true',
       limit: 1,

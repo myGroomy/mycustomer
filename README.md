@@ -3,7 +3,9 @@
 CRM ringan untuk bisnis F&B untuk mencatat order, mengelola customer,
 memantau retensi, dan melakukan follow-up WhatsApp manual. Branch
 `supabase-ver` menggunakan **Supabase PostgreSQL sebagai database utama**.
-Google Sheets hanya dipakai sebagai sumber migrasi/backup lama.
+API dapat dipindahkan secara eksplisit ke Google Sheets dengan
+`APP_DATA_BACKEND=sheets`; jika variabel tidak ada, backend aman default ke
+`supabase`. Selector ini hanya dibaca server-side sehingga UI tetap sama.
 
 ## Persyaratan
 
@@ -76,6 +78,10 @@ SUPABASE_DATABASE_URL=postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:
 # Minimal 32 karakter.
 # Buat dengan: openssl rand -hex 32
 SESSION_SECRET=replace-with-a-long-random-secret
+
+# Pilih "supabase" (default saat tidak diisi) atau "sheets".
+# Jangan ubah saat runtime; lakukan cutover terencana setelah migrasi.
+APP_DATA_BACKEND=supabase
 
 NEXT_PUBLIC_DEFAULT_CHURN_ACTIVE_DAYS=30
 NEXT_PUBLIC_DEFAULT_CHURN_AT_RISK_DAYS=60
@@ -160,6 +166,17 @@ terbaca. `db:migrate` melakukan upsert data ke Supabase. Migrator:
 - memetakan order ke customer utama;
 - melewati order yatim yang tidak memiliki customer;
 - tidak menghapus atau mengubah Google Sheets.
+
+## Cutover backend
+
+Backend aktif dipilih oleh `APP_DATA_BACKEND` dan tidak melakukan dual-write.
+Untuk cutover ke Sheets, siapkan tab dengan header yang sama (`customers`,
+`orders`, `settings`, `branches`, `users`, dan bila dipakai
+`customer_branches`), migrasikan/cadangkan data terlebih dahulu, lalu ubah
+environment variable dan redeploy. Untuk kembali ke Supabase, lakukan
+rekonsiliasi data hasil operasi selama masa cutover secara manual, ubah selector
+kembali ke `supabase`, dan redeploy. Endpoint staging hanya tersedia ketika
+backend Sheets aktif.
 
 Setelah migrasi, verifikasi jumlah data melalui Supabase Table Editor atau SQL:
 

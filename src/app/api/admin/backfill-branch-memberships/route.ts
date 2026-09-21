@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticatedUser } from '@/lib/apiAuth'
-import { supabaseTable } from '@/lib/supabaseServer'
+import { dataTable } from '@/lib/backendServer'
 
 export async function POST(request: NextRequest) {
   const auth = await authenticatedUser(['owner', 'admin'])
@@ -8,8 +8,8 @@ export async function POST(request: NextRequest) {
   try {
     const apply = (await request.json().catch(() => ({}))).apply === true
     const [customers, orders] = await Promise.all([
-      supabaseTable('customers').list<Record<string, unknown>>({ limit: 1000 }),
-      supabaseTable('orders').list<Record<string, unknown>>({ limit: 1000 }),
+      dataTable('customers').list<Record<string, unknown>>({ limit: 1000 }),
+      dataTable('orders').list<Record<string, unknown>>({ limit: 1000 }),
     ])
     const byCustomer = new Map<string, Set<string>>()
     for (const order of orders) {
@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
       const next = [...branches].sort()
       if (JSON.stringify(next) !== JSON.stringify(customer.branch_memberships || [])) {
         updates.push({ customer_id: String(customer.id), branches: next })
-        if (apply) await supabaseTable('customers').update({ id: `eq.${customer.id}` }, { branch_memberships: next })
+        if (apply) await dataTable('customers').update({ id: `eq.${customer.id}` }, { branch_memberships: next })
       }
     }
     return NextResponse.json({ success: true, dry_run: !apply, updated_count: updates.length, preview: updates.slice(0, 100) })
