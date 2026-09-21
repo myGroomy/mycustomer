@@ -1,56 +1,63 @@
 # MYCUSTOMER
 
-CRM ringan untuk bisnis F&B untuk mencatat order, mengelola profil customer, memantau retensi, dan melakukan follow-up WhatsApp manual. Aplikasi ini menggunakan Next.js App Router, TypeScript, Tailwind CSS, dan Google Sheets sebagai datastore melalui Google API.
+CRM ringan untuk bisnis F&B untuk mencatat order, mengelola customer,
+memantau retensi, dan melakukan follow-up WhatsApp manual. Branch
+`supabase-ver` menggunakan **Supabase PostgreSQL sebagai database utama**.
+Google Sheets hanya dipakai sebagai sumber migrasi/backup lama.
 
 ## Persyaratan
 
 - Node.js 20 atau lebih baru
 - npm 10 atau lebih baru
-- Google Cloud project
-- Google Spreadsheet untuk data aplikasi
-- Service account Google dengan akses Editor ke spreadsheet
+- Project Supabase
+- Akses ke Supabase SQL Editor
+- (Opsional) Google Sheets dan service account jika ingin memigrasikan data lama
 
 ## Setup dari nol
 
-### 1. Clone repository dan install dependency
+### 1. Clone branch Supabase
 
 ```bash
-git clone <URL_REPOSITORY>
+git clone -b supabase-ver https://github.com/myGroomy/mycustomer.git
 cd mycustomer
 npm install
 ```
 
-### 2. Buat Google Cloud service account
+### 2. Buat project Supabase
 
-1. Buka [Google Cloud Console](https://console.cloud.google.com/).
+1. Buka [Supabase Dashboard](https://supabase.com/dashboard).
 2. Buat project baru atau pilih project yang sudah ada.
-3. Aktifkan **Google Sheets API**.
-4. Buka **IAM & Admin → Service Accounts** lalu buat service account.
-5. Buat JSON key untuk service account dan simpan dengan aman.
-6. Catat email service account dan private key dari file JSON.
+3. Buka **Project Settings → API**.
+4. Catat:
+   - **Project URL** → `NEXT_PUBLIC_SUPABASE_URL`
+   - **Publishable/anon key** → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - **Service role key** → `SUPABASE_SERVICE_ROLE_KEY`
+5. Buka **Project Settings → Database** dan salin connection string jika
+   diperlukan sebagai `SUPABASE_DATABASE_URL`.
 
-Jangan commit file JSON, private key, atau kredensial lain ke repository.
+`SUPABASE_SERVICE_ROLE_KEY` hanya boleh berada di server dan tidak boleh
+diawali `NEXT_PUBLIC_`. Jangan commit atau membagikan key tersebut.
 
-### 3. Buat dan bagikan Google Spreadsheet
+### 3. Buat schema database
 
-Buat spreadsheet baru, lalu bagikan spreadsheet tersebut ke email service account sebagai **Editor**. Salin spreadsheet ID dari URL:
+1. Di Supabase Dashboard buka **SQL Editor**.
+2. Buat query baru.
+3. Salin seluruh isi file
+   `supabase/migrations/001_initial_schema.sql`.
+4. Klik **Run**.
+5. Pastikan tabel berikut muncul di **Table Editor**:
 
-```text
-https://docs.google.com/spreadsheets/d/SPREADSHEET_ID/edit
-```
+   - `branches`
+   - `app_users`
+   - `customers`
+   - `orders`
+   - `app_settings`
 
-Spreadsheet perlu memiliki sheet utama berikut:
+Schema mengaktifkan Row Level Security. Operasi aplikasi berjalan melalui
+server menggunakan service-role key dan tetap menerapkan pemeriksaan session
+serta role pada API.
 
-- `users`
-- `customers`
-- `orders`
-- `settings`
-- `branches`
-- `customer_branches`
-
-Kolom/header harus mengikuti skema yang digunakan aplikasi. Untuk instalasi baru, gunakan proses inisialisasi atau template internal project jika tersedia. Jangan mengubah nama sheet tanpa memperbarui service backend.
-
-### 4. Siapkan environment variables
+### 4. Buat environment lokal
 
 ```bash
 cp .env.example .env.local
@@ -59,29 +66,62 @@ cp .env.example .env.local
 Isi `.env.local`:
 
 ```env
-GOOGLE_SERVICE_ACCOUNT_EMAIL=service-account@project.iam.gserviceaccount.com
-GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-GOOGLE_SPREADSHEET_ID=your-spreadsheet-id
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-or-publishable-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Minimal 32 karakter. Buat dengan:
-# openssl rand -hex 32
+# Opsional untuk migrasi langsung melalui PostgreSQL.
+SUPABASE_DATABASE_URL=postgresql://postgres:PASSWORD@db.PROJECT_REF.supabase.co:5432/postgres
+
+# Minimal 32 karakter.
+# Buat dengan: openssl rand -hex 32
 SESSION_SECRET=replace-with-a-long-random-secret
 
 NEXT_PUBLIC_DEFAULT_CHURN_ACTIVE_DAYS=30
 NEXT_PUBLIC_DEFAULT_CHURN_AT_RISK_DAYS=60
 ```
 
-`GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY` harus menggunakan newline escaped (`\n`) jika disimpan sebagai satu baris di environment variable. Pastikan `.env.local` tidak pernah di-commit atau dibagikan.
+`src/lib/supabaseServer.ts` juga dapat membaca file `.env` workspace satu
+tingkat di atas project, tetapi untuk development lokal gunakan `.env.local`.
 
-### 5. Jalankan aplikasi
+### 5. Isi data awal
+
+Untuk instalasi baru, masukkan minimal satu baris ke tabel `branches`,
+`app_users`, dan `app_settings`. Contoh:
+
+```sql
+insert into public.branches (id, code, name)
+values (gen_random_uuid(), 'CMH', 'Cimahi (CMH)')
+on conflict (code) do nothing;
+
+insert into public.app_users
+  (id, username, display_name, pin, role, branch)
+values
+  (gen_random_uuid(), 'admin', 'Admin User', '123456', 'admin', 'CMH')
+on conflict (username) do nothing;
+
+insert into public.app_settings (key, value) values
+  ('storeName', 'Nama Toko Anda'),
+  ('activeDays', '30'),
+  ('atRiskDays', '60'),
+  ('waTemplate', 'Halo {nama}, terima kasih sudah order di {toko}! Ada yang bisa kami bantu?')
+on conflict (key) do update set value = excluded.value;
+```
+
+Ganti username, PIN, cabang, dan nama toko sebelum digunakan. PIN saat ini
+harus berupa 6 digit angka. Setelah login sebagai Admin, user dan cabang dapat
+dikelola dari menu **Admin**.
+
+### 6. Jalankan aplikasi
 
 ```bash
 npm run dev
 ```
 
-Buka [http://localhost:3000](http://localhost:3000).
+Buka [http://localhost:3000](http://localhost:3000), lalu login dengan user
+yang dibuat pada langkah sebelumnya.
 
-### 6. Verifikasi instalasi
+### 7. Validasi instalasi
 
 ```bash
 npm run typecheck
@@ -89,88 +129,111 @@ npm run build
 npm start
 ```
 
-`npm run build` digunakan untuk memverifikasi production build. Untuk development cukup gunakan `npm run dev`.
+## Migrasi data lama dari Google Sheets
 
-### 7. Migrasi bertahap ke Supabase
+Migrator tersedia jika data lama masih berada di Google Sheets:
 
-Schema Supabase dan migrator Google Sheets tersedia di:
+- `scripts/setup_supabase.js` — setup schema melalui koneksi PostgreSQL.
+- `scripts/migrate_sheets_to_supabase.js` — membaca sheet dan mengisi Supabase.
 
-- `supabase/migrations/001_initial_schema.sql`
-- `scripts/setup_supabase.js`
-- `scripts/migrate_sheets_to_supabase.js`
+Siapkan tambahan environment berikut:
 
-Migrasi ini tidak menghapus atau mengubah Google Sheets. Jalankan dari workspace
-yang memiliki akses jaringan ke PostgreSQL Supabase:
+```env
+GOOGLE_SERVICE_ACCOUNT_EMAIL=service-account@project.iam.gserviceaccount.com
+GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_SPREADSHEET_ID=your-spreadsheet-id
+```
+
+Service account harus memiliki akses **Viewer** ke spreadsheet sumber. Jalankan:
 
 ```bash
-npm run db:setup
 npm run db:migrate:dry
 npm run db:migrate
 ```
 
-`db:migrate:dry` hanya membaca spreadsheet dan menampilkan jumlah baris yang
-akan dipindahkan. `db:migrate` menjalankan transaksi PostgreSQL dan melakukan
-upsert berdasarkan ID. Kredensial Supabase dibaca dari
-`/home/bradley/project/MOCHIKIN-APPS/.env`; `GOOGLE_SPREADSHEET_ID` dapat dibaca
-dari `.env.local` project jika tidak tersedia di env workspace.
+`db:migrate:dry` tidak menulis data dan hanya menampilkan jumlah baris yang
+terbaca. `db:migrate` melakukan upsert data ke Supabase. Migrator:
 
-Jika koneksi PostgreSQL langsung (`SUPABASE_DATABASE_URL`) diblokir oleh
-jaringan, buka Supabase Dashboard → **SQL Editor**, jalankan isi
-`supabase/migrations/001_initial_schema.sql`, lalu jalankan migrator dari
-komputer/server yang dapat mengakses database tersebut. Aplikasi belum berpindah
-ke Supabase sebelum migrasi data diverifikasi, sehingga Google Sheets tetap
-menjadi sumber data aktif selama tahap ini.
+- membaca `branches`, `users`, `customers`, `orders`, dan `settings`;
+- menormalisasi nomor WhatsApp;
+- menggabungkan customer yang memiliki nomor sama setelah normalisasi;
+- memetakan order ke customer utama;
+- melewati order yatim yang tidak memiliki customer;
+- tidak menghapus atau mengubah Google Sheets.
+
+Setelah migrasi, verifikasi jumlah data melalui Supabase Table Editor atau SQL:
+
+```sql
+select 'branches' as table_name, count(*) from public.branches
+union all
+select 'app_users', count(*) from public.app_users
+union all
+select 'customers', count(*) from public.customers
+union all
+select 'orders', count(*) from public.orders
+union all
+select 'app_settings', count(*) from public.app_settings;
+```
 
 ## Role dan akses
 
-- **Admin**: mengelola cabang dan user, mengakses import/export data, serta melihat data lintas cabang.
-- **Kasir**: menjalankan operasional cabang sendiri seperti input order, pencarian customer, dan follow-up yang diizinkan.
+- **Admin/Owner**: mengelola user dan cabang, import/export data, settings,
+  dan melihat data lintas cabang.
+- **Kasir**: input order, mencari customer, dan menjalankan operasional cabang
+  yang ditetapkan.
 
-Export/import data massal berisi PII dan hanya boleh tersedia untuk admin. Jangan mengandalkan penyembunyian tombol UI saja; endpoint API juga harus memvalidasi session dan role.
+Import/export dan endpoint API tetap memvalidasi session serta role di server;
+menyembunyikan tombol di UI bukan satu-satunya proteksi.
 
-## Perintah yang tersedia
+## Perintah
 
 | Perintah | Fungsi |
 | --- | --- |
 | `npm run dev` | Menjalankan development server |
-| `npm run typecheck` | Memeriksa tipe TypeScript |
+| `npm run typecheck` | Memeriksa TypeScript |
 | `npm run build` | Membuat production build |
 | `npm start` | Menjalankan production server |
 | `npm run format` | Memformat source dengan Prettier |
+| `npm run db:migrate:dry` | Preview migrasi Google Sheets |
+| `npm run db:migrate` | Migrasi data Google Sheets ke Supabase |
 
 ## Deploy ke Vercel
 
-1. Import repository ke Vercel.
+1. Import repository dan pilih branch `supabase-ver`.
 2. Gunakan framework preset **Next.js**.
-3. Tambahkan environment variables yang sama dengan `.env.local` pada **Project Settings → Environment Variables**.
-4. Pastikan private key disimpan sebagai secret Vercel, bukan di source code.
-5. Deploy dan uji login, input order, pembatasan role, serta akses Google Sheets.
+3. Tambahkan `NEXT_PUBLIC_SUPABASE_URL`,
+   `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, dan
+   `SESSION_SECRET` pada Environment Variables.
+4. Jangan menambahkan Google Sheets credentials jika aplikasi tidak lagi
+   melakukan migrasi/backup dari Sheets.
+5. Deploy, lalu uji login, input order, pembatasan role, settings, import, dan
+   export.
 
 ## Troubleshooting
 
-### `Failed to read sheet`
+### `Missing Supabase server env vars`
 
-Periksa bahwa:
+Pastikan `.env.local` berada di root project dan berisi
+`NEXT_PUBLIC_SUPABASE_URL` serta `SUPABASE_SERVICE_ROLE_KEY`. Restart server
+setelah mengubah environment.
 
-- Google Sheets API sudah aktif.
-- Spreadsheet sudah dibagikan ke service account sebagai Editor.
-- `GOOGLE_SPREADSHEET_ID` benar.
-- Nama sheet sesuai dengan yang digunakan aplikasi.
+### Login gagal
 
-### Login selalu gagal
+Periksa baris pada `app_users`: `username`, PIN 6 digit, `role`, dan
+`active = true`.
 
-Periksa data user pada sheet `users`, nilai `username`, PIN, role, status aktif, serta `SESSION_SECRET`. Setelah mengubah environment variable, restart development server.
+### Migrasi gagal karena koneksi PostgreSQL
 
-### Private key error
-
-Pastikan nilai private key berisi header dan footer lengkap serta newline dipertahankan sebagai `\n` pada environment variable.
+Jalankan schema dari SQL Editor terlebih dahulu. Jika `SUPABASE_DATABASE_URL`
+tidak bisa dijangkau dari jaringan lokal, migrator akan mencoba REST API
+Supabase menggunakan service-role key.
 
 ## Keamanan
 
-- Jangan commit `.env`, `.env.local`, JSON service account, API key, atau private key.
-- Gunakan `RAW` untuk penulisan data ke Google Sheets agar input tidak diperlakukan sebagai formula.
-- Normalisasi nomor WhatsApp melalui utility aplikasi sebelum disimpan atau dicocokkan.
-- Gunakan pagination/limit untuk query list.
-- Review akses export/import sebelum deployment production.
+- Jangan commit `.env`, `.env.local`, service-account JSON, atau key Supabase.
+- Jangan pernah mengekspos `SUPABASE_SERVICE_ROLE_KEY` ke browser.
+- Normalisasi nomor WhatsApp sebelum menyimpan atau mencocokkan.
+- Gunakan role check server-side untuk endpoint sensitif.
+- Buat backup sebelum menjalankan operasi data massal.
 
 Panduan web tersedia di [halaman dokumentasi](/docs).
