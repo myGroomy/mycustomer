@@ -1,4 +1,4 @@
-import { getSheetData } from './sheetsService'
+import { getSheetData, clearSheetsCache } from './sheetsService'
 import type { Order, OrderWithCustomer, PaginatedResponse } from '@/types'
 
 const ORDERS_SHEET = 'orders'
@@ -61,6 +61,8 @@ export async function createOrder(order: CreateOrderInput): Promise<Order> {
     }
     throw new Error(data.error || 'Gagal menyimpan order')
   }
+
+  clearSheetsCache()
 
   return {
     id: data.order_id,
