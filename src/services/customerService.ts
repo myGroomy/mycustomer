@@ -371,7 +371,7 @@ export async function updateCustomerProfile(
 }
 
 /**
- * Menyimpan perubahan daftar alias customer ke Google Sheets.
+ * Menyimpan perubahan daftar alias customer melalui API Supabase.
  * Alias disimpan sebagai JSON string di kolom `aliases`.
  *
  * @param id - ID customer

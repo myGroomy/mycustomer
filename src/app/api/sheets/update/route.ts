@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { supabaseTable } from '@/lib/supabaseServer'
 
 const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users'])
+const TABLES: Record<string, string> = { users: 'app_users', settings: 'app_settings' }
 
 export async function PUT(request: NextRequest) {
   const auth = await authenticatedUser()
@@ -16,29 +17,18 @@ export async function PUT(request: NextRequest) {
     }
     if (!['owner', 'admin'].includes(auth.user.role)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const sheets = getSheets()
-    const spreadsheetId = getSpreadsheetId()
-
-    // Get headers to ensure correct order
-    const dataResponse = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: `${sheet}!A:Z`,
-    })
-
-    const rows = dataResponse.data.values || []
-    if (rows.length === 0) {
-      return NextResponse.json({ error: `Sheet ${sheet} is empty` }, { status: 400 })
+    const table = TABLES[sheet] || sheet
+    const identity = sheet === 'settings' ? 'key' : 'id'
+    const rows = await supabaseTable(table).list<Record<string, unknown>>({ select: identity, order: sheet === 'settings' ? 'key.asc' : 'created_at.asc', limit: 1000 })
+    const target = rows[rowIndex]
+    if (!target?.[identity]) return NextResponse.json({ error: 'Row not found' }, { status: 404 })
+    const payload = { ...row }
+    for (const key of ['is_active', 'active', 'is_followed_up']) if (key in payload) payload[key] = String(payload[key]).toLowerCase() === 'true'
+    for (const key of ['aliases', 'branch_memberships']) if (typeof payload[key] === 'string') {
+      try { payload[key] = JSON.parse(payload[key]) } catch {}
     }
-
-    const headers = rows[0]
-    const values = headers.map((header: string) => row[header] || '')
-
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: `${sheet}!A${rowIndex + 2}`,
-      valueInputOption: 'RAW',
-      requestBody: { values: [values] },
-    })
+    delete payload.id
+    await supabaseTable(table).update({ [identity]: `eq.${target[identity]}` }, payload)
 
     return NextResponse.json({ success: true })
   } catch (error) {

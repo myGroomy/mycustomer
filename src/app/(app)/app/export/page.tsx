@@ -21,6 +21,7 @@ import { CHANNELS } from '@/constants'
 import { fadeUp, FLUID_EASE } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
 import { getSessionUser } from '@/utils/session'
+import { isManagerRole } from '@/services/adminService'
 
 export default function ExportPage() {
   const ready = useMounted()
@@ -34,7 +35,7 @@ export default function ExportPage() {
 
   useEffect(() => {
     const user = getSessionUser()
-    setCanExport(user?.role === 'admin')
+    setCanExport(isManagerRole(user?.role))
     setAccessChecked(true)
   }, [])
 
@@ -77,16 +78,6 @@ export default function ExportPage() {
             })
           }
 
-          if (accessChecked && !canExport) {
-            return (
-              <main className="mx-auto flex min-h-[60dvh] max-w-2xl items-center justify-center px-4 text-center">
-                <div>
-                  <h1 className="text-xl font-semibold text-ink">Akses export dibatasi</h1>
-                  <p className="mt-2 text-sm text-ash">Export data hanya tersedia untuk Admin.</p>
-                </div>
-              </main>
-            )
-          }
         }
 
         // Sort by order_date descending
@@ -155,6 +146,17 @@ export default function ExportPage() {
     { key: 'orders' as const, label: 'Laporan Transaksi (CSV)', desc: 'Format: Tanggal, Nama, No. HP, Tipe Order, Total Order, Status', icon: Receipt },
     { key: 'customers' as const, label: 'Database Customer (CSV)', desc: 'Format: Nama, No. HP, Order Pertama, Order Terakhir, Total Order', icon: UsersThree },
   ]
+
+  if (accessChecked && !canExport) {
+    return (
+      <main className="mx-auto flex min-h-[60dvh] max-w-2xl items-center justify-center px-4 text-center">
+        <div>
+          <h1 className="text-xl font-semibold text-ink">Akses export dibatasi</h1>
+          <p className="mt-2 text-sm text-ash">Export data hanya tersedia untuk Admin.</p>
+        </div>
+      </main>
+    )
+  }
 
   return (
     <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:py-10 pb-28 md:pb-20">

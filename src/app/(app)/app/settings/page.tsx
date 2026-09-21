@@ -49,6 +49,7 @@ export default function SettingsPage() {
   const [recalculating, setRecalculating] = useState(false);
   const [recalcResult, setRecalcResult] = useState<string | null>(null);
   const [canImport, setCanImport] = useState(false);
+  const [canEditSettings, setCanEditSettings] = useState(false);
 
   // Import customer state
   const [importFile, setImportFile] = useState<{
@@ -65,7 +66,9 @@ export default function SettingsPage() {
 
   useEffect(() => {
     const user = getSessionUser();
-    setCanImport(Boolean(user && isManagerRole(user.role)));
+    const manager = Boolean(user && isManagerRole(user.role));
+    setCanImport(manager);
+    setCanEditSettings(manager);
     loadSettings();
   }, []);
 
@@ -82,6 +85,7 @@ export default function SettingsPage() {
   };
 
   const handleSave = async () => {
+    if (!canEditSettings) return;
     setSaving(true);
     try {
       await saveAppSettings(settings);
@@ -95,6 +99,7 @@ export default function SettingsPage() {
   };
 
   const handleRecalculate = async () => {
+    if (!canEditSettings) return;
     setRecalculating(true);
     setRecalcResult(null);
     try {
@@ -247,9 +252,16 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     setSettings({ ...settings, storeName: e.target.value })
                   }
+                  disabled={!canEditSettings}
                   placeholder="Misal: Cabang Senopati / Outlet Sudirman"
-                  className="h-12 text-sm font-medium"
+                  className="h-12 text-sm font-medium disabled:cursor-not-allowed disabled:bg-sunken/60 disabled:text-ash"
                 />
+                {!canEditSettings && (
+                  <p className="mt-2 text-xs text-ash">
+                    Nama toko ditetapkan oleh Admin dan tidak dapat diubah oleh
+                    user.
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -293,6 +305,7 @@ export default function SettingsPage() {
                         activeDays: Number(e.target.value) || 30,
                       })
                     }
+                    disabled={!canEditSettings}
                     className="h-11 bg-sunken/50 font-semibold"
                   />
                   <p className="mt-1.5 text-[11px] text-ash">
@@ -313,6 +326,7 @@ export default function SettingsPage() {
                         atRiskDays: Number(e.target.value) || 60,
                       })
                     }
+                    disabled={!canEditSettings}
                     className="h-11 bg-sunken/50 font-semibold"
                   />
                   <p className="mt-1.5 text-[11px] text-ash">
@@ -539,8 +553,9 @@ export default function SettingsPage() {
                 onChange={(e) =>
                   setSettings({ ...settings, waTemplate: e.target.value })
                 }
+                disabled={!canEditSettings}
                 rows={3}
-                className="resize-none text-sm leading-relaxed"
+                className="resize-none text-sm leading-relaxed disabled:cursor-not-allowed disabled:bg-sunken/60"
               />
 
               <div className="mt-3 rounded-2xl border border-hairline bg-sunken/40 p-4">
@@ -589,7 +604,7 @@ export default function SettingsPage() {
         >
           <button
             onClick={handleSave}
-            disabled={saving}
+            disabled={saving || !canEditSettings}
             className="group flex min-h-[50px] h-13 w-full items-center justify-center gap-3 rounded-full bg-[#022D4E] text-sm font-semibold text-white transition-all duration-500 hover:-translate-y-px active:scale-[0.98] disabled:opacity-50"
             style={{ boxShadow: "0 8px 24px -8px rgba(28, 43, 66, 0.5)" }}
           >
@@ -614,7 +629,7 @@ export default function SettingsPage() {
         >
           <button
             onClick={handleRecalculate}
-            disabled={recalculating}
+            disabled={recalculating || !canEditSettings}
             className="text-[11px] text-ash hover:text-ink transition-colors"
           >
             {recalculating

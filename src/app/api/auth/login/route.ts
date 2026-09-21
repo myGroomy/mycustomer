@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
+import { supabaseTable } from '@/lib/supabaseServer'
 import { createSessionToken, SESSION_COOKIE_NAME, SESSION_MAX_AGE } from '@/lib/sessionServer'
 import { checkRateLimit } from '@/lib/rateLimit'
 
@@ -14,14 +14,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Username dan PIN tidak valid' }, { status: 400 })
     }
 
-    const response = await getSheets().spreadsheets.values.get({
-      spreadsheetId: getSpreadsheetId(),
-      range: 'users!A:Z',
+    const users = await supabaseTable('app_users').list({
+      username: `eq.${username.trim()}`,
+      pin: `eq.${pin}`,
+      active: 'eq.true',
+      limit: 1,
     })
-    const rows = response.data.values || []
-    const headers = rows[0] || []
-    const users = rows.slice(1).map((row) => Object.fromEntries(headers.map((h: string, i: number) => [h, row[i] || ''])))
-    const user = users.find((candidate) => candidate.username === username.trim() && candidate.pin === pin)
+    const user = users[0] as { id: string; username: string; display_name?: string; role: string; branch?: string } | undefined
     if (!user) return NextResponse.json({ error: 'Username atau PIN salah' }, { status: 401 })
 
     const sessionUser = {
@@ -44,8 +43,7 @@ export async function POST(request: NextRequest) {
     console.error('Login error:', error)
     if (error instanceof Error && (
       error.message === 'SESSION_SECRET must be configured with at least 32 characters' ||
-      error.message === 'Missing Google Sheets env vars' ||
-      error.message === 'Missing GOOGLE_SPREADSHEET_ID env var'
+      error.message === 'Missing Supabase server env vars'
     )) {
       return NextResponse.json(
         { error: 'Konfigurasi server belum lengkap. Hubungi administrator.' },

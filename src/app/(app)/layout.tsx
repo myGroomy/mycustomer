@@ -24,6 +24,7 @@ import {
   syncSettingsFromSheets,
 } from "@/services/settingsService";
 import { syncStaging } from "@/services/sheetsService";
+import { isManagerRole } from "@/services/adminService";
 import { clearSessionUser } from "@/utils/session";
 import { Toaster } from "@/components/ui/sonner";
 import { SettingsProvider } from "@/lib/SettingsProvider";
@@ -62,7 +63,7 @@ const NAV_ITEMS: NavItem[] = [
 
 function visibleNav(user: User | null): NavItem[] {
   return user
-    ? NAV_ITEMS.filter((i) => !i.adminOnly || user.role === "admin")
+    ? NAV_ITEMS.filter((i) => !i.adminOnly || isManagerRole(user.role))
     : NAV_ITEMS;
 }
 

@@ -91,6 +91,36 @@ npm start
 
 `npm run build` digunakan untuk memverifikasi production build. Untuk development cukup gunakan `npm run dev`.
 
+### 7. Migrasi bertahap ke Supabase
+
+Schema Supabase dan migrator Google Sheets tersedia di:
+
+- `supabase/migrations/001_initial_schema.sql`
+- `scripts/setup_supabase.js`
+- `scripts/migrate_sheets_to_supabase.js`
+
+Migrasi ini tidak menghapus atau mengubah Google Sheets. Jalankan dari workspace
+yang memiliki akses jaringan ke PostgreSQL Supabase:
+
+```bash
+npm run db:setup
+npm run db:migrate:dry
+npm run db:migrate
+```
+
+`db:migrate:dry` hanya membaca spreadsheet dan menampilkan jumlah baris yang
+akan dipindahkan. `db:migrate` menjalankan transaksi PostgreSQL dan melakukan
+upsert berdasarkan ID. Kredensial Supabase dibaca dari
+`/home/bradley/project/MOCHIKIN-APPS/.env`; `GOOGLE_SPREADSHEET_ID` dapat dibaca
+dari `.env.local` project jika tidak tersedia di env workspace.
+
+Jika koneksi PostgreSQL langsung (`SUPABASE_DATABASE_URL`) diblokir oleh
+jaringan, buka Supabase Dashboard → **SQL Editor**, jalankan isi
+`supabase/migrations/001_initial_schema.sql`, lalu jalankan migrator dari
+komputer/server yang dapat mengakses database tersebut. Aplikasi belum berpindah
+ke Supabase sebelum migrasi data diverifikasi, sehingga Google Sheets tetap
+menjadi sumber data aktif selama tahap ini.
+
 ## Role dan akses
 
 - **Admin**: mengelola cabang dan user, mengakses import/export data, serta melihat data lintas cabang.

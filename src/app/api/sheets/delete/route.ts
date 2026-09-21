@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { supabaseTable } from '@/lib/supabaseServer'
 
 const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users'])
+const TABLES: Record<string, string> = { users: 'app_users', settings: 'app_settings' }
 
 export async function DELETE(request: NextRequest) {
   const auth = await authenticatedUser(['owner', 'admin'])
@@ -15,30 +16,12 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: 'Missing sheet or rowIndex parameter' }, { status: 400 })
     }
 
-    const sheets = getSheets()
-    const spreadsheetId = getSpreadsheetId()
-
-    const meta = await sheets.spreadsheets.get({ spreadsheetId })
-    const tab = meta.data.sheets?.find((s) => s.properties?.title === sheet)
-    const sheetId = tab?.properties?.sheetId
-    if (sheetId === undefined) {
-      return NextResponse.json({ error: `Sheet ${sheet} not found` }, { status: 404 })
-    }
-
-    // rowIndex is 0-based among data rows (below header at sheet row 1)
-    const startIndex = rowIndex + 1
-    await sheets.spreadsheets.batchUpdate({
-      spreadsheetId,
-      requestBody: {
-        requests: [
-          {
-            deleteDimension: {
-              range: { sheetId, dimension: 'ROWS', startIndex, endIndex: startIndex + 1 },
-            },
-          },
-        ],
-      },
-    })
+    const table = TABLES[sheet] || sheet
+    const identity = sheet === 'settings' ? 'key' : 'id'
+    const rows = await supabaseTable(table).list<Record<string, unknown>>({ select: identity, order: sheet === 'settings' ? 'key.asc' : 'created_at.asc', limit: 1000 })
+    const target = rows[rowIndex]
+    if (!target?.[identity]) return NextResponse.json({ error: 'Row not found' }, { status: 404 })
+    await supabaseTable(table).remove({ [identity]: `eq.${target[identity]}` })
 
     return NextResponse.json({ success: true })
   } catch (error) {

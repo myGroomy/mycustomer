@@ -28,7 +28,7 @@ function rowsToSettings(rows: Record<string, string>[]): AppSettings {
   }
 }
 
-// In-memory cache sumber utama settings adalah Google Sheets, bukan localStorage.
+// In-memory cache sumber utama settings adalah Supabase, bukan localStorage.
 // Di-set lewat syncSettingsFromSheets(); dipakai sebagai sumber sinkron untuk
 // komponen yang butuh nilai seketika (churnStatus, waLinkBuilder, layout, provider).
 let _cache: AppSettings | null = null
@@ -44,7 +44,7 @@ export function getAppSettings(): AppSettings {
   return _cache ?? DEFAULT_APP_SETTINGS
 }
 
-// Baca langsung dari Sheets lalu simpan ke cache in-memory
+// Baca langsung dari API Supabase lalu simpan ke cache in-memory
 export async function syncSettingsFromSheets(): Promise<AppSettings> {
   try {
     const rows = await getSheetData(SETTINGS_SHEET)
@@ -59,7 +59,7 @@ export async function syncSettingsFromSheets(): Promise<AppSettings> {
   return getAppSettings()
 }
 
-// Simpan ke cache + Sheets (Google Sheets adalah source of truth)
+// Simpan ke cache + Supabase (Supabase adalah source of truth)
 export async function saveAppSettings(settings: AppSettings): Promise<void> {
   _cache = settings
   broadcastChange()

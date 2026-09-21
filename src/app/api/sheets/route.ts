@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { supabaseTable } from '@/lib/supabaseServer'
 
 const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users', 'customer_branches'])
-const ORDERS_SHEET = 'orders'
+const TABLES: Record<string, string> = { users: 'app_users', settings: 'app_settings' }
+const serialize = (row: Record<string, unknown>): Record<string, string> =>
+  Object.fromEntries(Object.entries(row).map(([key, value]) => [
+    key,
+    typeof value === 'boolean' ? String(value).toUpperCase() : value && typeof value === 'object' ? JSON.stringify(value) : String(value ?? ''),
+  ]))
 const CLIENT_COLUMNS: Record<string, Set<string>> = {
   customers: new Set(['id', 'phone_normalized', 'name', 'first_order_date', 'created_at', 'branch', 'order_count', 'description', 'age_range', 'usia', 'gender', 'jenis_kelamin', 'aliases', 'branch_memberships', 'is_followed_up', 'followed_up_at']),
   orders: new Set(['id', 'customer_id', 'order_date', 'channel', 'raw_phone_input', 'created_at', 'branch', 'is_followed_up', 'followed_up_at']),
@@ -23,43 +28,20 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const sheets = getSheets()
-    const spreadsheetId = getSpreadsheetId()
-
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: `${sheet}!A:Z`,
-    })
-
-    const rows = response.data.values || []
-    if (rows.length === 0) {
-      return NextResponse.json({ data: [] })
-    }
-
-    const headers = rows[0]
+    const table = TABLES[sheet] || sheet
+    const rows = await supabaseTable(table).list<Record<string, unknown>>({ limit: 1000, ...(sheet === 'settings' ? {} : { order: 'created_at.asc' }) })
     const visibleColumns = CLIENT_COLUMNS[sheet]
-    let data = rows.slice(1).map(row => {
-      const obj: Record<string, string> = {}
-      headers.forEach((header: string, index: number) => {
-        if (!visibleColumns || visibleColumns.has(header)) obj[header] = row[index] || ''
-      })
-      return obj
-    })
+    let data = rows.map(serialize).map(row => visibleColumns
+      ? Object.fromEntries(Object.entries(row).filter(([key]) => visibleColumns.has(key)))
+      : row)
 
     if (auth.user.role === 'kasir' && auth.user.branch && (sheet === 'orders' || sheet === 'customers')) {
       if (sheet === 'orders') {
         data = data.filter(row => row.branch === auth.user.branch)
       } else {
-        const orderResponse = await sheets.spreadsheets.values.get({
-          spreadsheetId,
-          range: `${ORDERS_SHEET}!A:Z`,
-        })
-        const orderRows = orderResponse.data.values || []
-        const orderHeaders = orderRows[0] || []
+        const orderRows = await supabaseTable('orders').list<Record<string, unknown>>({ limit: 1000 })
         const customerIdsInBranch = new Set(
-          orderRows.slice(1)
-            .filter(row => row[orderHeaders.indexOf('branch')] === auth.user.branch)
-            .map(row => row[orderHeaders.indexOf('customer_id')]),
+          orderRows.filter(row => row.branch === auth.user.branch).map(row => row.customer_id),
         )
         data = data.filter(row => customerIdsInBranch.has(row.id))
       }

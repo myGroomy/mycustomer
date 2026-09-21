@@ -35,6 +35,7 @@ import { useMounted } from "@/lib/useMounted";
 import type { CustomerWithStats, RetentionStatus } from "@/types";
 import { getSessionUser } from "@/utils/session";
 import { formatPhoneDisplay } from "@/utils/phoneDisplay";
+import { isManagerRole } from "@/services/adminService";
 
 type RepeatFilter = "all" | "1x" | "2-5x" | "6-10x" | "11-20x" | "21x+";
 
@@ -78,7 +79,7 @@ function CustomerListView() {
   // Date Filter State
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const canExport = getSessionUser()?.role === "admin";
+  const canExport = isManagerRole(getSessionUser()?.role);
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);

@@ -71,6 +71,10 @@ export default function AdminPage() {
       return
     }
     setMe(stored)
+    if (!isManagerRole(stored.role)) {
+      setLoading(false)
+      return
+    }
     loadAll()
   }, [])
 

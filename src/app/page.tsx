@@ -189,6 +189,7 @@ export default function LandingPage() {
             </Link>
             <Button
               render={<Link href="/login" />}
+              nativeButton={false}
               className={`group h-auto gap-1.5 rounded-full px-5 py-2.5 text-sm font-semibold text-ink transition-all duration-700 hover:-translate-y-px active:scale-[0.98] ${CTA_STYLE}`}
             >
               Daftar
@@ -272,6 +273,7 @@ export default function LandingPage() {
             <motion.div variants={ctaReveal} custom={0}>
               <Button
                 render={<Link href="/login" />}
+                nativeButton={false}
                 className={`group h-auto gap-2 rounded-full px-8 py-4 text-base font-semibold text-ink transition-all duration-700 hover:-translate-y-[2px] active:scale-[0.98] ${CTA_STYLE}`}
               >
                 Mulai Sekarang
@@ -283,6 +285,7 @@ export default function LandingPage() {
             <motion.div variants={ctaReveal} custom={1}>
               <Button
                 render={<a href="#features" />}
+                nativeButton={false}
                 className="group h-auto gap-2 rounded-full border border-hairline bg-white px-7 py-4 text-base font-semibold text-ink-soft transition-all duration-700 hover:bg-sunken active:scale-[0.98]"
               >
                 Lihat Cara Kerjanya
@@ -855,6 +858,7 @@ export default function LandingPage() {
             </p>
             <Button
               render={<Link href="/login" />}
+              nativeButton={false}
               className="group mt-10 h-auto gap-2 rounded-full bg-white px-9 py-4 text-base font-semibold text-ink shadow-[0_20px_60px_-20px_rgba(255,255,255,0.4)] transition-all duration-700 hover:-translate-y-[2px] active:scale-[0.98]"
             >
               Mulai Sekarang

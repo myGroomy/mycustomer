@@ -1,113 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
-
-const CUSTOMERS_SHEET = 'customers'
-
-function colLetter(index: number): string {
-  let result = ''
-  for (let value = index + 1; value > 0; value = Math.floor((value - 1) / 26)) {
-    result = String.fromCharCode(65 + ((value - 1) % 26)) + result
-  }
-  return result
-}
+import { supabaseTable } from '@/lib/supabaseServer'
+import { normalizePhone } from '@/utils/normalizePhone'
 
 export async function PATCH(request: NextRequest) {
   const auth = await authenticatedUser()
   if (auth.error) return auth.error
-
   try {
     const body = await request.json()
-    const { id, aliases, usia, jenis_kelamin } = body
-
-    if (!id) {
-      return NextResponse.json({ error: 'id customer diperlukan' }, { status: 400 })
-    }
-
-    const sheets = getSheets()
-    const spreadsheetId = getSpreadsheetId()
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: `${CUSTOMERS_SHEET}!A:Z`,
-    })
-    const rows = response.data.values || []
-    if (rows.length === 0) {
-      return NextResponse.json({ error: 'Customers sheet kosong' }, { status: 400 })
-    }
-
-    const headers = [...(rows[0] as string[])]
-    const idColIdx = headers.indexOf('id')
-    if (idColIdx === -1) {
-      return NextResponse.json({ error: 'Kolom id tidak ditemukan' }, { status: 400 })
-    }
-
-    const matchIndex = rows.findIndex((row, index) => index > 0 && row[idColIdx] === id)
-    if (matchIndex === -1) {
-      return NextResponse.json({ error: `Customer dengan id ${id} tidak ditemukan` }, { status: 404 })
-    }
-    if (auth.user.role === 'kasir') {
-      const branchIndex = headers.indexOf('branch')
-      const membershipIndex = headers.indexOf('branch_memberships')
-      let memberships: string[] = []
-      try {
-        memberships = membershipIndex >= 0 ? JSON.parse(rows[matchIndex][membershipIndex] || '[]') : []
-      } catch {
-        memberships = []
-      }
-      if (branchIndex < 0 || (rows[matchIndex][branchIndex] !== auth.user.branch && !memberships.includes(auth.user.branch))) {
-        return NextResponse.json({ error: 'Customer tidak tersedia di cabang akun ini' }, { status: 403 })
-      }
-    }
-
-    const targetRow = [...(rows[matchIndex] as string[])]
-    while (targetRow.length < headers.length) targetRow.push('')
-
-    const updates: Record<number, string> = {}
-
-    const aliasesIndex = headers.indexOf('aliases')
-    const usiaIndex = headers.indexOf('usia')
-    const jenisKelaminIndex = headers.indexOf('jenis_kelamin')
-
-    if (aliasesIndex >= 0 && aliases !== undefined) {
-      targetRow[aliasesIndex] = aliases
-      updates[aliasesIndex] = aliases
-    }
-    if (usiaIndex >= 0 && usia !== undefined) {
-      targetRow[usiaIndex] = usia
-      updates[usiaIndex] = usia
-    }
-    if (jenisKelaminIndex >= 0 && jenis_kelamin !== undefined) {
-      targetRow[jenisKelaminIndex] = jenis_kelamin
-      updates[jenisKelaminIndex] = jenis_kelamin
-    }
-
-    const versionIndex = headers.indexOf('version')
-    if (versionIndex >= 0) {
-      const currentVersion = parseInt(targetRow[versionIndex] || '1', 10)
-      targetRow[versionIndex] = String(currentVersion + 1)
-      updates[versionIndex] = String(currentVersion + 1)
-    }
-
-    if (Object.keys(updates).length > 0) {
-      const updateData = headers.map((_, colIdx) => updates[colIdx] !== undefined ? updates[colIdx] : targetRow[colIdx])
-      await sheets.spreadsheets.values.update({
-        spreadsheetId,
-        range: `${CUSTOMERS_SHEET}!A${matchIndex + 1}:${colLetter(headers.length - 1)}${matchIndex + 1}`,
-        valueInputOption: 'RAW',
-        requestBody: { values: [updateData] },
-      })
-    }
-
-    return NextResponse.json({
-      success: true,
-      customer_id: id,
-      updated_fields: { aliases, usia, jenis_kelamin },
-    })
-  } catch (error) {
-    console.error('Error updating customer profile:', error)
-    return NextResponse.json(
-      { error: 'Gagal memperbarui profil customer' },
-      { status: 500 },
-    )
-  }
+    if (!body.id) return NextResponse.json({ error: 'id customer diperlukan' }, { status: 400 })
+    const customer = (await supabaseTable('customers').list<Record<string, unknown>>({ id: `eq.${body.id}`, limit: 1 }))[0]
+    if (!customer) return NextResponse.json({ error: 'Customer tidak ditemukan' }, { status: 404 })
+    if (auth.user.role === 'kasir' && customer.branch && customer.branch !== auth.user.branch) return NextResponse.json({ error: 'Customer tidak tersedia di cabang akun ini' }, { status: 403 })
+    const updates: Record<string, unknown> = {}
+    if (body.aliases !== undefined) { try { updates.aliases = typeof body.aliases === 'string' ? JSON.parse(body.aliases) : body.aliases } catch { updates.aliases = [] } }
+    if (body.usia !== undefined) updates.usia = body.usia
+    if (body.jenis_kelamin !== undefined) { updates.jenis_kelamin = body.jenis_kelamin; updates.gender = body.jenis_kelamin }
+    if (Object.keys(updates).length) await supabaseTable('customers').update({ id: `eq.${body.id}` }, updates)
+    return NextResponse.json({ success: true, customer_id: body.id, updated_fields: body })
+  } catch { return NextResponse.json({ error: 'Gagal memperbarui profil customer' }, { status: 500 }) }
 }

@@ -1,6 +1,6 @@
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { cookies } from 'next/headers'
-import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
+import { supabaseTable } from '@/lib/supabaseServer'
 
 const SESSION_COOKIE = 'mycustomer_session'
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7
@@ -65,16 +65,12 @@ export async function requireSession(roles?: string[]): Promise<AuthenticatedUse
   const user = await getSessionUser()
   if (!user) throw new Error('UNAUTHORIZED')
   try {
-    const response = await getSheets().spreadsheets.values.get({
-      spreadsheetId: getSpreadsheetId(),
-      range: 'users!A:Z',
-    })
-    const rows = response.data.values || []
-    const headers = rows[0] || []
-    const current = rows.slice(1)
-      .map((row) => Object.fromEntries(headers.map((header: string, index: number) => [header, row[index] || ''])))
-      .find((candidate) => candidate.id === user.id)
-    if (!current || current.active === 'false' || current.status === 'disabled') {
+    const current = (await supabaseTable('app_users').list({
+      id: `eq.${user.id}`,
+      active: 'eq.true',
+      limit: 1,
+    }))[0] as { id: string; username: string; display_name: string; role: string; branch?: string } | undefined
+    if (!current) {
       throw new Error('UNAUTHORIZED')
     }
     const currentUser = {
