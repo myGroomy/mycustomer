@@ -23,8 +23,8 @@ export async function POST(request: NextRequest) {
     if (rows.length === 0) {
       return NextResponse.json({ error: 'Tidak ada baris untuk diimport' }, { status: 400 })
     }
-    if (rows.length > 1000) {
-      return NextResponse.json({ error: 'Maksimal 1000 baris per import' }, { status: 400 })
+    if (rows.length > 10000) {
+      return NextResponse.json({ error: 'Maksimal 10000 baris per import' }, { status: 400 })
     }
 
     const sheets = getSheets()
