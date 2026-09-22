@@ -8,11 +8,25 @@ export interface ImportCustomerRow {
   description?: string
 }
 
+export interface ImportOrderRow {
+  phone: string
+  name?: string
+  order_date: string
+  channel: string
+  branch?: string
+}
+
 export interface MappedCsv {
   data: ImportCustomerRow[]
   errors: string[]
 }
 
+export interface MappedOrderCsv {
+  data: ImportOrderRow[]
+  errors: string[]
+}
+
+/* ─── Customer template ─── */
 export const IMPORT_TEMPLATE_HEADERS = [
   'Nama',
   'No WhatsApp',
@@ -31,6 +45,23 @@ const IMPORT_COLUMN_KEYS: Record<keyof ImportCustomerRow, string[]> = {
   age_range: ['usia', 'umur', 'age', 'agerange', 'rentangusia', 'rentangumur'],
   first_order_date: ['tanggalorderpertama', 'firstorderdate', 'tanggalpertama', 'tglorderpertama', 'orderpertama'],
   description: ['catatan', 'keterangan', 'description', 'deskripsi', 'notes'],
+}
+
+/* ─── Order template ─── */
+export const IMPORT_ORDER_HEADERS = [
+  'No WhatsApp',
+  'Nama',
+  'Tanggal Order',
+  'Channel',
+  'Cabang',
+]
+
+const IMPORT_ORDER_KEYS: Record<keyof ImportOrderRow, string[]> = {
+  phone: ['nowhatsapp', 'nowa', 'nowapp', 'notelp', 'nohp', 'telepon', 'phone', 'phon', 'nomor'],
+  name: ['nama', 'name', 'namacustomer', 'namapelanggan'],
+  order_date: ['tanggalorder', 'tanggal', 'orderdate', 'tglorder', 'date'],
+  channel: ['channel', 'tipeorder', 'tipe', 'type', 'saluran'],
+  branch: ['cabang', 'branch'],
 }
 
 export function parseCsv(text: string): string[][] {
@@ -122,6 +153,66 @@ export function downloadImportTemplate() {
   const link = document.createElement('a')
   link.href = url
   link.download = 'Template_Import_Customer.csv'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  URL.revokeObjectURL(url)
+}
+
+/* ─── Order import ─── */
+
+export function mapCsvToOrderRows(rows: string[][]): MappedOrderCsv {
+  if (rows.length === 0) return { data: [], errors: ['File CSV kosong.'] }
+  const headers = (rows[0] || []).map(normHeader)
+  const idx = {
+    phone: firstIdx(headers, IMPORT_ORDER_KEYS.phone),
+    name: firstIdx(headers, IMPORT_ORDER_KEYS.name),
+    order_date: firstIdx(headers, IMPORT_ORDER_KEYS.order_date),
+    channel: firstIdx(headers, IMPORT_ORDER_KEYS.channel),
+    branch: firstIdx(headers, IMPORT_ORDER_KEYS.branch),
+  }
+
+  if (idx.phone === -1 || idx.order_date === -1 || idx.channel === -1) {
+    const found = (rows[0] || []).map((h) => `"${h}"`).join(', ')
+    return { data: [], errors: [`Header tidak valid. Ditemukan: ${found}. Kolom "No WhatsApp", "Tanggal Order", dan "Channel" wajib ada.`] }
+  }
+
+  const data: ImportOrderRow[] = []
+  const missing: number[] = []
+  for (let r = 1; r < rows.length; r++) {
+    const cells = rows[r]
+    if (!cells || cells.every((c) => !c.trim())) continue
+    const get = (i: number) => (i >= 0 ? (cells[i] || '').trim() : '')
+    const phone = get(idx.phone)
+    const order_date = get(idx.order_date)
+    const channel = get(idx.channel)
+    if (!phone || !order_date || !channel) { missing.push(r + 1); continue }
+    data.push({
+      phone,
+      name: get(idx.name),
+      order_date,
+      channel,
+      branch: get(idx.branch),
+    })
+  }
+
+  const errors: string[] = []
+  if (missing.length > 0) {
+    const shown = missing.slice(0, 5).join(', ')
+    errors.push(`${missing.length} baris dilewati (WA/tanggal/channel kosong): baris ${shown}${missing.length > 5 ? ', ...' : ''}`)
+  }
+  return { data, errors }
+}
+
+export function downloadOrderImportTemplate() {
+  const BOM = '\uFEFF'
+  const sample = ['081234567890', 'Budi Santoso', '2026-09-01', 'Tokopedia', 'CMH']
+  const csv = [IMPORT_ORDER_HEADERS.join(','), sample.join(',')].join('\n')
+  const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = 'Template_Import_Order.csv'
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
