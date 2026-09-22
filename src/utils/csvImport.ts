@@ -35,21 +35,23 @@ const IMPORT_COLUMN_KEYS: Record<keyof ImportCustomerRow, string[]> = {
 
 export function parseCsv(text: string): string[][] {
   const cleaned = text.replace(/^\uFEFF/, '')
+  const firstLine = cleaned.split('\n')[0] || ''
+  const delimiter = firstLine.split(';').length > firstLine.split(',').length ? ';' : ','
   const rows: string[][] = []
   let row: string[] = []
   let cur = ''
   let inQuotes = false
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i]
+  for (let i = 0; i < cleaned.length; i++) {
+    const ch = cleaned[i]
     if (inQuotes) {
       if (ch === '"') {
-        if (text[i + 1] === '"') { cur += '"'; i++ } else { inQuotes = false }
+        if (cleaned[i + 1] === '"') { cur += '"'; i++ } else { inQuotes = false }
       } else {
         cur += ch
       }
     } else if (ch === '"') {
       inQuotes = true
-    } else if (ch === ',') {
+    } else if (ch === delimiter) {
       row.push(cur); cur = ''
     } else if (ch === '\n') {
       row.push(cur); rows.push(row); row = []; cur = ''
@@ -61,7 +63,7 @@ export function parseCsv(text: string): string[][] {
   return rows
 }
 
-const normHeader = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, '')
+const normHeader = (h: string) => h.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/^feff/, '')
 const firstIdx = (headers: string[], keys: string[]) => headers.findIndex((h) => keys.includes(h))
 
 export function mapCsvToRows(rows: string[][]): MappedCsv {
@@ -78,7 +80,8 @@ export function mapCsvToRows(rows: string[][]): MappedCsv {
   }
 
   if (idx.name === -1 || idx.phone === -1) {
-    return { data: [], errors: ['Header tidak valid: kolom "Nama" dan "No WhatsApp" wajib ada. Gunakan template yang disediakan.'] }
+    const found = (rows[0] || []).map((h) => `"${h}"`).join(', ')
+    return { data: [], errors: [`Header tidak valid. Ditemukan: ${found}. Kolom "Nama" dan "No WhatsApp" wajib ada.`] }
   }
 
   const data: ImportCustomerRow[] = []
