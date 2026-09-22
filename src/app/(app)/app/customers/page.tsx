@@ -78,7 +78,7 @@ function CustomerListView() {
   // Date Filter State
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  const canExport = getSessionUser()?.role === "admin";
+  const canExport = getSessionUser()?.role === "admin" || getSessionUser()?.role === "owner";
 
   const loadCustomers = useCallback(async () => {
     setLoading(true);

@@ -28,7 +28,8 @@ export interface ManagedUser {
 }
 
 export const ROLE_OPTIONS = [
-  { value: 'owner', label: 'Owner / Admin' },
+  { value: 'owner', label: 'Owner' },
+  { value: 'admin', label: 'Admin' },
   { value: 'kasir', label: 'Kasir' },
 ]
 

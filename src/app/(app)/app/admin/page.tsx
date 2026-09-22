@@ -559,16 +559,16 @@ export default function AdminPage() {
                             <div className="flex items-center gap-2">
                               <span className="truncate text-sm font-semibold text-ink">{u.display_name || (u.role === 'owner' || u.role === 'admin' ? 'Admin' : u.username)}</span>
                               {isSelf && <Badge className="h-auto rounded-full  bg-[#022D4E]/10 px-2 py-0.5 text-[10px] font-semibold text-[#022D4E]">Anda</Badge>}
-                              <Badge className={`hidden h-auto rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${u.role === 'owner' ? 'bg-ink/5 text-ink' : ' bg-[#022D4E]-soft/20 text-[#022D4E]-deep'}`}>
-                                {u.role === 'owner' ? 'Owner / Admin' : 'Kasir'}
+                              <Badge className={`hidden h-auto rounded-full px-2 py-0.5 text-[10px] font-semibold sm:inline-flex ${u.role === 'owner' ? 'bg-ink/5 text-ink' : u.role === 'admin' ? 'bg-[#022D4E]-soft/20 text-[#022D4E]-deep' : 'bg-[#022D4E]-soft/20 text-[#022D4E]-deep'}`}>
+                                {u.role === 'owner' ? 'Owner' : u.role === 'admin' ? 'Admin' : 'Kasir'}
                               </Badge>
                             </div>
                             <div className="text-[11px] text-ash">
                               {u.username} • {u.branch || 'Tanpa cabang'} • PIN {isEditing ? '' : PIN_BLANK}
                             </div>
                           </div>
-                          <Badge className={`h-auto rounded-full px-2.5 py-1 text-[10px] font-semibold sm:hidden ${u.role === 'owner' ? 'bg-ink/5 text-ink' : ' bg-[#022D4E]-soft/20 text-[#022D4E]-deep'}`}>
-                            {u.role === 'owner' ? 'Owner' : 'Kasir'}
+                          <Badge className={`h-auto rounded-full px-2.5 py-1 text-[10px] font-semibold sm:hidden ${u.role === 'owner' ? 'bg-ink/5 text-ink' : u.role === 'admin' ? 'bg-[#022D4E]-soft/20 text-[#022D4E]-deep' : 'bg-[#022D4E]-soft/20 text-[#022D4E]-deep'}`}>
+                            {u.role === 'owner' ? 'Owner' : u.role === 'admin' ? 'Admin' : 'Kasir'}
                           </Badge>
                         </>
                       )}

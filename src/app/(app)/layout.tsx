@@ -62,7 +62,7 @@ const NAV_ITEMS: NavItem[] = [
 
 function visibleNav(user: User | null): NavItem[] {
   return user
-    ? NAV_ITEMS.filter((i) => !i.adminOnly || user.role === "admin")
+    ? NAV_ITEMS.filter((i) => !i.adminOnly || user.role === "admin" || user.role === "owner")
     : NAV_ITEMS;
 }
 

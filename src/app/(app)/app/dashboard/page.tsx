@@ -59,7 +59,7 @@ export default function DashboardPage() {
 
   const [userRole, setUserRole] = useState('')
   const [userBranch, setUserBranch] = useState('')
-  const canExport = userRole === 'admin'
+  const canExport = userRole === 'admin' || userRole === 'owner'
   useEffect(() => {
     try {
       const user = getSessionUser()

@@ -71,7 +71,7 @@ export interface User {
   username: string
   display_name?: string
   pin: string
-  role: 'owner' | 'kasir'
+  role: 'owner' | 'admin' | 'kasir'
   created_at: string
   branch?: string
 }

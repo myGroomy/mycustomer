@@ -34,7 +34,7 @@ export default function ExportPage() {
 
   useEffect(() => {
     const user = getSessionUser()
-    setCanExport(user?.role === 'admin')
+    setCanExport(user?.role === 'admin' || user?.role === 'owner')
     setAccessChecked(true)
   }, [])
 
