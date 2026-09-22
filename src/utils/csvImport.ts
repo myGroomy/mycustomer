@@ -34,6 +34,7 @@ const IMPORT_COLUMN_KEYS: Record<keyof ImportCustomerRow, string[]> = {
 }
 
 export function parseCsv(text: string): string[][] {
+  const cleaned = text.replace(/^\uFEFF/, '')
   const rows: string[][] = []
   let row: string[] = []
   let cur = ''
