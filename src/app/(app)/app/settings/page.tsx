@@ -68,6 +68,7 @@ export default function SettingsPage() {
   const [importResult, setImportResult] = useState<{
     imported: number;
     skipped: number;
+    customers_created?: number;
     errors: string[];
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -202,11 +203,17 @@ export default function SettingsPage() {
         if (!res.ok) throw new Error(result.error || "Import gagal");
         setImportResult({
           imported: result.imported as number,
-          skipped: result.skipped as number,
+          skipped: 0,
+          customers_created: (result.customers_created as number) || 0,
           errors: [...parseErrors, ...((result.errors as string[]) || [])],
         });
         clearSheetsCache("orders");
-        toast.success(result.imported > 0 ? `${result.imported} order berhasil diimport` : "Tidak ada order yang diimport");
+        clearSheetsCache("customers");
+        const created = (result.customers_created as number) || 0;
+        const msgs = [];
+        if (result.imported > 0) msgs.push(`${result.imported} order`);
+        if (created > 0) msgs.push(`${created} customer baru`);
+        toast.success(msgs.length > 0 ? `${msgs.join(', ')} berhasil diimport` : "Tidak ada data yang diimport");
       } catch (err) {
         setImportResult({ imported: 0, skipped: 0, errors: [err instanceof Error ? err.message : "Import gagal"] });
         toast.error(err instanceof Error ? err.message : "Import gagal");
@@ -626,8 +633,11 @@ export default function SettingsPage() {
                   )}
                 >
                   <p className="text-xs font-semibold">
-                    Import selesai: {importResult.imported} diimport,{" "}
-                    {importResult.skipped} dilewati.
+                    Import selesai: {importResult.imported} diimport
+                    {importResult.customers_created && importResult.customers_created > 0
+                      ? ` (${importResult.customers_created} customer baru)`
+                      : ""}
+                    {importResult.skipped > 0 ? `, ${importResult.skipped} dilewati` : ""}.
                   </p>
                   {importResult.errors.map((err, i) => (
                     <p key={i} className="mt-1">{err}</p>

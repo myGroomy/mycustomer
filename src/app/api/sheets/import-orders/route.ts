@@ -12,6 +12,14 @@ export interface ImportOrderRow {
   branch?: string
 }
 
+function colLetter(index: number): string {
+  let result = ''
+  for (let value = index + 1; value > 0; value = Math.floor((value - 1) / 26)) {
+    result = String.fromCharCode(65 + ((value - 1) % 26)) + result
+  }
+  return result
+}
+
 export async function POST(request: NextRequest) {
   const auth = await authenticatedUser(['owner', 'admin'])
   if (auth.error) return auth.error
@@ -28,7 +36,7 @@ export async function POST(request: NextRequest) {
     const sheets = getSheets()
     const spreadsheetId = getSpreadsheetId()
 
-    // 1. Read customers
+    // ── 1. Read customers sheet ──
     const customersResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: 'customers!A:Z',
@@ -41,10 +49,11 @@ export async function POST(request: NextRequest) {
 
     const phoneIdx = customerHeaders.indexOf('phone_normalized')
     const idIdx = customerHeaders.indexOf('id')
+    const nameIdx = customerHeaders.indexOf('name')
     const orderCountIdx = customerHeaders.indexOf('order_count')
     const branchMembershipsIdx = customerHeaders.indexOf('branch_memberships')
 
-    // Build phone → row index map (fast lookup)
+    // Build phone → row index map
     const phoneToRow = new Map<string, number>()
     for (let i = 1; i < customerRows.length; i++) {
       const ph = customerRows[i]?.[phoneIdx]
@@ -54,7 +63,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 2. Read orders sheet headers
+    // ── 2. Read orders sheet headers ──
     const ordersResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: 'orders!A:Z',
@@ -65,12 +74,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Sheet orders belum memiliki header' }, { status: 400 })
     }
 
-    // 3. Process each row
+    // ── 3. Process each row ──
     let imported = 0
-    let skipped = 0
+    const createdCustomers = new Set<string>()
     const errors: string[] = []
     const ordersToAppend: string[][] = []
     const customerUpdates: { rowIndex: number; newCount: number; memberships?: string[] }[] = []
+    const newCustomersToAppend: string[][] = []
+    const newCustomerIndexMap = new Map<string, number>() // phone → pending row index
 
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i]
@@ -90,16 +101,70 @@ export async function POST(request: NextRequest) {
         continue
       }
 
-      const customerRowIndex = phoneToRow.get(phone)
-      if (customerRowIndex === undefined) {
-        skipped++
-        errors.push(`Baris ${line}: customer dengan no WA ${rawPhone} tidak ditemukan`)
-        continue
-      }
-
-      const customerId = customerRows[customerRowIndex]?.[idIdx] || ''
+      let customerId: string
+      let customerRowIndex: number | undefined = phoneToRow.get(phone)
       const branchRaw = r.branch?.trim().toUpperCase() || ''
       const branch = branchRaw === 'BDG' ? 'BDG' : branchRaw === 'CMH' ? 'CMH' : ''
+
+      if (customerRowIndex !== undefined) {
+        // ── Existing customer ──
+        customerId = customerRows[customerRowIndex][idIdx] || ''
+
+        // Update order_count
+        const currentCount = orderCountIdx >= 0 ? parseInt(customerRows[customerRowIndex]?.[orderCountIdx] || '0', 10) : 0
+        const newCount = currentCount + 1
+        let memberships: string[] = []
+        if (branchMembershipsIdx >= 0) {
+          try { memberships = JSON.parse(customerRows[customerRowIndex]?.[branchMembershipsIdx] || '[]') } catch { memberships = [] }
+          if (branch && !memberships.includes(branch)) memberships.push(branch)
+        }
+        customerUpdates.push({
+          rowIndex: customerRowIndex,
+          newCount,
+          memberships: branch && branchMembershipsIdx >= 0 ? memberships : undefined,
+        })
+      } else if (newCustomerIndexMap.has(phone)) {
+        // ── Customer was created in this same import batch ──
+        const pendingIdx = newCustomerIndexMap.get(phone)!
+        customerId = newCustomersToAppend[pendingIdx][idIdx] || ''
+        // Just increment the order count on the pending row
+        const currentCount = parseInt(newCustomersToAppend[pendingIdx][orderCountIdx] || '0', 10)
+        newCustomersToAppend[pendingIdx][orderCountIdx] = String(currentCount + 1)
+        if (branch && branchMembershipsIdx >= 0) {
+          try {
+            const mems = JSON.parse(newCustomersToAppend[pendingIdx][branchMembershipsIdx] || '[]')
+            if (!mems.includes(branch)) {
+              mems.push(branch)
+              newCustomersToAppend[pendingIdx][branchMembershipsIdx] = JSON.stringify(mems)
+            }
+          } catch { /* ignore */ }
+        }
+      } else {
+        // ── New customer: auto-create ──
+        customerId = crypto.randomUUID()
+        const now = new Date().toISOString()
+        const customerName = r.name?.trim() || ''
+
+        const newCustomerRow = customerHeaders.map((header: string) => {
+          switch (header) {
+            case 'id': return customerId
+            case 'phone_normalized': return phone
+            case 'name': return customerName
+            case 'first_order_date': return orderDate
+            case 'created_at': return now
+            case 'version': return '1'
+            case 'branch': return branch || 'CMH'
+            case 'order_count': return '1'
+            case 'aliases': return '[]'
+            case 'branch_memberships': return JSON.stringify(branch ? [branch] : [])
+            default: return ''
+          }
+        })
+        const pendingRowIdx = newCustomersToAppend.length
+        newCustomersToAppend.push(newCustomerRow)
+        newCustomerIndexMap.set(phone, pendingRowIdx)
+        createdCustomers.add(rawPhone)
+      }
 
       // Build order row
       const orderId = generateId()
@@ -117,22 +182,20 @@ export async function POST(request: NextRequest) {
         }
       })
       ordersToAppend.push(orderValues)
-
-      // Update customer order_count + branch_memberships
-      const currentCount = orderCountIdx >= 0 ? parseInt(customerRows[customerRowIndex]?.[orderCountIdx] || '0', 10) : 0
-      const newCount = currentCount + 1
-
-      let memberships: string[] = []
-      if (branchMembershipsIdx >= 0) {
-        try { memberships = JSON.parse(customerRows[customerRowIndex]?.[branchMembershipsIdx] || '[]') } catch { memberships = [] }
-        if (branch && !memberships.includes(branch)) memberships.push(branch)
-      }
-
-      customerUpdates.push({ rowIndex: customerRowIndex, newCount, memberships: branch && branchMembershipsIdx >= 0 ? memberships : undefined })
       imported++
     }
 
-    // 4. Batch append orders
+    // ── 4. Batch append new customers ──
+    if (newCustomersToAppend.length > 0) {
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: 'customers!A:Z',
+        valueInputOption: 'RAW',
+        requestBody: { values: newCustomersToAppend },
+      })
+    }
+
+    // ── 5. Batch append orders ──
     if (ordersToAppend.length > 0) {
       await sheets.spreadsheets.values.append({
         spreadsheetId,
@@ -142,37 +205,27 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // 5. Batch update customer order_counts
-    const colLetter = (idx: number): string => {
-      let result = ''
-      for (let v = idx + 1; v > 0; v = Math.floor((v - 1) / 26)) {
-        result = String.fromCharCode(65 + ((v - 1) % 26)) + result
-      }
-      return result
-    }
-
+    // ── 6. Batch update existing customer order_counts ──
     for (const update of customerUpdates) {
       const rowIdx = update.rowIndex + 1
-      const updates: Record<string, string> = {}
-      if (orderCountIdx >= 0) updates[colLetter(orderCountIdx)] = String(update.newCount)
-      if (update.memberships && branchMembershipsIdx >= 0) updates[colLetter(branchMembershipsIdx)] = JSON.stringify(update.memberships)
-
-      if (Object.keys(updates).length > 0) {
-        const range = `customers!${colLetter(0)}${rowIdx}:${colLetter(customerHeaders.length - 1)}${rowIdx}`
-        const existingRow = [...(customerRows[update.rowIndex] || [])]
-        while (existingRow.length < customerHeaders.length) existingRow.push('')
-        if (orderCountIdx >= 0) existingRow[orderCountIdx] = String(update.newCount)
-        if (update.memberships && branchMembershipsIdx >= 0) existingRow[branchMembershipsIdx] = JSON.stringify(update.memberships)
-        await sheets.spreadsheets.values.update({
-          spreadsheetId,
-          range,
-          valueInputOption: 'RAW',
-          requestBody: { values: [existingRow] },
-        })
-      }
+      const existingRow = [...(customerRows[update.rowIndex] || [])]
+      while (existingRow.length < customerHeaders.length) existingRow.push('')
+      if (orderCountIdx >= 0) existingRow[orderCountIdx] = String(update.newCount)
+      if (update.memberships && branchMembershipsIdx >= 0) existingRow[branchMembershipsIdx] = JSON.stringify(update.memberships)
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: `customers!${colLetter(0)}${rowIdx}:${colLetter(customerHeaders.length - 1)}${rowIdx}`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [existingRow] },
+      })
     }
 
-    return NextResponse.json({ success: true, imported, skipped, errors })
+    return NextResponse.json({
+      success: true,
+      imported,
+      customers_created: newCustomersToAppend.length,
+      errors,
+    })
   } catch (error) {
     console.error('Import orders error:', error)
     return NextResponse.json({ error: 'Import failed' }, { status: 500 })
