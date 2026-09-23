@@ -232,7 +232,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:py-10 pb-28 md:pb-20">
+    <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:px-8 md:py-10 pb-28 md:pb-20">
       {/* Toast */}
       <AnimatePresence>
         {savedToast && (

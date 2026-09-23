@@ -27,6 +27,16 @@ import { syncStaging } from "@/services/sheetsService";
 import { clearSessionUser } from "@/utils/session";
 import { Toaster } from "@/components/ui/sonner";
 import { SettingsProvider } from "@/lib/SettingsProvider";
+import { BranchProvider, useBranch } from "@/lib/BranchContext";
+import { getBranches, isManagerRole, type Branch } from "@/services/adminService";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Storefront } from "@phosphor-icons/react";
 import {
   Sheet,
   SheetContent,
@@ -41,6 +51,7 @@ interface User {
   username: string;
   display_name?: string;
   role: string;
+  branch?: string;
 }
 
 interface NavItem {
@@ -258,6 +269,48 @@ function BottomNav({
   );
 }
 
+function BranchSwitcher({ user }: { user: User | null }) {
+  const { selectedBranch, setSelectedBranch } = useBranch();
+  const [branches, setBranches] = useState<Branch[]>([]);
+
+  useEffect(() => {
+    getBranches().then(setBranches).catch(() => {});
+  }, []);
+
+  const branchName = branches.find((b) => b.code === selectedBranch)?.name || selectedBranch;
+  const canSwitch = user && isManagerRole(user.role);
+
+  if (!selectedBranch && !canSwitch) return null;
+
+  if (!canSwitch) {
+    return (
+      <div className="flex h-9 items-center gap-1.5 rounded-full border border-hairline bg-sunken/60 px-3">
+        <Storefront size={14} weight="duotone" className="text-[#022D4E]" />
+        <span className="max-w-[100px] truncate text-xs font-semibold text-ink">
+          {branchName || "—"}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <Select value={selectedBranch} onValueChange={(v) => v && setSelectedBranch(v)}>
+      <SelectTrigger
+        className="h-9 w-auto gap-1.5 rounded-full border-hairline bg-sunken/60 px-3 text-xs font-semibold text-ink"
+        aria-label="Pilih cabang"
+      >
+        <Storefront size={14} weight="duotone" className="text-[#022D4E]" />
+        <SelectValue placeholder="Pilih cabang" />
+      </SelectTrigger>
+      <SelectContent>
+        {branches.map((b) => (
+          <SelectItem key={b.code} value={b.code}>{b.name}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
 export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
@@ -306,6 +359,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
 
   return (
     <SettingsProvider>
+      <BranchProvider>
       <div className="sky-hero grain relative min-h-[100dvh] md:pl-64">
         <Toaster position="top-center" />
         {/* Top Navbar Header with Hamburg Menu */}
@@ -336,21 +390,25 @@ export default function AppLayout({ children }: { children: ReactNode }) {
               </div>
             </div>
 
-            {/* Hamburg Menu Button */}
-            <button
-              onClick={() => setMenuOpen((prev) => !prev)}
-              aria-expanded={menuOpen}
-              aria-controls="mobile-navigation-menu"
-              aria-label={menuOpen ? "Tutup menu utama" : "Buka menu utama"}
-              className="flex h-11 w-11 items-center justify-center rounded-md border border-hairline bg-white text-ink transition-all hover:bg-sunken active:scale-95"
-              title={menuOpen ? "Tutup menu utama" : "Buka menu utama"}
-            >
-              {menuOpen ? (
-                <X size={20} weight="bold" />
-              ) : (
-                <List size={22} weight="bold" />
-              )}
-            </button>
+            <div className="flex items-center gap-2">
+              <BranchSwitcher user={user} />
+
+              {/* Hamburg Menu Button */}
+              <button
+                onClick={() => setMenuOpen((prev) => !prev)}
+                aria-expanded={menuOpen}
+                aria-controls="mobile-navigation-menu"
+                aria-label={menuOpen ? "Tutup menu utama" : "Buka menu utama"}
+                className="flex h-11 w-11 items-center justify-center rounded-md border border-hairline bg-white text-ink transition-all hover:bg-sunken active:scale-95"
+                title={menuOpen ? "Tutup menu utama" : "Buka menu utama"}
+              >
+                {menuOpen ? (
+                  <X size={20} weight="bold" />
+                ) : (
+                  <List size={22} weight="bold" />
+                )}
+              </button>
+            </div>
           </div>
         </header>
 
@@ -426,6 +484,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         <main className="relative pb-28 md:pb-10">{children}</main>
         <BottomNav user={user} onLogout={handleLogout} />
       </div>
+      </BranchProvider>
     </SettingsProvider>
   );
 }

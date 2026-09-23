@@ -378,7 +378,7 @@ function CustomerListView() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 md:py-10 pb-28 md:pb-20">
+    <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 md:px-8 md:py-10 pb-28 md:pb-20">
       {/* Heading */}
       <motion.div
         variants={fadeUp}
@@ -640,7 +640,7 @@ function CustomerListView() {
                                   variant="outline"
                                   className="border-accent/20 text-[#022D4E]"
                                 >
-                                  Order ke-{(customer.order_count || 0) + 1}
+                                  Order ke-{customer.order_count}
                                 </Badge>
                                 {(!customer.age_range || !customer.gender) && (
                                   <Badge

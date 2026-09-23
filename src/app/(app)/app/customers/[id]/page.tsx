@@ -248,7 +248,7 @@ export default function CustomerDetailPage() {
   ];
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:py-10 pb-36 md:pb-32">
+    <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:px-8 md:py-10 pb-36 md:pb-32">
       {/* Top Header & Actions */}
       <motion.div
         variants={fadeUp}
@@ -413,13 +413,20 @@ export default function CustomerDetailPage() {
                     <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
                       Usia
                     </Label>
-                    <Input
-                      type="text"
-                      value={editUsia}
-                      onChange={(e) => setEditUsia(e.target.value)}
-                      placeholder="Contoh: 25 atau 26-35"
-                      className="h-11 rounded-2xl"
-                    />
+                    <Select value={editUsia} onValueChange={(value) => setEditUsia(value || "")}>
+                      <SelectTrigger className="h-11 rounded-2xl">
+                        <SelectValue placeholder="Pilih usia" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="0-17">0-17</SelectItem>
+                        <SelectItem value="18-25">18-25</SelectItem>
+                        <SelectItem value="26-35">26-35</SelectItem>
+                        <SelectItem value="36-45">36-45</SelectItem>
+                        <SelectItem value="46-55">46-55</SelectItem>
+                        <SelectItem value="56-65">56-65</SelectItem>
+                        <SelectItem value="66+">66+</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div>
                     <Label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-ash">
@@ -578,7 +585,7 @@ export default function CustomerDetailPage() {
 
       {/* Fixed bottom CTA */}
       <div className="fixed inset-x-0 bottom-20 md:bottom-0 z-30 md:left-64">
-        <div className="mx-auto max-w-3xl px-4 py-3">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 md:px-8 py-3">
           <div className="doppel-outer rounded-[1.75rem]">
             <div className="doppel-inner flex items-center gap-2.5 rounded-[calc(1.75rem-0.375rem)] p-2.5 sm:p-3">
               <a
@@ -598,7 +605,7 @@ export default function CustomerDetailPage() {
                 className="flex min-h-[48px] h-12 sm:h-13 items-center gap-2 rounded-full border border-hairline bg-white px-4 sm:px-5 text-xs sm:text-sm font-semibold text-ink-soft transition-all duration-500 hover:bg-sunken hover:text-ink active:scale-[0.96]"
               >
                 <UserPlus size={18} weight="duotone" className="text-[#022D4E]" />
-                <span className="hidden sm:inline">vCard</span>
+                <span className="hidden sm:inline">Kontak</span>
               </button>
             </div>
           </div>

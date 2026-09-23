@@ -106,7 +106,7 @@ export default function DashboardPage() {
 
   if (error) {
     return (
-      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 md:py-10">
+      <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 md:px-8 md:py-10">
         <div className="flex min-h-[70dvh] flex-col items-center justify-center gap-4 text-center">
           <span className="flex h-14 w-14 items-center justify-center rounded-full bg-rose/10 text-rose">
             <WarningCircle size={28} weight="duotone" />
@@ -360,7 +360,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 md:py-10 pb-28 md:pb-20">
+    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 md:px-8 md:py-10 pb-28 md:pb-20">
       {/* Header */}
       <motion.div variants={fadeUp} custom={0} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-6">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -472,7 +472,7 @@ export default function DashboardPage() {
       </motion.div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4 mb-6">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-6">
         {statsGrid.map((s, i) => (
           <motion.div
             key={s.label}

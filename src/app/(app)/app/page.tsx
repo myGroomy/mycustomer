@@ -55,6 +55,7 @@ import { FLUID_EASE } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
 import { getSessionUser } from "@/utils/session";
 import { formatPhoneDisplay } from "@/utils/phoneDisplay";
+import { useBranch } from "@/lib/BranchContext";
 import type { ChannelType, CustomerWithStats } from "@/types";
 
 const CHANNELS = [
@@ -95,15 +96,11 @@ export default function InputOrderPage() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [userBranch, setUserBranch] = useState("");
+  const { selectedBranch: userBranch } = useBranch();
 
   // Alias dialog state
   const [aliasDialogOpen, setAliasDialogOpen] = useState(false);
   const [aliasName, setAliasName] = useState("");
-
-  useEffect(() => {
-    setUserBranch(getSessionUser()?.branch || "");
-  }, []);
 
   // Preload all customers on mount
   useEffect(() => {
@@ -260,7 +257,7 @@ export default function InputOrderPage() {
     : 0;
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 md:py-10 pb-36 md:pb-32">
+    <main className="mx-auto w-full max-w-2xl px-4 py-6 sm:px-6 md:px-8 md:py-10 pb-36 md:pb-32">
       {error && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -306,6 +303,7 @@ export default function InputOrderPage() {
                   ref={inputRef as any}
                   value={query}
                   onValueChange={setQuery}
+                  inputMode="numeric"
                   placeholder={
                     preloading
                       ? "Memuat data pelanggan..."
@@ -601,6 +599,7 @@ export default function InputOrderPage() {
                     </Label>
                     <Input
                       type="tel"
+                      inputMode="tel"
                       value={newPhone}
                       onChange={(e) => setNewPhone(e.target.value)}
                       placeholder="08xxxxxxxxxx"
@@ -674,7 +673,7 @@ export default function InputOrderPage() {
       {/* Fixed bottom CTA */}
       {selectedCustomer || isCreatingNew ? (
         <div className="fixed inset-x-0 bottom-20 md:bottom-0 z-30 md:left-64">
-          <div className="mx-auto max-w-2xl px-4 py-3">
+          <div className="mx-auto max-w-2xl px-4 sm:px-6 md:px-8 py-3">
             <div className="doppel-outer rounded-[1.75rem]">
               <div className="doppel-inner flex items-center gap-2.5 rounded-[calc(1.75rem-0.375rem)] p-2.5 sm:p-3">
                 <button

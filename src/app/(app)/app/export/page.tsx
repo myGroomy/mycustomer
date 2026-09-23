@@ -157,7 +157,7 @@ export default function ExportPage() {
   ]
 
   return (
-    <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:py-10 pb-28 md:pb-20">
+    <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:px-8 md:py-10 pb-28 md:pb-20">
       {/* Heading */}
       <motion.div variants={fadeUp} custom={0} initial="hidden" animate={ready ? 'show' : 'hidden'} className="mb-8">
         <Badge className="h-auto rounded-full border-hairline bg-white px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#022D4E]">Export Laporan</Badge>

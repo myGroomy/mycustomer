@@ -242,7 +242,7 @@ export default function AdminPage() {
 
   if (me && !isManagerRole(me.role)) {
     return (
-      <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:py-10">
+      <main className="mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 md:px-8 md:py-10">
         <motion.div variants={fadeUp} custom={0} initial="hidden" animate={ready ? 'show' : 'hidden'}>
           <div className="doppel-outer">
             <div className="doppel-inner p-8 text-center">
@@ -265,7 +265,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 md:py-10 pb-28 md:pb-20">
+    <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 md:px-8 md:py-10 pb-28 md:pb-20">
       {/* Notice toast */}
       <AnimatePresence>
         {notice && (
@@ -564,7 +564,7 @@ export default function AdminPage() {
                               </Badge>
                             </div>
                             <div className="text-[11px] text-ash">
-                              {u.username} • {u.branch || 'Tanpa cabang'} • PIN {isEditing ? '' : PIN_BLANK}
+                              {u.username} • {u.branch ? (branches.find((b) => b.code === u.branch)?.name || u.branch) : 'Tanpa cabang'} • PIN {isEditing ? '' : PIN_BLANK}
                             </div>
                           </div>
                           <Badge className={`h-auto rounded-full px-2.5 py-1 text-[10px] font-semibold sm:hidden ${u.role === 'owner' ? 'bg-ink/5 text-ink' : u.role === 'admin' ? 'bg-[#022D4E]-soft/20 text-[#022D4E]-deep' : 'bg-[#022D4E]-soft/20 text-[#022D4E]-deep'}`}>

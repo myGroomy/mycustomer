@@ -208,7 +208,7 @@ export default function FollowUpPage() {
     .split("T")[0];
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 md:py-10 pb-28 md:pb-20">
+    <main className="mx-auto w-full max-w-4xl px-4 py-6 sm:px-6 md:px-8 md:py-10 pb-28 md:pb-20">
       {loadError && (
         <div
           role="alert"
@@ -294,7 +294,7 @@ export default function FollowUpPage() {
               weight="duotone"
               className="text-[#022D4E]"
             />
-            <span>Download Semua .vcf ({dailyOrders.length})</span>
+            <span>Add semua contact ({dailyOrders.length})</span>
           </button>
         )}
 
@@ -308,7 +308,7 @@ export default function FollowUpPage() {
               weight="duotone"
               className="text-[#022D4E]"
             />
-            <span>Download .vcf ({churnCustomers.length})</span>
+            <span>Add contact ({churnCustomers.length})</span>
           </button>
         )}
       </motion.div>
@@ -505,14 +505,14 @@ export default function FollowUpPage() {
                               downloadVCard(cust.name, cust.phone_normalized)
                             }
                             className="flex min-h-[44px] h-10 items-center gap-1.5 rounded-full border border-hairline bg-white px-3.5 text-xs font-semibold text-ink-soft transition-all hover:bg-sunken hover:text-ink active:scale-95"
-                            title="Simpan Kontak ke HP (.vcf)"
+                            title="Tambah ke kontak"
                           >
                             <UserPlus
                               size={15}
                               weight="duotone"
                               className="text-[#022D4E]"
                             />
-                            <span className="hidden sm:inline">vCard</span>
+                            <span className="hidden sm:inline">Kontak</span>
                           </button>
                         </div>
                       </div>

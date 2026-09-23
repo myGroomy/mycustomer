@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json()
-    const { customer_id, order_date, channel, raw_phone_input, branch: requestedBranch, alias_name } = body
+    const { customer_id, order_date, channel, raw_phone_input, branch: requestedBranch, alias_name, usia, jenis_kelamin } = body
 
     if (!customer_id || !order_date || !channel) {
       return NextResponse.json(
@@ -115,6 +115,16 @@ export async function POST(request: NextRequest) {
 
     if (orderCountCol >= 0) {
       rowToWrite[orderCountCol] = String(newCount)
+    }
+
+    if (typeof usia === 'string' && usia.trim()) {
+      const usiaCol = customerHeaders.indexOf('usia')
+      if (usiaCol >= 0) rowToWrite[usiaCol] = usia.trim()
+    }
+
+    if (typeof jenis_kelamin === 'string' && jenis_kelamin.trim()) {
+      const jenisKelaminCol = customerHeaders.indexOf('jenis_kelamin')
+      if (jenisKelaminCol >= 0) rowToWrite[jenisKelaminCol] = jenis_kelamin.trim()
     }
 
     const aliasesCol = customerHeaders.indexOf('aliases')
