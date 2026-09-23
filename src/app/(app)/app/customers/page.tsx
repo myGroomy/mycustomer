@@ -404,67 +404,68 @@ function CustomerListView() {
         custom={1}
         initial="hidden"
         animate={ready ? "show" : "hidden"}
-        className="mb-6"
+        className="mb-4"
       >
         <div className="doppel-outer">
-          <div className="doppel-inner p-4 sm:p-5">
-            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Funnel size={16} weight="duotone" className="text-[#022D4E]" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-ash">
-                  Filter Customer
+          <div className="doppel-inner p-2.5 sm:p-3.5">
+            <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-1.5">
+                <Funnel size={14} weight="duotone" className="text-[#022D4E]" />
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-ash">
+                  Filter
                 </span>
               </div>
-              <div className="flex items-center gap-2">
-                {canExport && <button
+              <div className="flex items-center gap-1.5">
+                {ready && canExport && <button
                   type="button"
                   onClick={handleDownload}
                   disabled={downloading || loading}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-[#022D4E] px-4 min-h-[44px] text-xs font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-8 items-center gap-1.5 rounded-full bg-[#022D4E] px-3 text-[11px] font-semibold text-white transition-all hover:opacity-90 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50"
                   title="Download CSV data sesuai filter aktif"
                 >
-                  <DownloadSimple size={14} weight="bold" />
-                  {downloading ? "Menyiapkan..." : "Download CSV"}
+                  <DownloadSimple size={13} weight="bold" />
+                  {downloading ? "Menyiapkan..." : "CSV"}
                 </button>}
                 {hasActiveFilter && (
                   <button
                     type="button"
                     onClick={handleResetAll}
-                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 min-h-[44px] text-xs font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95"
+                    className="inline-flex h-8 items-center gap-1.5 rounded-full bg-white px-3 text-[11px] font-semibold text-ink ring-1 ring-ink/10 transition-all hover:bg-ink/5 active:scale-95"
                   >
-                    <X size={13} weight="bold" className="text-[#022D4E]" />
-                    Reset Filter
+                    <X size={12} weight="bold" className="text-[#022D4E]" />
+                    Reset
                   </button>
                 )}
               </div>
             </div>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="sm:col-span-2 lg:col-span-4">
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">
+            <div className="grid grid-cols-2 gap-x-2.5 gap-y-2">
+              <div className="relative col-span-2">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ash">
                   Cari Customer
                 </span>
                 <div className="relative">
                   <MagnifyingGlass
-                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-mist"
-                    size={18}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-mist"
+                    size={16}
                     weight="light"
                   />
                   <Input
                     type="text"
-                    placeholder="Cari nama atau no. telepon..."
+                    aria-label="Cari customer"
+                    placeholder="Cari nama atau no. HP..."
                     value={searchQuery}
                     onChange={(e) => {
                       setSearchQuery(e.target.value);
                       setPage(0);
                     }}
-                    className="h-11 pl-10 text-sm rounded-2xl"
+                    className="h-9 rounded-xl pl-9 text-sm sm:h-10"
                   />
                 </div>
               </div>
 
               <div>
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ash">
                   Status Retensi
                 </span>
                 <Select
@@ -473,7 +474,10 @@ function CustomerListView() {
                     v && setFilter(v as RetentionStatus | "all")
                   }
                 >
-                  <SelectTrigger className="h-11 w-full rounded-2xl">
+                  <SelectTrigger
+                    aria-label="Status retensi"
+                    className="h-9 w-full rounded-xl text-xs sm:h-10"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -492,14 +496,19 @@ function CustomerListView() {
               </div>
 
               <div>
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ash">
                   Jumlah Order
                 </span>
                 <Select
                   value={repeatFilter}
-                  onValueChange={(v) => v && setRepeatFilter(v as RepeatFilter)}
+                  onValueChange={(v) =>
+                    v && setRepeatFilter(v as RepeatFilter)
+                  }
                 >
-                  <SelectTrigger className="h-11 w-full rounded-2xl">
+                  <SelectTrigger
+                    aria-label="Jumlah order"
+                    className="h-9 w-full rounded-xl text-xs sm:h-10"
+                  >
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -514,39 +523,41 @@ function CustomerListView() {
               </div>
 
               <div>
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ash">
                   Dari Tanggal
                 </span>
                 <Input
                   type="date"
+                  aria-label="Dari tanggal"
                   value={dateFrom}
                   onChange={(e) => setDateFrom(e.target.value)}
-                  className="h-11 text-xs rounded-2xl"
+                  className="h-9 rounded-xl text-xs sm:h-10"
                 />
               </div>
 
               <div>
-                <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-wider text-ash">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wider text-ash">
                   Sampai Tanggal
                 </span>
                 <Input
                   type="date"
+                  aria-label="Sampai tanggal"
                   value={dateTo}
                   onChange={(e) => setDateTo(e.target.value)}
-                  className="h-11 text-xs rounded-2xl"
+                  className="h-9 rounded-xl text-xs sm:h-10"
                 />
               </div>
             </div>
 
             {countRange && (
-              <div className="mt-3 flex flex-wrap items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setCountRange(null)}
-                  className="flex items-center gap-1.5 rounded-full border border-accent bg-[#022D4E] px-4 min-h-[44px] text-[11px] font-semibold text-white transition-all hover:opacity-90"
+                  className="inline-flex h-7 items-center gap-1.5 rounded-full border border-accent bg-[#022D4E] px-3 text-[11px] font-semibold text-white transition-all hover:opacity-90"
                   title="Reset filter order count"
                 >
                   Order: {countRangeLabel}
-                  <X size={12} weight="bold" />
+                  <X size={11} weight="bold" />
                 </button>
               </div>
             )}
@@ -604,10 +615,10 @@ function CustomerListView() {
         <motion.div
           variants={fadeUp}
           custom={3}
-          initial="hidden"
-          animate={ready ? "show" : "hidden"}
-          className="grid grid-cols-1 gap-3"
-        >
+        initial="hidden"
+        animate={ready ? "show" : "hidden"}
+        className="mb-4"
+      >
           {!loading &&
             filtered.map((customer) => {
               const status = customer.retention_status;

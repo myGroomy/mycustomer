@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getCustomersWithStats } from '@/services/customerService'
 import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
-import { CHANNELS } from '@/constants'
+import { CHANNELS, AGE_RANGES, GENDER_LABELS } from '@/constants'
 import { getAppSettings, syncSettingsFromSheets } from '@/services/settingsService'
 import { fadeUp } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
@@ -40,6 +40,13 @@ const FREQ_MAX = 10
 
 // Warna distinct untuk donut chart channel order ramp navy/steel monokrom
 const CHANNEL_COLORS = ['#1c2b42', '#2f4a6e', '#4f6b8a', '#66809e', '#8198b4', '#9cafc8', '#b9c8db', '#d5dfec']
+
+// Warna donut chart jenis kelamin (monokrom navy + netral)
+const GENDER_COLORS: Record<string, string> = {
+  L: '#1c2b42',
+  P: '#66809e',
+  unknown: '#d5dfec',
+}
 
 // Cache hasil agregasi di level client supaya pindah tab/halaman tidak refetch 10.000 baris setiap kali
 const DASH_CACHE_TTL = 60_000
@@ -273,6 +280,52 @@ export default function DashboardPage() {
   })
 
   const getChannelLabel = (id: string) => CHANNELS.find((ch) => ch.id === id)?.label || id
+
+  // Distribusi jenis kelamin (gender || jenis_kelamin fallback lintas sumber data)
+  const genderCounts = { L: 0, P: 0, unknown: 0 }
+  filteredCustomers.forEach((c) => {
+    const g = (c.gender || c.jenis_kelamin || '').trim().toUpperCase()
+    if (g.startsWith('L')) genderCounts.L++
+    else if (g.startsWith('P')) genderCounts.P++
+    else genderCounts.unknown++
+  })
+  const genderTotal = filteredCustomers.length
+  const genderList = [
+    { key: 'L', label: GENDER_LABELS.L, count: genderCounts.L, color: GENDER_COLORS.L },
+    { key: 'P', label: GENDER_LABELS.P, count: genderCounts.P, color: GENDER_COLORS.P },
+    { key: 'unknown', label: 'Belum diisi', count: genderCounts.unknown, color: GENDER_COLORS.unknown },
+  ].filter((g) => g.count > 0)
+
+  const GENDER_R = 58
+  const GENDER_CIRC = 2 * Math.PI * GENDER_R
+  let genderCursor = 0
+  const genderSegments = genderList.map((g) => {
+    const frac = genderTotal > 0 ? g.count / genderTotal : 0
+    const segment = {
+      ...g,
+      dash: Math.max(frac * GENDER_CIRC, 0.4),
+      offset: genderCursor,
+    }
+    genderCursor -= frac * GENDER_CIRC
+    return segment
+  })
+
+  // Distribusi usia (age_range || usia fallback) — urut sesuai AGE_RANGES
+  const ageRaw: Record<string, number> = {}
+  filteredCustomers.forEach((c) => {
+    const age = (c.age_range || c.usia || '').trim() || 'Belum diisi'
+    ageRaw[age] = (ageRaw[age] || 0) + 1
+  })
+  const ageList = [
+    ...AGE_RANGES.filter((a) => ageRaw[a]).map((a) => ({ label: a, count: ageRaw[a], isMissing: false })),
+    ...Object.entries(ageRaw)
+      .filter(([k]) => !(AGE_RANGES as readonly string[]).includes(k) && k !== 'Belum diisi')
+      .map(([k, count]) => ({ label: k, count, isMissing: false })),
+    ...(ageRaw['Belum diisi']
+      ? [{ label: 'Belum diisi', count: ageRaw['Belum diisi'], isMissing: true }]
+      : []),
+  ]
+  const ageMax = Math.max(...ageList.map((a) => a.count), 1)
 
   const statsGrid = [
     {
@@ -718,6 +771,123 @@ export default function DashboardPage() {
           </div>
         </div>
       </motion.div>
+
+      {/* Distribusi Jenis Kelamin & Usia */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 mb-8">
+        <motion.div variants={fadeUp} custom={7.7} initial="hidden" animate={ready ? 'show' : 'hidden'}>
+          <div className="doppel-outer h-full">
+            <div className="doppel-inner p-5 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#022D4E]-wash">
+                    <UsersThree size={18} weight="duotone" className="text-[#022D4E]" />
+                  </span>
+                  <div>
+                    <h2 className="text-base font-semibold text-ink">Distribusi Jenis Kelamin</h2>
+                    <p className="text-[11px] text-ash">Proporsi customer pada filter aktif</p>
+                  </div>
+                </div>
+                <span className="font-mono text-xs text-ash">{genderTotal} orang</span>
+              </div>
+
+              {genderList.length > 0 && genderTotal > 0 ? (
+                <div className="flex flex-col items-center gap-5 sm:flex-row">
+                  <div className="relative h-40 w-40 shrink-0">
+                    <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90">
+                      <circle cx="80" cy="80" r={GENDER_R} fill="none" stroke="var(--color-sunken)" strokeWidth="18" />
+                      {genderSegments.map((s) => (
+                        <circle
+                          key={s.key}
+                          cx="80"
+                          cy="80"
+                          r={GENDER_R}
+                          fill="none"
+                          stroke={s.color}
+                          strokeWidth="18"
+                          strokeLinecap="round"
+                          strokeDasharray={`${s.dash} ${GENDER_CIRC - s.dash}`}
+                          strokeDashoffset={s.offset}
+                        />
+                      ))}
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-semibold tabular-nums text-ink">{genderTotal.toLocaleString('id-ID')}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-ash">customer</span>
+                    </div>
+                  </div>
+
+                  <div className="w-full space-y-2">
+                    {genderList.map((g) => {
+                      const pct = genderTotal > 0 ? Math.round((g.count / genderTotal) * 100) : 0
+                      return (
+                        <div key={g.key} className="flex items-center justify-between gap-3 rounded-xl bg-sunken/40 px-3 py-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: g.color }} />
+                            <span className="truncate text-xs font-medium text-ink">{g.label}</span>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2 font-mono text-xs">
+                            <span className="text-ink">{g.count.toLocaleString('id-ID')}</span>
+                            <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] text-ash">{pct}%</span>
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              ) : (
+                <div className="py-8 text-center text-xs text-ash">Tidak ada data jenis kelamin pada filter ini.</div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+
+        <motion.div variants={fadeUp} custom={7.75} initial="hidden" animate={ready ? 'show' : 'hidden'}>
+          <div className="doppel-outer h-full">
+            <div className="doppel-inner h-full p-5 sm:p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2.5">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-[#022D4E]-wash">
+                    <ChartBar size={18} weight="duotone" className="text-[#022D4E]" />
+                  </span>
+                  <div>
+                    <h2 className="text-base font-semibold text-ink">Distribusi Usia</h2>
+                    <p className="text-[11px] text-ash">Jumlah customer per rentang usia</p>
+                  </div>
+                </div>
+                <span className="font-mono text-xs text-ash">{filteredCustomers.length} customer</span>
+              </div>
+
+              {ageList.length > 0 ? (
+                <div className="space-y-3">
+                  {ageList.map((a) => {
+                    const pct = filteredCustomers.length > 0 ? Math.round((a.count / filteredCustomers.length) * 100) : 0
+                    const barPct = a.count > 0 ? Math.max((a.count / ageMax) * 100, 4) : 0
+                    return (
+                      <div key={a.label}>
+                        <div className="mb-1.5 flex items-center justify-between text-xs">
+                          <span className={`font-semibold ${a.isMissing ? 'text-mist' : 'text-ink'}`}>{a.label}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-ink">{a.count} orang</span>
+                            <span className="text-ash">({pct}%)</span>
+                          </div>
+                        </div>
+                        <div className="h-2.5 w-full overflow-hidden rounded-full bg-sunken">
+                          <div
+                            className={`h-full rounded-full transition-all duration-700 ${a.isMissing ? 'bg-mist' : 'bg-blue-500'}`}
+                            style={{ width: `${barPct}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div className="py-8 text-center text-xs text-ash">Tidak ada data usia pada filter ini.</div>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 mb-8">
         <motion.div variants={fadeUp} custom={7.8} initial="hidden" animate={ready ? 'show' : 'hidden'}>

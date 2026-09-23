@@ -16,3 +16,11 @@ export const DEFAULT_THRESHOLDS: RetentionThresholds = {
 }
 
 export const PAGE_SIZE = 20
+
+// Bucket usia standar (sesuai pilihan di form edit profil customer)
+export const AGE_RANGES = ['0-17', '18-25', '26-35', '36-45', '46-55', '56-65', '66+'] as const
+
+export const GENDER_LABELS: Record<string, string> = {
+  L: 'Laki-laki',
+  P: 'Perempuan',
+}
