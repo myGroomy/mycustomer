@@ -38,15 +38,37 @@ const BRANCHES: { id: BranchType | 'ALL'; label: string }[] = [
 // Distribusi frekuensi repeat order: bucket 1x..9x, lalu 10x+ digabung jadi satu bucket terakhir
 const FREQ_MAX = 10
 
-// Warna distinct untuk donut chart channel order ramp navy/steel monokrom
-const CHANNEL_COLORS = ['#1c2b42', '#2f4a6e', '#4f6b8a', '#66809e', '#8198b4', '#9cafc8', '#b9c8db', '#d5dfec']
+// Warna kontras untuk donut chart channel order — tiap channel gampang dibedakan
+const CHANNEL_COLORS = [
+  '#022d4e', // navy gelap
+  '#0ea5e9', // sky
+  '#f59e0b', // amber
+  '#10b981', // emerald
+  '#ef4444', // red
+  '#8b5cf6', // violet
+  '#ec4899', // pink
+  '#14b8a6', // teal
+]
 
-// Warna donut chart jenis kelamin (monokrom navy + netral)
+// Warna donut chart jenis kelamin
 const GENDER_COLORS: Record<string, string> = {
-  L: '#1c2b42',
-  P: '#66809e',
-  unknown: '#d5dfec',
+  L: '#022d4e',
+  P: '#ec4899',
+  unknown: '#94a3b8',
 }
+
+// Warna kontras untuk donut chart distribusi usia
+const AGE_COLORS = [
+  '#0ea5e9', // 0-17
+  '#8b5cf6', // 18-25
+  '#022d4e', // 26-35
+  '#10b981', // 36-45
+  '#f59e0b', // 46-55
+  '#ef4444', // 56-65
+  '#ec4899', // 66+
+  '#14b8a6', // lainnya / custom
+  '#94a3b8', // belum diisi
+]
 
 // Cache hasil agregasi di level client supaya pindah tab/halaman tidak refetch 10.000 baris setiap kali
 const DASH_CACHE_TTL = 60_000
@@ -310,22 +332,54 @@ export default function DashboardPage() {
     return segment
   })
 
-  // Distribusi usia (age_range || usia fallback) — urut sesuai AGE_RANGES
+  // Distribusi usia (age_range || usia fallback) — urut sesuai AGE_RANGES, jadi donut
   const ageRaw: Record<string, number> = {}
   filteredCustomers.forEach((c) => {
     const age = (c.age_range || c.usia || '').trim() || 'Belum diisi'
     ageRaw[age] = (ageRaw[age] || 0) + 1
   })
+  const ageTotal = filteredCustomers.length
   const ageList = [
-    ...AGE_RANGES.filter((a) => ageRaw[a]).map((a) => ({ label: a, count: ageRaw[a], isMissing: false })),
+    ...AGE_RANGES.filter((a) => ageRaw[a]).map((a, i) => ({
+      key: a,
+      label: a,
+      count: ageRaw[a],
+      color: AGE_COLORS[i % AGE_COLORS.length],
+      isMissing: false,
+    })),
     ...Object.entries(ageRaw)
       .filter(([k]) => !(AGE_RANGES as readonly string[]).includes(k) && k !== 'Belum diisi')
-      .map(([k, count]) => ({ label: k, count, isMissing: false })),
+      .map(([k, count]) => ({
+        key: k,
+        label: k,
+        count,
+        color: AGE_COLORS[7 % AGE_COLORS.length],
+        isMissing: false,
+      })),
     ...(ageRaw['Belum diisi']
-      ? [{ label: 'Belum diisi', count: ageRaw['Belum diisi'], isMissing: true }]
+      ? [{
+          key: 'Belum diisi',
+          label: 'Belum diisi',
+          count: ageRaw['Belum diisi'],
+          color: AGE_COLORS[8 % AGE_COLORS.length],
+          isMissing: true,
+        }]
       : []),
   ]
-  const ageMax = Math.max(...ageList.map((a) => a.count), 1)
+
+  const AGE_R = 58
+  const AGE_CIRC = 2 * Math.PI * AGE_R
+  let ageCursor = 0
+  const ageSegments = ageList.map((a) => {
+    const frac = ageTotal > 0 ? a.count / ageTotal : 0
+    const segment = {
+      ...a,
+      dash: Math.max(frac * AGE_CIRC, 0.4),
+      offset: ageCursor,
+    }
+    ageCursor -= frac * AGE_CIRC
+    return segment
+  })
 
   const statsGrid = [
     {
@@ -791,7 +845,7 @@ export default function DashboardPage() {
               </div>
 
               {genderList.length > 0 && genderTotal > 0 ? (
-                <div className="flex flex-col items-center gap-5 sm:flex-row">
+                <div className="flex flex-col items-center gap-5">
                   <div className="relative h-40 w-40 shrink-0">
                     <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90">
                       <circle cx="80" cy="80" r={GENDER_R} fill="none" stroke="var(--color-sunken)" strokeWidth="18" />
@@ -816,6 +870,7 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
+                  {/* Legend di bawah donut: jumlah + persentase */}
                   <div className="w-full space-y-2">
                     {genderList.map((g) => {
                       const pct = genderTotal > 0 ? Math.round((g.count / genderTotal) * 100) : 0
@@ -826,7 +881,7 @@ export default function DashboardPage() {
                             <span className="truncate text-xs font-medium text-ink">{g.label}</span>
                           </div>
                           <div className="flex shrink-0 items-center gap-2 font-mono text-xs">
-                            <span className="text-ink">{g.count.toLocaleString('id-ID')}</span>
+                            <span className="text-ink">{g.count.toLocaleString('id-ID')} orang</span>
                             <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] text-ash">{pct}%</span>
                           </div>
                         </div>
@@ -857,29 +912,50 @@ export default function DashboardPage() {
                 <span className="font-mono text-xs text-ash">{filteredCustomers.length} customer</span>
               </div>
 
-              {ageList.length > 0 ? (
-                <div className="space-y-3">
-                  {ageList.map((a) => {
-                    const pct = filteredCustomers.length > 0 ? Math.round((a.count / filteredCustomers.length) * 100) : 0
-                    const barPct = a.count > 0 ? Math.max((a.count / ageMax) * 100, 4) : 0
-                    return (
-                      <div key={a.label}>
-                        <div className="mb-1.5 flex items-center justify-between text-xs">
-                          <span className={`font-semibold ${a.isMissing ? 'text-mist' : 'text-ink'}`}>{a.label}</span>
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-ink">{a.count} orang</span>
-                            <span className="text-ash">({pct}%)</span>
+              {ageList.length > 0 && ageTotal > 0 ? (
+                <div className="flex flex-col items-center gap-5">
+                  <div className="relative h-40 w-40 shrink-0">
+                    <svg viewBox="0 0 160 160" className="h-full w-full -rotate-90">
+                      <circle cx="80" cy="80" r={AGE_R} fill="none" stroke="var(--color-sunken)" strokeWidth="18" />
+                      {ageSegments.map((s) => (
+                        <circle
+                          key={s.key}
+                          cx="80"
+                          cy="80"
+                          r={AGE_R}
+                          fill="none"
+                          stroke={s.color}
+                          strokeWidth="18"
+                          strokeLinecap="round"
+                          strokeDasharray={`${s.dash} ${AGE_CIRC - s.dash}`}
+                          strokeDashoffset={s.offset}
+                        />
+                      ))}
+                    </svg>
+                    <div className="absolute inset-0 flex flex-col items-center justify-center">
+                      <span className="text-2xl font-semibold tabular-nums text-ink">{ageTotal.toLocaleString('id-ID')}</span>
+                      <span className="text-[10px] font-semibold uppercase tracking-wider text-ash">customer</span>
+                    </div>
+                  </div>
+
+                  {/* Legend di bawah donut: jumlah + persentase */}
+                  <div className="w-full space-y-2">
+                    {ageList.map((a) => {
+                      const pct = ageTotal > 0 ? Math.round((a.count / ageTotal) * 100) : 0
+                      return (
+                        <div key={a.key} className="flex items-center justify-between gap-3 rounded-xl bg-sunken/40 px-3 py-2">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: a.color }} />
+                            <span className={`truncate text-xs font-medium ${a.isMissing ? 'text-mist' : 'text-ink'}`}>{a.label}</span>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-2 font-mono text-xs">
+                            <span className="text-ink">{a.count.toLocaleString('id-ID')} orang</span>
+                            <span className="rounded-full bg-white px-1.5 py-0.5 text-[10px] text-ash">{pct}%</span>
                           </div>
                         </div>
-                        <div className="h-2.5 w-full overflow-hidden rounded-full bg-sunken">
-                          <div
-                            className={`h-full rounded-full transition-all duration-700 ${a.isMissing ? 'bg-mist' : 'bg-blue-500'}`}
-                            style={{ width: `${barPct}%` }}
-                          />
-                        </div>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
               ) : (
                 <div className="py-8 text-center text-xs text-ash">Tidak ada data usia pada filter ini.</div>
