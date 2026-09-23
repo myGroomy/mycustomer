@@ -86,7 +86,7 @@ export default function CustomerDetailPage() {
         setCustomer({ ...c, retention_status: status });
         setEditName(c.name);
         setEditPhone(c.phone_normalized);
-        setEditUsia(c.usia || "");
+        setEditUsia(c.usia || c.age_range || "");
         setEditJenisKelamin(c.jenis_kelamin || c.gender || "");
       }
       setOrders(o.data);
@@ -314,12 +314,12 @@ export default function CustomerDetailPage() {
                       >
                         {customer.order_count}x Order
                       </Badge>
-                      {customer.usia && (
-                        <Badge variant="secondary">{customer.usia}</Badge>
+                      {(customer.usia || customer.age_range) && (
+                        <Badge variant="secondary">{customer.usia || customer.age_range}</Badge>
                       )}
-                      {customer.jenis_kelamin && (
+                      {(customer.jenis_kelamin || customer.gender) && (
                         <Badge variant="secondary">
-                          {customer.jenis_kelamin === "L" ? "Laki-laki" : "Perempuan"}
+                          {(customer.jenis_kelamin || customer.gender) === "L" ? "Laki-laki" : "Perempuan"}
                         </Badge>
                       )}
                     </div>
@@ -355,7 +355,7 @@ export default function CustomerDetailPage() {
                     <div>
                       <span className="block text-[10px] font-semibold uppercase tracking-wider text-ash">Jenis Kelamin</span>
                       <span className="mt-1 block text-sm text-ink">
-                        {customer.jenis_kelamin === "L" ? "Laki-laki" : customer.jenis_kelamin === "P" ? "Perempuan" : "Belum diisi"}
+                        {(customer.jenis_kelamin || customer.gender) === "L" ? "Laki-laki" : (customer.jenis_kelamin || customer.gender) === "P" ? "Perempuan" : "Belum diisi"}
                       </span>
                     </div>
                   </div>

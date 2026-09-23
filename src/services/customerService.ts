@@ -345,7 +345,7 @@ export async function updateCustomerProfile(
     description: existing.description || '',
     age_range: existing.age_range || '',
     usia: payload.usia !== undefined ? payload.usia : (existing.usia || ''),
-    gender: payload.jenis_kelamin !== undefined ? payload.jenis_kelamin : (existing.gender || ''),
+    gender: existing.gender || '',
     jenis_kelamin: payload.jenis_kelamin !== undefined ? payload.jenis_kelamin : (existing.jenis_kelamin || ''),
     aliases: payload.aliases !== undefined ? payload.aliases : (existing.aliases || ''),
     branch_memberships: existing.branch_memberships || '[]',

@@ -253,8 +253,8 @@ function CustomerListView() {
         idx + 1,
         c.name,
         c.phone_normalized,
-        c.gender === "L" ? "Laki-laki" : c.gender === "P" ? "Perempuan" : "",
-        c.age_range || "",
+        (c.gender || c.jenis_kelamin) === "L" ? "Laki-laki" : (c.gender || c.jenis_kelamin) === "P" ? "Perempuan" : "",
+        c.age_range || c.usia || "",
         c.branch ||
           [
             ...new Set(c.orders?.map((o) => o.branch).filter(Boolean) || []),
@@ -653,7 +653,7 @@ function CustomerListView() {
                                 >
                                   Order ke-{customer.order_count}
                                 </Badge>
-                                {(!customer.age_range || !customer.gender) && (
+                                {(!(customer.age_range || customer.usia) || !(customer.gender || customer.jenis_kelamin)) && (
                                   <Badge
                                     variant="outline"
                                     className="border-accent-soft/40 text-[#022D4E]-deep"
