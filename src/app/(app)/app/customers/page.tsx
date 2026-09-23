@@ -29,7 +29,7 @@ import {
   searchCustomers,
 } from "@/services/customerService";
 import { getRetentionStatus, getRetentionLabel } from "@/utils/churnStatus";
-import { CHANNELS, DEFAULT_THRESHOLDS, PAGE_SIZE } from "@/constants";
+import { CHANNELS, DEFAULT_THRESHOLDS, PAGE_SIZE, MAX_FETCH_ALL } from "@/constants";
 import { fadeUp } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
 import type { CustomerWithStats, RetentionStatus } from "@/types";
@@ -293,7 +293,7 @@ function CustomerListView() {
     if (downloading) return;
     setDownloading(true);
     try {
-      const r = await getCustomersWithStats(0, 1000);
+      const r = await getCustomersWithStats(0, MAX_FETCH_ALL);
       const all = r.data.map((c) => ({
         ...c,
         retention_status: getRetentionStatus(

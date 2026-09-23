@@ -50,7 +50,7 @@ import {
 } from "@/services/customerService";
 import { createOrder } from "@/services/orderService";
 import { getRetentionStatus, getRetentionLabel } from "@/utils/churnStatus";
-import { DEFAULT_THRESHOLDS } from "@/constants";
+import { DEFAULT_THRESHOLDS, MAX_FETCH_ALL } from "@/constants";
 import { FLUID_EASE } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
 import { getSessionUser } from "@/utils/session";
@@ -106,7 +106,7 @@ export default function InputOrderPage() {
   useEffect(() => {
     async function preload() {
       try {
-        const res = await getCustomersWithStats(0, 1000);
+        const res = await getCustomersWithStats(0, MAX_FETCH_ALL);
         const withStatus = res.data.map((c) => ({
           ...c,
           retention_status: getRetentionStatus(

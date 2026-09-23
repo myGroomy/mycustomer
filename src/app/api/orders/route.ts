@@ -6,6 +6,27 @@ import { normalizePhone } from '@/utils/normalizePhone'
 const CUSTOMERS_SHEET = 'customers'
 const ORDERS_SHEET = 'orders'
 
+// Per-customer mutex: serialisasi read-modify-write order_count
+// agar concurrent POST tidak lost-update.
+const customerLocks = new Map<string, Promise<unknown>>()
+
+async function withCustomerLock<T>(customerId: string, fn: () => Promise<T>): Promise<T> {
+  const prev = customerLocks.get(customerId) ?? Promise.resolve()
+  let release!: () => void
+  const gate = new Promise<void>((resolve) => { release = resolve })
+  const next = prev.then(() => gate, () => gate)
+  customerLocks.set(customerId, next)
+  try {
+    await prev.catch(() => {})
+    return await fn()
+  } finally {
+    release()
+    if (customerLocks.get(customerId) === next) {
+      customerLocks.delete(customerId)
+    }
+  }
+}
+
 export async function POST(request: NextRequest) {
   const auth = await authenticatedUser()
   if (auth.error) return auth.error
@@ -52,12 +73,11 @@ export async function POST(request: NextRequest) {
 
     const customerRow = customerRows[customerRowIndex]
     const orderCountCol = customerHeaders.indexOf('order_count')
-    const currentCount = orderCountCol >= 0 ? parseInt(customerRow[orderCountCol] || '0', 10) : 0
 
     // 2. Generate ID untuk order baru
     const orderId = crypto.randomUUID()
 
-    // 3. Tulis order baru ke orders sheet
+    // 3. Baca orders (untuk cek akses kasir)
     const ordersResponse = await sheets.spreadsheets.values.get({
       spreadsheetId,
       range: `${ORDERS_SHEET}!A:Z`,
@@ -101,65 +121,77 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    await sheets.spreadsheets.values.append({
-      spreadsheetId,
-      range: `${ORDERS_SHEET}!A:Z`,
-      valueInputOption: 'RAW',
-      requestBody: { values: [newOrderValues] },
-    })
+    // 4. Append order + update order_count dalam lock per-customer
+    const result = await withCustomerLock(customer_id, async () => {
+      // Re-read baris customer di bawah lock untuk dapat count terbaru
+      const freshResponse = await sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: `${CUSTOMERS_SHEET}!A${customerRowIndex + 1}:${String.fromCharCode(65 + Math.min(customerHeaders.length - 1, 25))}${customerRowIndex + 1}`,
+      })
+      const freshRow = freshResponse.data.values?.[0] || customerRow
+      const freshCount = orderCountCol >= 0 ? parseInt(freshRow[orderCountCol] || '0', 10) : 0
+      const newCount = freshCount + 1
 
-    // 4. Update order_count + description di customers sheet (satu operasi server-side)
-    const newCount = currentCount + 1
-    const rowToWrite = [...customerRow]
-    while (rowToWrite.length < customerHeaders.length) rowToWrite.push('')
+      await sheets.spreadsheets.values.append({
+        spreadsheetId,
+        range: `${ORDERS_SHEET}!A:Z`,
+        valueInputOption: 'RAW',
+        requestBody: { values: [newOrderValues] },
+      })
 
-    if (orderCountCol >= 0) {
-      rowToWrite[orderCountCol] = String(newCount)
-    }
+      const rowToWrite = [...freshRow]
+      while (rowToWrite.length < customerHeaders.length) rowToWrite.push('')
 
-    if (typeof usia === 'string' && usia.trim()) {
-      const usiaCol = customerHeaders.indexOf('usia')
-      if (usiaCol >= 0) rowToWrite[usiaCol] = usia.trim()
-    }
-
-    if (typeof jenis_kelamin === 'string' && jenis_kelamin.trim()) {
-      const jenisKelaminCol = customerHeaders.indexOf('jenis_kelamin')
-      if (jenisKelaminCol >= 0) rowToWrite[jenisKelaminCol] = jenis_kelamin.trim()
-    }
-
-    const aliasesCol = customerHeaders.indexOf('aliases')
-    if (typeof alias_name === 'string' && alias_name.trim() && aliasesCol >= 0) {
-      let aliases: Array<{ name: string; branch: string; first_seen_at: string; last_seen_at: string }> = []
-      try {
-        const parsed = JSON.parse(rowToWrite[aliasesCol] || '[]')
-        if (Array.isArray(parsed)) aliases = parsed
-      } catch {
-        aliases = []
+      if (orderCountCol >= 0) {
+        rowToWrite[orderCountCol] = String(newCount)
       }
-      const trimmedAlias = alias_name.trim()
-      const existingAlias = aliases.find((alias) => alias.name.toLowerCase() === trimmedAlias.toLowerCase())
-      if (existingAlias) {
-        existingAlias.last_seen_at = new Date().toISOString()
-      } else {
-        const now = new Date().toISOString()
-        aliases.push({ name: trimmedAlias, branch, first_seen_at: now, last_seen_at: now })
-      }
-      rowToWrite[aliasesCol] = JSON.stringify(aliases)
-    }
 
-    const lastColLetter = String.fromCharCode(65 + Math.min(customerHeaders.length - 1, 25))
-    const rowUpdateRange = `${CUSTOMERS_SHEET}!A${customerRowIndex + 1}:${lastColLetter}${customerRowIndex + 1}`
-    await sheets.spreadsheets.values.update({
-      spreadsheetId,
-      range: rowUpdateRange,
-      valueInputOption: 'RAW',
-      requestBody: { values: [rowToWrite] },
+      if (typeof usia === 'string' && usia.trim()) {
+        const usiaCol = customerHeaders.indexOf('usia')
+        if (usiaCol >= 0) rowToWrite[usiaCol] = usia.trim()
+      }
+
+      if (typeof jenis_kelamin === 'string' && jenis_kelamin.trim()) {
+        const jenisKelaminCol = customerHeaders.indexOf('jenis_kelamin')
+        if (jenisKelaminCol >= 0) rowToWrite[jenisKelaminCol] = jenis_kelamin.trim()
+      }
+
+      const aliasesCol = customerHeaders.indexOf('aliases')
+      if (typeof alias_name === 'string' && alias_name.trim() && aliasesCol >= 0) {
+        let aliases: Array<{ name: string; branch: string; first_seen_at: string; last_seen_at: string }> = []
+        try {
+          const parsed = JSON.parse(rowToWrite[aliasesCol] || '[]')
+          if (Array.isArray(parsed)) aliases = parsed
+        } catch {
+          aliases = []
+        }
+        const trimmedAlias = alias_name.trim()
+        const existingAlias = aliases.find((alias) => alias.name.toLowerCase() === trimmedAlias.toLowerCase())
+        if (existingAlias) {
+          existingAlias.last_seen_at = new Date().toISOString()
+        } else {
+          const now = new Date().toISOString()
+          aliases.push({ name: trimmedAlias, branch, first_seen_at: now, last_seen_at: now })
+        }
+        rowToWrite[aliasesCol] = JSON.stringify(aliases)
+      }
+
+      const lastColLetter = String.fromCharCode(65 + Math.min(customerHeaders.length - 1, 25))
+      const rowUpdateRange = `${CUSTOMERS_SHEET}!A${customerRowIndex + 1}:${lastColLetter}${customerRowIndex + 1}`
+      await sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: rowUpdateRange,
+        valueInputOption: 'RAW',
+        requestBody: { values: [rowToWrite] },
+      })
+
+      return newCount
     })
 
     return NextResponse.json({
       success: true,
       order_id: orderId,
-      order_count: newCount,
+      order_count: result,
     })
   } catch (error) {
     console.error('Error creating order:', error)

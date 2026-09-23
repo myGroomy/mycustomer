@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge'
 import { getCustomersWithStats } from '@/services/customerService'
 import { getOrdersByCustomer } from '@/services/orderService'
 import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
-import { CHANNELS } from '@/constants'
+import { CHANNELS, MAX_FETCH_ALL } from '@/constants'
 import { fadeUp, FLUID_EASE } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
 import { getSessionUser } from '@/utils/session'
@@ -45,7 +45,7 @@ export default function ExportPage() {
     try {
       if (exportType === 'orders') {
         // Fetch all customers & orders within date range
-        const result = await getCustomersWithStats(0, 1000)
+        const result = await getCustomersWithStats(0, MAX_FETCH_ALL)
         const rows: Array<{
           no: number
           tanggal_order: string
@@ -58,7 +58,7 @@ export default function ExportPage() {
 
         let counter = 1
         for (const c of result.data) {
-          const orders = await getOrdersByCustomer(c.id, 0, 1000)
+          const orders = await getOrdersByCustomer(c.id, 0, MAX_FETCH_ALL)
           for (const o of orders.data) {
             if (dateFrom && o.order_date < dateFrom) continue
             if (dateTo && o.order_date > dateTo) continue
@@ -101,7 +101,7 @@ export default function ExportPage() {
         downloadCsv(rows, filename)
       } else {
         // Customer Database Export
-        const result = await getCustomersWithStats(0, 1000)
+        const result = await getCustomersWithStats(0, MAX_FETCH_ALL)
         const rows = result.data.map((c, idx) => ({
           no: idx + 1,
           nama_customer: c.name,

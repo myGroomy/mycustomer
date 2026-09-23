@@ -17,6 +17,9 @@ export const DEFAULT_THRESHOLDS: RetentionThresholds = {
 
 export const PAGE_SIZE = 20
 
+// Batas ambil semua data (dashboard/export/follow-up) — cukup besar untuk dataset produksi
+export const MAX_FETCH_ALL = 50000
+
 // Bucket usia standar (sesuai pilihan di form edit profil customer)
 export const AGE_RANGES = ['0-17', '18-25', '26-35', '36-45', '46-55', '56-65', '66+'] as const
 

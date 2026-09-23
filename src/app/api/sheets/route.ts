@@ -16,8 +16,11 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const sheet = searchParams.get('sheet')
 
-    if (!sheet || !ALLOWED_SHEETS.has(sheet)) {
+    if (!sheet) {
       return NextResponse.json({ error: 'Missing sheet parameter' }, { status: 400 })
+    }
+    if (!ALLOWED_SHEETS.has(sheet)) {
+      return NextResponse.json({ error: `Sheet tidak valid: ${sheet}` }, { status: 400 })
     }
     if (sheet === 'users' && !['owner', 'admin'].includes(auth.user.role)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

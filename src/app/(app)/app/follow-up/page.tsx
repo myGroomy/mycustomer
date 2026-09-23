@@ -25,7 +25,7 @@ import { clearSheetsCache } from "@/services/sheetsService";
 import { getRetentionStatus, getRetentionLabel } from "@/utils/churnStatus";
 import { buildWaLink } from "@/utils/waLinkBuilder";
 import { downloadVCard, downloadBulkVCard } from "@/utils/vcardGenerator";
-import { CHANNELS, DEFAULT_THRESHOLDS } from "@/constants";
+import { CHANNELS, DEFAULT_THRESHOLDS, MAX_FETCH_ALL } from "@/constants";
 import { fadeUp } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
 import type {
@@ -73,7 +73,7 @@ export default function FollowUpPage() {
     setLoading(true);
     setLoadError(null);
     try {
-      const r = await getCustomersWithStats(0, 1000);
+      const r = await getCustomersWithStats(0, MAX_FETCH_ALL);
       const filtered = r.data
         .map((c) => ({
           ...c,

@@ -22,7 +22,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { getCustomersWithStats } from '@/services/customerService'
 import { getRetentionStatus, getRetentionLabel } from '@/utils/churnStatus'
-import { CHANNELS, AGE_RANGES, GENDER_LABELS } from '@/constants'
+import { CHANNELS, AGE_RANGES, GENDER_LABELS, MAX_FETCH_ALL } from '@/constants'
 import { getAppSettings, syncSettingsFromSheets } from '@/services/settingsService'
 import { fadeUp } from '@/lib/motion'
 import { useMounted } from '@/lib/useMounted'
@@ -110,7 +110,7 @@ export default function DashboardPage() {
       if (dashCache && now - dashCache.ts < DASH_CACHE_TTL) {
         setCustomers(dashCache.data)
       } else {
-        const r = await getCustomersWithStats(0, 1000)
+        const r = await getCustomersWithStats(0, MAX_FETCH_ALL)
         const data = r.data.map((c) => ({ ...c, retention_status: getRetentionStatus(c.last_order_date, settings) }))
         dashCache = { data, ts: now }
         setCustomers(data)

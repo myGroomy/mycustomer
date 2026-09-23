@@ -90,6 +90,8 @@ export async function POST(request: NextRequest) {
 
       const firstOrderDate = r.first_order_date?.trim() || today
 
+      const memberships = branch ? JSON.stringify([branch]) : '[]'
+
       const customer: Record<string, string> = {
         id: generateId(),
         phone_normalized: phone,
@@ -102,6 +104,8 @@ export async function POST(request: NextRequest) {
         description: r.description?.trim() || '',
         age_range: r.age_range?.trim() || '',
         gender,
+        aliases: '[]',
+        branch_memberships: memberships,
       }
 
       toAppend.push(headers.map((h: string) => customer[h] ?? ''))
