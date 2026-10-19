@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { invalidateSheetCache } from '@/lib/sheetCache'
 
 const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users'])
 
@@ -39,6 +40,8 @@ export async function POST(request: NextRequest) {
       valueInputOption: 'RAW',
       requestBody: { values: [values] },
     })
+
+    await invalidateSheetCache([sheet])
 
     return NextResponse.json({ success: true })
   } catch (error) {

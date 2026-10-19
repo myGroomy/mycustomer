@@ -269,7 +269,7 @@ function BottomNav({
   );
 }
 
-function BranchSwitcher({ user }: { user: User | null }) {
+function BranchSwitcher({ user, onSelect }: { user: User | null; onSelect?: (branch: string) => void }) {
   const { selectedBranch, setSelectedBranch } = useBranch();
   const [branches, setBranches] = useState<Branch[]>([]);
 
@@ -279,6 +279,12 @@ function BranchSwitcher({ user }: { user: User | null }) {
 
   const branchName = branches.find((b) => b.code === selectedBranch)?.name || selectedBranch;
   const canSwitch = user && isManagerRole(user.role);
+
+  const handleSelect = (v: string | null) => {
+    if (!v) return;
+    setSelectedBranch(v);
+    onSelect?.(v);
+  };
 
   if (!selectedBranch && !canSwitch) return null;
 
@@ -294,7 +300,7 @@ function BranchSwitcher({ user }: { user: User | null }) {
   }
 
   return (
-    <Select value={selectedBranch} onValueChange={(v) => v && setSelectedBranch(v)}>
+    <Select value={selectedBranch} onValueChange={handleSelect}>
       <SelectTrigger
         className="h-9 w-auto gap-1.5 rounded-full border-hairline bg-sunken/60 px-3 text-xs font-semibold text-ink"
         aria-label="Pilih cabang"
@@ -314,12 +320,24 @@ function BranchSwitcher({ user }: { user: User | null }) {
 export default function AppLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [storeName, setStoreName] = useState("Cabang Senopati");
+  const [storeName, setStoreName] = useState<string>("");
   const [menuOpen, setMenuOpen] = useState(false);
 
   const syncSettings = () => {
     const s = getAppSettings();
-    setStoreName(s.storeName);
+    if (s.storeName) setStoreName(s.storeName);
+  };
+
+  // Nama toko mengikuti cabang yang dipilih di sidebar / sesi.
+  // Urutan: nama cabang (Sheets) → kode cabang → setting Sheet.
+  const updateStoreNameFromBranch = (branch: string) => {
+    if (!branch) return;
+    getBranches().then((bs) => {
+      const b = bs.find((x) => x.code === branch);
+      setStoreName(b ? b.name : branch);
+    }).catch(() => {
+      setStoreName(branch);
+    });
   };
 
   useEffect(() => {
@@ -333,8 +351,12 @@ export default function AppLayout({ children }: { children: ReactNode }) {
         if (!active) return;
         setUser(authenticatedUser);
         syncSettings();
+        const loginBranch = authenticatedUser.branch || "";
+        updateStoreNameFromBranch(loginBranch);
         syncSettingsFromSheets()
-          .then((s) => setStoreName(s.storeName))
+          .then((s) => {
+            if (!loginBranch && s.storeName) setStoreName(s.storeName);
+          })
           .catch(() => {});
         syncStaging().catch(() => {});
       })
@@ -391,7 +413,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="flex items-center gap-2">
-              <BranchSwitcher user={user} />
+              <BranchSwitcher user={user} onSelect={updateStoreNameFromBranch} />
 
               {/* Hamburg Menu Button */}
               <button

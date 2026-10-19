@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { invalidateSheetCache } from '@/lib/sheetCache'
 
 const CUSTOMERS_SHEET = 'customers'
 const ORDERS_SHEET = 'orders'
@@ -122,6 +123,10 @@ export async function POST(request: NextRequest) {
         valueInputOption: 'RAW',
         requestBody: { values: [customerHeaders] },
       })
+    }
+
+    if (apply && updates.length > 0) {
+      await invalidateSheetCache(['customers'])
     }
 
     return NextResponse.json({

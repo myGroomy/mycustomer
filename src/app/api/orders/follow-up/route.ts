@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { invalidateSheetCache } from '@/lib/sheetCache'
 
 const ORDERS_SHEET = 'orders'
 const FU_COL = 'is_followed_up'
@@ -108,6 +109,8 @@ export async function PUT(request: NextRequest) {
         ],
       },
     })
+
+    await invalidateSheetCache(['orders'])
 
     return NextResponse.json({
       success: true,

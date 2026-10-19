@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { invalidateSheetCache } from '@/lib/sheetCache'
 
 const CUSTOMERS_SHEET = 'customers'
 
@@ -96,6 +97,7 @@ export async function PATCH(request: NextRequest) {
         valueInputOption: 'RAW',
         requestBody: { values: [updateData] },
       })
+      await invalidateSheetCache(['customers'])
     }
 
     return NextResponse.json({

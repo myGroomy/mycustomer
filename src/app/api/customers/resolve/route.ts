@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { invalidateSheetCache } from '@/lib/sheetCache'
 import { normalizePhone } from '@/utils/normalizePhone'
 
 const CUSTOMERS_SHEET = 'customers'
@@ -93,6 +94,7 @@ export async function POST(request: NextRequest) {
         valueInputOption: 'RAW',
         requestBody: { values: [values] },
       })
+      await invalidateSheetCache(['customers'])
       return NextResponse.json({ customer_id: customerId, phone_normalized: normalizedPhone, name, created: true })
     }
 
@@ -121,6 +123,7 @@ export async function POST(request: NextRequest) {
         valueInputOption: 'RAW',
         requestBody: { values: [row] },
       })
+      await invalidateSheetCache(['customers'])
     }
 
     const customerId = row[idIndex]

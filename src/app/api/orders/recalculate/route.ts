@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { invalidateSheetCache } from '@/lib/sheetCache'
 
 const CUSTOMERS_SHEET = 'customers'
 const ORDERS_SHEET = 'orders'
@@ -75,6 +76,11 @@ export async function POST() {
           })
         )
       )
+    }
+
+    // order_count customers berubah → invalidate
+    if (updated > 0) {
+      await invalidateSheetCache(['customers'])
     }
 
     return NextResponse.json({

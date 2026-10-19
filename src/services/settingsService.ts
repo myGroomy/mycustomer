@@ -10,7 +10,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_APP_SETTINGS: AppSettings = {
-  storeName: 'Cabang Senopati',
+  storeName: '',
   activeDays: 30,
   atRiskDays: 60,
   waTemplate: 'Halo {nama}, terima kasih sudah order di {toko}! 😊 Ada yang bisa kami bantu?',

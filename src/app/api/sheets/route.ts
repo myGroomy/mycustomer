@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { readSheetRowsCached } from '@/lib/sheetCache'
 
 const ALLOWED_SHEETS = new Set(['customers', 'orders', 'settings', 'branches', 'users', 'customer_branches'])
 const ORDERS_SHEET = 'orders'
@@ -26,15 +26,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
-    const sheets = getSheets()
-    const spreadsheetId = getSpreadsheetId()
-
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range: `${sheet}!A:Z`,
-    })
-
-    const rows = response.data.values || []
+    // Data mentah dari cache (raw, SEBELUM filter role/branch).
+    const rows = await readSheetRowsCached(sheet)
     if (rows.length === 0) {
       return NextResponse.json({ data: [] })
     }
@@ -53,11 +46,7 @@ export async function GET(request: NextRequest) {
       if (sheet === 'orders') {
         data = data.filter(row => row.branch === auth.user.branch)
       } else {
-        const orderResponse = await sheets.spreadsheets.values.get({
-          spreadsheetId,
-          range: `${ORDERS_SHEET}!A:Z`,
-        })
-        const orderRows = orderResponse.data.values || []
+        const orderRows = await readSheetRowsCached(ORDERS_SHEET)
         const orderHeaders = orderRows[0] || []
         const customerIdsInBranch = new Set(
           orderRows.slice(1)

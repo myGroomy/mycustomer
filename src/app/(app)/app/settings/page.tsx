@@ -41,12 +41,25 @@ import {
 } from "@/utils/csvImport";
 import { fadeUp } from "@/lib/motion";
 import { useMounted } from "@/lib/useMounted";
+import { useBranch } from "@/lib/BranchContext";
 import { getSessionUser } from "@/utils/session";
+import { getBranches } from "@/services/adminService";
 import { isManagerRole } from "@/services/adminService";
 
 export default function SettingsPage() {
   const ready = useMounted();
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_APP_SETTINGS);
+  const [branchName, setBranchName] = useState("");
+  const { selectedBranch } = useBranch();
+
+  useEffect(() => {
+    if (selectedBranch) {
+      getBranches().then((bs) => {
+        const b = bs.find((x) => x.code === selectedBranch);
+        setBranchName(b ? b.name : selectedBranch);
+      }).catch(() => {});
+    }
+  }, [selectedBranch]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
@@ -65,10 +78,18 @@ export default function SettingsPage() {
     mapped: MappedOrderCsv;
   } | null>(null);
   const [importing, setImporting] = useState(false);
+  const [importProgress, setImportProgress] = useState<{
+    done: number;
+    total: number;
+    startedAt: number;
+  } | null>(null);
+  const [importElapsed, setImportElapsed] = useState(0);
   const [importResult, setImportResult] = useState<{
     imported: number;
     skipped: number;
     customers_created?: number;
+    aliases_added?: number;
+    classification?: { active: number; at_risk: number; churned: number } | null;
     errors: string[];
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -163,6 +184,23 @@ export default function SettingsPage() {
     ? (importFile ? importFile.mapped.errors : [])
     : (orderImportFile ? orderImportFile.mapped.errors : []);
 
+  // Detik berjalan selama import (untuk hitung estimasi sisa waktu)
+  useEffect(() => {
+    if (!importing || !importProgress) return;
+    const t = setInterval(() => {
+      setImportElapsed((Date.now() - importProgress.startedAt) / 1000);
+    }, 500);
+    return () => clearInterval(t);
+  }, [importing, importProgress]);
+
+  const formatEta = (remainingSec: number): string => {
+    if (!Number.isFinite(remainingSec) || remainingSec < 0) return "—";
+    const s = Math.round(remainingSec);
+    if (s < 60) return `~${s} dtk`;
+    const m = Math.floor(s / 60);
+    return `~${m} mnt ${s % 60} dtk`;
+  };
+
   const handleRunImport = async () => {
     if (importTab === 'customer') {
       if (!importFile || importFile.mapped.data.length === 0 || importing) return;
@@ -191,34 +229,73 @@ export default function SettingsPage() {
       }
     } else {
       if (!orderImportFile || orderImportFile.mapped.data.length === 0 || importing) return;
+      const allRows = orderImportFile.mapped.data;
+      const CHUNK_SIZE = 500;
+      const totalChunks = Math.ceil(allRows.length / CHUNK_SIZE);
+      // Threshold retensi ikut Settings agar klasifikasi batch konsisten dengan app
+      const activeDays = Number(settings.activeDays) > 0 ? Number(settings.activeDays) : 30;
+      const atRiskDays = Number(settings.atRiskDays) > 0 ? Number(settings.atRiskDays) : 60;
       setImporting(true);
       setImportResult(null);
+      setImportElapsed(0);
+      setImportProgress({ done: 0, total: allRows.length, startedAt: Date.now() });
+      let accImported = 0;
+      let accCreated = 0;
+      let accAliases = 0;
+      const accErrors: string[] = [];
+      let accClassification: { active: number; at_risk: number; churned: number } | null = null;
       try {
-        const res = await fetch("/api/sheets/import-orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ rows: orderImportFile.mapped.data }),
-        });
-        const result = await res.json();
-        if (!res.ok) throw new Error(result.error || "Import gagal");
+        for (let c = 0; c < totalChunks; c++) {
+          const chunk = allRows.slice(c * CHUNK_SIZE, (c + 1) * CHUNK_SIZE);
+          const res = await fetch("/api/sheets/import-orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              rows: chunk,
+              finalize: c === totalChunks - 1,
+              activeDays,
+              atRiskDays,
+            }),
+          });
+          const result = await res.json();
+          if (!res.ok) throw new Error(result.error || `Import gagal pada bagian ${c + 1}/${totalChunks}`);
+          accImported += (result.imported as number) || 0;
+          accCreated += (result.customers_created as number) || 0;
+          accAliases += (result.aliases_added as number) || 0;
+          for (const e of (result.errors as string[]) || []) {
+            if (accErrors.length < 50) {
+              accErrors.push(`[Bagian ${c + 1}] ${e}`);
+            }
+          }
+          if (result.classification) {
+            accClassification = result.classification as { active: number; at_risk: number; churned: number };
+          }
+          const done = Math.min((c + 1) * CHUNK_SIZE, allRows.length);
+          setImportProgress((prev) =>
+            prev ? { ...prev, done } : { done, total: allRows.length, startedAt: Date.now() },
+          );
+        }
         setImportResult({
-          imported: result.imported as number,
+          imported: accImported,
           skipped: 0,
-          customers_created: (result.customers_created as number) || 0,
-          errors: [...parseErrors, ...((result.errors as string[]) || [])],
+          customers_created: accCreated,
+          aliases_added: accAliases,
+          classification: accClassification,
+          errors: [...parseErrors, ...accErrors],
         });
         clearSheetsCache("orders");
         clearSheetsCache("customers");
-        const created = (result.customers_created as number) || 0;
         const msgs = [];
-        if (result.imported > 0) msgs.push(`${result.imported} order`);
-        if (created > 0) msgs.push(`${created} customer baru`);
+        if (accImported > 0) msgs.push(`${accImported} order`);
+        if (accCreated > 0) msgs.push(`${accCreated} customer baru`);
+        if (accAliases > 0) msgs.push(`${accAliases} alias tercatat`);
         toast.success(msgs.length > 0 ? `${msgs.join(', ')} berhasil diimport` : "Tidak ada data yang diimport");
       } catch (err) {
-        setImportResult({ imported: 0, skipped: 0, errors: [err instanceof Error ? err.message : "Import gagal"] });
+        setImportResult({ imported: accImported, skipped: 0, errors: [err instanceof Error ? err.message : "Import gagal"] });
         toast.error(err instanceof Error ? err.message : "Import gagal");
       } finally {
         setImporting(false);
+        setImportProgress(null);
       }
     }
   };
@@ -300,9 +377,12 @@ export default function SettingsPage() {
                   onChange={(e) =>
                     setSettings({ ...settings, storeName: e.target.value })
                   }
-                  placeholder="Misal: Cabang Senopati / Outlet Sudirman"
+                  placeholder={`Cabang: ${branchName || "Pilih cabang di sidebar"}`}
                   className="h-12 text-sm font-medium"
                 />
+                <p className="mt-1.5 text-xs text-ash/70">
+                  Nama toko mengikuti cabang yang dipilih di sidebar.
+                </p>
               </div>
             </div>
           </div>
@@ -610,6 +690,34 @@ export default function SettingsPage() {
                       </>
                     )}
                   </button>
+                  {/* Progress bar + estimasi (import chunk 500 baris) */}
+                  {importing && importTab === 'order' && importProgress && (
+                    <div className="mt-4 rounded-2xl border border-hairline bg-sunken/40 p-4">
+                      {(() => {
+                        const pct = importProgress.total > 0
+                          ? Math.min(100, Math.round((importProgress.done / importProgress.total) * 100))
+                          : 0;
+                        const perRow = importProgress.done > 0 ? importElapsed / importProgress.done : 0;
+                        const etaSec = (importProgress.total - importProgress.done) * perRow;
+                        return (
+                          <>
+                            <div className="flex items-center justify-between text-xs font-semibold text-ink">
+                              <span>
+                                {importProgress.done.toLocaleString("id-ID")} / {importProgress.total.toLocaleString("id-ID")} baris ({pct}%)
+                              </span>
+                              <span className="text-ash">Sisa {formatEta(etaSec)}</span>
+                            </div>
+                            <div className="mt-2 h-2.5 overflow-hidden rounded-full bg-ink/10">
+                              <div
+                                className="h-full rounded-full bg-[#022D4E] transition-all duration-300"
+                                style={{ width: `${pct}%` }}
+                              />
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  )}
                 </>
               )}
 
@@ -637,8 +745,16 @@ export default function SettingsPage() {
                     {importResult.customers_created && importResult.customers_created > 0
                       ? ` (${importResult.customers_created} customer baru)`
                       : ""}
+                    {importResult.aliases_added && importResult.aliases_added > 0
+                      ? `, ${importResult.aliases_added} alias tercatat`
+                      : ""}
                     {importResult.skipped > 0 ? `, ${importResult.skipped} dilewati` : ""}.
                   </p>
+                  {importResult.classification && (
+                    <p className="mt-1">
+                      Klasifikasi saat ini — Aktif: {importResult.classification.active}, At Risk: {importResult.classification.at_risk}, Churned: {importResult.classification.churned}.
+                    </p>
+                  )}
                   {importResult.errors.map((err, i) => (
                     <p key={i} className="mt-1">{err}</p>
                   ))}

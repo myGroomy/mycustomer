@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { authenticatedUser } from '@/lib/apiAuth'
 import { normalizePhone } from '@/utils/normalizePhone'
+import { invalidateSheetCache } from '@/lib/sheetCache'
 
 const CUSTOMERS_SHEET = 'customers'
 const ORDERS_SHEET = 'orders'
@@ -157,7 +158,15 @@ export async function POST(request: NextRequest) {
       }
 
       const aliasesCol = customerHeaders.indexOf('aliases')
-      if (typeof alias_name === 'string' && alias_name.trim() && aliasesCol >= 0) {
+      const rowNameIdx = customerHeaders.indexOf('name')
+      const rowName = rowNameIdx >= 0 ? (rowToWrite[rowNameIdx] || '') : ''
+      // Aturan alias terpadu (konsisten dengan import & resolve):
+      // alias_name eksplisit menang; kalau tidak ada, nama params name dari
+      // client (kalau beda dari nama existing) ikut naik jadi nama terbaru
+      // dan nama lama turun jadi alias. Nama tidak pernah hilang.
+      const explicitAlias = (typeof alias_name === 'string' && alias_name.trim()) ? alias_name.trim() : ''
+      const nameParam = typeof (body as { name?: unknown }).name === 'string' ? ((body as { name?: string }).name || '').trim() : ''
+      if (aliasesCol >= 0) {
         let aliases: Array<{ name: string; branch: string; first_seen_at: string; last_seen_at: string }> = []
         try {
           const parsed = JSON.parse(rowToWrite[aliasesCol] || '[]')
@@ -165,13 +174,26 @@ export async function POST(request: NextRequest) {
         } catch {
           aliases = []
         }
-        const trimmedAlias = alias_name.trim()
-        const existingAlias = aliases.find((alias) => alias.name.toLowerCase() === trimmedAlias.toLowerCase())
-        if (existingAlias) {
-          existingAlias.last_seen_at = new Date().toISOString()
-        } else {
-          const now = new Date().toISOString()
-          aliases.push({ name: trimmedAlias, branch, first_seen_at: now, last_seen_at: now })
+        const now = new Date().toISOString()
+        const upsertAlias = (aliasName: string, branchValue: string) => {
+          if (!aliasName) return
+          const trimmedAlias = aliasName.trim()
+          if (!trimmedAlias) return
+          const existingAlias = aliases.find((alias) => alias.name.toLowerCase() === trimmedAlias.toLowerCase())
+          if (existingAlias) {
+            existingAlias.last_seen_at = now
+          } else {
+            aliases.push({ name: trimmedAlias, branch: branchValue, first_seen_at: now, last_seen_at: now })
+          }
+        }
+        // 1) Nama lama existing yang digantikan param name → jadi alias
+        if (rowNameIdx >= 0 && nameParam && rowName && nameParam.toLowerCase() !== rowName.toLowerCase()) {
+          upsertAlias(rowName, branch)
+          rowToWrite[rowNameIdx] = nameParam
+        }
+        // 2) Alias eksplisit (dialog "Tambah Alias Customer" di UI)
+        if (explicitAlias) {
+          upsertAlias(explicitAlias, branch)
         }
         rowToWrite[aliasesCol] = JSON.stringify(aliases)
       }
@@ -187,6 +209,9 @@ export async function POST(request: NextRequest) {
 
       return newCount
     })
+
+    // Orders & order_count customer berubah → invalidate keduanya
+    await invalidateSheetCache(['orders', 'customers'])
 
     return NextResponse.json({
       success: true,

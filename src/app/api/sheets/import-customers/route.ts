@@ -3,6 +3,7 @@ import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { normalizePhone } from '@/utils/normalizePhone'
 import { generateId } from '@/utils/generateId'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { invalidateSheetCache } from '@/lib/sheetCache'
 
 export interface ImportCustomerRow {
   name: string
@@ -121,6 +122,7 @@ export async function POST(request: NextRequest) {
         valueInputOption: 'RAW',
         requestBody: { values: toAppend },
       })
+      await invalidateSheetCache(['customers'])
     }
 
     return NextResponse.json({ success: true, imported, skipped, errors })

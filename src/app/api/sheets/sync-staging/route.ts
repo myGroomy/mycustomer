@@ -3,6 +3,7 @@ import { getSheets, getSpreadsheetId } from '@/lib/sheetsServer'
 import { normalizePhone } from '@/utils/normalizePhone'
 import { generateId } from '@/utils/generateId'
 import { authenticatedUser } from '@/lib/apiAuth'
+import { invalidateSheetCache } from '@/lib/sheetCache'
 
 const STAGING_SHEETS = ['staging_cmh', 'staging_bdg']
 
@@ -213,6 +214,11 @@ export async function POST() {
           },
         })
       }
+    }
+
+    // Invalidate cache setelah semua write staging → customers/orders sukses
+    if (totalImported > 0) {
+      await invalidateSheetCache(['customers', 'orders'])
     }
 
     return NextResponse.json({
