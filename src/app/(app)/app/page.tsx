@@ -603,7 +603,7 @@ export default function InputOrderPage() {
                       value={newPhone}
                       onChange={(e) => setNewPhone(e.target.value)}
                       placeholder="08xxxxxxxxxx"
-                      className="h-11 rounded-2xl font-mono"
+                      className="h-14 sm:h-13 rounded-2xl font-mono"
                     />
                   </div>
                 </div>
