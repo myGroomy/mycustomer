@@ -17,12 +17,12 @@
 
 ## CRITICAL UX
 
-### C1. Hardcoded Store Name "Cabang Senopati" in Customer Detail
+### C1. Hardcoded Store Name in Customer Detail (RESOLVED)
 **File:** `src/app/(app)/app/customers/[id]/page.tsx:295`
 
-Every order row displays "Cabang Senopati" as a static string. Ignores user's configured store name from settings.
+Previously every order row displayed a static store name. Now the row reads the real branch (`order.branch`), and the store name follows the active branch (`Cimahi (CMH)` / `Bandung (BDG)`).
 
-**Fix:** Use `getAppSettings().storeName`.
+**Fix:** Resolved — store name now derives from the active branch / settings.
 
 ### C2. `--color-mist: #94a3b8` Fails WCAG AA Contrast (3.03:1)
 **File:** `src/app/globals.css:18`
@@ -249,7 +249,7 @@ Like iOS passcode -- improves accuracy on shared devices.
 
 ## TOP 5 PRIORITY FIXES
 
-1. Fix hardcoded "Cabang Senopati" -- read from settings
+1. ~~Fix hardcoded store name~~ -- resolved; store name now follows the active branch (Cimahi (CMH) / Bandung (BDG))
 2. Darken `--color-mist` to pass WCAG AA (4.5:1 minimum)
 3. Fix silent error swallowing -- show error state with retry
 4. Persist follow-up checked-off state to localStorage

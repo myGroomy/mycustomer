@@ -69,7 +69,7 @@ SHEETS: dict[str, dict] = {
     "settings": {
         "headers": ["key", "value"],
         "seed": [
-            ["storeName", "Cabang Senopati"],
+            ["storeName", ""],
             ["activeDays", "30"],
             ["atRiskDays", "60"],
             ["waTemplate",

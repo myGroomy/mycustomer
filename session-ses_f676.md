@@ -1053,7 +1053,7 @@ Saya eksplorasi dulu struktur settings, autentikasi, dan data sheet yang ada:
 140:                 <Input
 141:                   value={settings.storeName}
 142:                   onChange={(e) => setSettings({ ...settings, storeName: e.target.value })}
-143:                   placeholder="Misal: Cabang Senopati / Outlet Sudirman"
+143:                   placeholder="Misal: Cimahi (CMH) / Bandung (BDG) / Outlet Sudirman"
 144:                   className="h-12 text-sm font-medium"
 145:                 />
 146:               </div>
@@ -1462,7 +1462,7 @@ Let me read settingsService, sheetsService, and layout.tsx (nav).
 10: }
 11: 
 12: export const DEFAULT_APP_SETTINGS: AppSettings = {
-13:   storeName: 'Cabang Senopati',
+13:   storeName: 'Cimahi (CMH) / Bandung (BDG)',
 14:   activeDays: 30,
 15:   atRiskDays: 60,
 16:   waTemplate: 'Halo {nama}, terima kasih sudah order di {toko}! 😊 Ada yang bisa kami bantu?',
@@ -1725,7 +1725,7 @@ Let me read settingsService, sheetsService, and layout.tsx (nav).
 165: export default function AppLayout({ children }: { children: ReactNode }) {
 166:   const router = useRouter()
 167:   const [user, setUser] = useState<User | null>(null)
-168:   const [storeName, setStoreName] = useState('Cabang Senopati')
+168:   const [storeName, setStoreName] = useState('Cimahi (CMH) / Bandung (BDG)')
 169:   const [menuOpen, setMenuOpen] = useState(false)
 170: 
 171:   const syncSettings = () => {
@@ -2535,7 +2535,7 @@ TABS: customers (gid=0) | orders (gid=687200747) | users (gid=2032612540) | sett
 
 [settings] rows=5
   1: ["key","value"]
-  2: ["storeName","Cabang Senopati"]
+  2: ["storeName","Cimahi (CMH) / Bandung (BDG)"]
   3: ["activeDays","30"]
   4: ["atRiskDays","60"]
 

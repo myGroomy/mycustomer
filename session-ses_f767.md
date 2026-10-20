@@ -538,7 +538,7 @@ Let me analyze the conversation and create a structured summary.
 - Updated `src/hooks/useCustomerSearch.ts` — client-side search with leading-zero normalization
 - Updated `src/services/index.ts` — exports sheets functions
 - Updated dashboard (`page.tsx`) — branch filter, branch breakdown for owner, kasir locked to own branch
-- Updated customer detail (`[id]/page.tsx`) — shows `order.branch` instead of hardcoded "Cabang Senopati"
+- Updated customer detail (`[id]/page.tsx`) — shows `order.branch` instead of hardcoded "Cimahi (CMH) / Bandung (BDG)"
 - Updated settings page — uses `settingsService` with async load/save, localStorage + Sheets sync
 - Seeded 500 customers (250 CMH, 250 BDG) + 2184 orders via `scripts/seed_500_customers.js`
 - Seeded 5 users: `admin/123456` (owner), `kasir_cmh1/111111`, `kasir_cmh2/222222`, `kasir_bdg1/333333`, `kasir_bdg2/444444`
@@ -3483,7 +3483,7 @@ Now let me update layout.tsx to auto-sync on app load.
 <path>/home/bradley/project/Retain-ly/src/app/(app)/layout.tsx</path>
 <type>file</type>
 <content>
-165:   const [storeName, setStoreName] = useState('Cabang Senopati')
+165:   const [storeName, setStoreName] = useState('Cimahi (CMH) / Bandung (BDG)')
 166:   const [menuOpen, setMenuOpen] = useState(false)
 167: 
 168:   const syncSettings = () => {

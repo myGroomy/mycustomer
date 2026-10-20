@@ -99,7 +99,7 @@ Sumber: `src/services/settingsService.ts`. Baris default wajib:
 
 | key | value default |
 |-----|---------------|
-| `storeName` | `Cabang Senopati` |
+| `storeName` | *(kosong)* — nama toko mengikuti cabang aktif: `Cimahi (CMH)` / `Bandung (BDG)` |
 | `activeDays` | `30` |
 | `atRiskDays` | `60` |
 | `waTemplate` | `Halo {nama}, terima kasih sudah order di {toko}! 😊 Ada yang bisa kami bantu?` |
